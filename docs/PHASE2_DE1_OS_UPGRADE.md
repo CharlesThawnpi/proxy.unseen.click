@@ -1,8 +1,10 @@
 # PHASE 2-DE — de1 OS to Ubuntu 22.04 (decision: clean reinstall, not in-place)
 
 > **Source of truth:** [PHASE2_DE1_PREFLIGHT.md](PHASE2_DE1_PREFLIGHT.md), [PHASE2_3_DE_NODE_PLAN.md](PHASE2_3_DE_NODE_PLAN.md), [DECISIONS.md](DECISIONS.md)
-> **Result:** **HOLD — no in-place upgrade performed by the agent.** Decision (Charles): get to 22.04 via a **clean
-> provider reinstall** (node is empty), then re-add the Master key and re-run preflight. No changes made to `de1`.
+> **Result:** **RESOLVED (2026-06-15).** No in-place upgrade was performed; instead Charles reinstalled `de1` to
+> **Ubuntu 22.04.5 LTS** (after an offline detour — see updates below). Re-verified: SSH root key works, OS is
+> 22.04.5, node clean, network persistent. Outstanding = resource items (RAM 1.8 GiB, root LV 5.6 GB free) tracked in
+> [PHASE2_DE1_PREFLIGHT.md](PHASE2_DE1_PREFLIGHT.md). Decision rationale (reinstall over in-place) retained below.
 
 ## Run metadata
 

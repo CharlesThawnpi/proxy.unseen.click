@@ -28,12 +28,14 @@ The Master carries **no proxy traffic — full stop.** The former §4.1 co-locat
 ([DECISIONS.md](DECISIONS.md) ADR-001): the DE node now runs on its **own dedicated VPS** (`de1`, `5.249.160.59`),
 reached by customers directly like any other node. The Master is control-plane only.
 
-## DE node `de1` — preflight network state (2026-06-15, read-only)
+## DE node `de1` — network state (re-verified 2026-06-15 after 22.04 reinstall)
 
-Detected on `5.249.160.59` (root key SSH): `eth0 5.249.160.59/24`, default via `5.249.160.1`, egress IP
-`5.249.160.59` (matches). **Only SSH `:22` public** + loopback `:53`; **80/443 free**; no proxy ports. **No active
-firewall** (ufw inactive, iptables INPUT ACCEPT, nft absent). Customer→node direct path will terminate here once
-Hiddify is installed (after the 22.04 reinstall). Detail: [PHASE2_DE1_PREFLIGHT.md](PHASE2_DE1_PREFLIGHT.md).
+On `5.249.160.59` (root key SSH): interface is now **`ens18`** = `5.249.160.59/24`, default via `5.249.160.1`
+(proto **static**), egress `5.249.160.59` (matches). **Persistent:** static `/etc/netplan/01-netcfg.yaml` for `ens18`
+(dhcp4 off), managed by systemd-networkd; **no manual dhclient**; cloud-init won't override — so the network survives
+reboot. **Only SSH `:22` public** + loopback `:53`; **80/443 free**; no proxy ports. **ufw is ACTIVE** (INPUT DROP,
+SSH allowed) — Phase 3-DE must allow Hiddify's ports while keeping SSH open. Customer→node direct path terminates here
+once Hiddify is installed. Detail: [PHASE2_DE1_PREFLIGHT.md](PHASE2_DE1_PREFLIGHT.md).
 
 ## Phase 2 preflight — current network state (2026-06-15, read-only) — MASTER
 

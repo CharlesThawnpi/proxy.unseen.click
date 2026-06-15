@@ -45,11 +45,12 @@ preflight ran: `de1` is **clean** (no legacy/proxy artifacts, no nginx/docker/ce
 firewall), CPU 4 ✓, disk 25 GB ✓, public IP `5.249.160.59` ✓, RAM **3.1 GiB** (vs 4 GB estimate). **BLOCKER: OS is
 Ubuntu 20.04.6, not the required 22.04.**
 
-**⚠ de1 is OFFLINE (2026-06-15T16:36Z).** After a custom-ISO install attempt (that still booted 20.04), `de1` is
-**unreachable** from the Master — 100% ICMP loss, TCP 22/1022/80/443 all timeout. SSH-based diagnosis/upgrade is
-impossible; the agent **STOPPED** (no node changes). **Recovery is an operator/console action:** check de1's boot
-state in the provider panel and **reinstall to Ubuntu 22.04 LTS (EN)** with the Master public key added (recommended;
-de1 is empty). Then ping the agent to re-test + re-run preflight. Detail: [PHASE2_DE1_OS_UPGRADE.md](PHASE2_DE1_OS_UPGRADE.md).
+**✅ de1 is back on Ubuntu 22.04.5 (re-verified 2026-06-15T18:57Z).** Charles reinstalled to 22.04.5 live-server, fixed
+networking, and re-added the Master key. Re-verify: **SSH root key works** (host key changed by reinstall → refreshed),
+**OS 22.04.5 LTS** ✓, node **clean**, **ufw active** (SSH allowed), network **persistent** (static netplan, `ens18`).
+**Result PARTIAL** — two resource items before Hiddify: **RAM detected 1.8 GiB** (under the 4 GB purchased *and* the
+prior 3.1 GiB — clarify with provider) and **root LV ~12 GB / 5.6 GB free** (extend into ~11.5 GB unallocated VG).
+Detail: [PHASE2_DE1_PREFLIGHT.md](PHASE2_DE1_PREFLIGHT.md).
 
 **OS path decided (2026-06-15):** in-place `do-release-upgrade` was considered, but since `de1` is **empty** the
 safer, same-outcome choice is a **clean provider reinstall to Ubuntu 22.04** (Charles). A read-only pre-upgrade gate

@@ -5,6 +5,21 @@
 
 Chronological record of notable changes to the UNSEEN PROXY project.
 
+## 2026-06-15 — Phase 2-DE: de1 re-verified on Ubuntu 22.04.5 — PARTIAL (resource items)
+
+- de1 reinstalled to **Ubuntu 22.04.5 LTS** (Charles); networking fixed; Master key re-added. Host key changed by
+  reinstall → removed only the de1 `known_hosts` entry and re-pinned (expected).
+- Re-ran read-only preflight: **SSH root key works**; **OS 22.04.5** (kernel 5.15) ✓; hostname `de1`; **clean** (no
+  legacy/proxy/nginx/docker); only SSH:22 public, 80/443 free; **ufw ACTIVE** (INPUT DROP, SSH allowed); egress
+  `5.249.160.59` ✓.
+- **Network persistence = PASS:** static `/etc/netplan/01-netcfg.yaml` for `ens18` (dhcp4 off, static IP+route),
+  systemd-networkd-managed, **no manual dhclient**, cloud-init not overriding → survives reboot.
+- **Detected vs estimate:** OS ✓, CPU 4 ✓, IP ✓; **RAM 1.8 GiB** (vs 4 GB purchased *and* prior 3.1 GiB — investigate);
+  **root LV ~12 GB / 5.6 GB free** of 25 GB disk (~11.5 GB unallocated VG → extend before Hiddify).
+- **Result PARTIAL.** Before Phase 3-DE: extend root LV, clarify RAM with provider, add `node-de.unseen.click` A
+  record. Updated PHASE2_DE1_PREFLIGHT (rewritten for 22.04) + OS_UPGRADE/SERVERS/NODES/NETWORK/PORTS/SECURITY/
+  CURRENT_STATUS. Docs only; node changes = none (read-only).
+
 ## 2026-06-15 — Phase 2-DE: de1 OFFLINE after custom-ISO attempt — upgrade on HOLD
 
 - Tried to diagnose/fix de1's release-upgrade connectivity (`changelogs.ubuntu.com` unreachable on console after a
