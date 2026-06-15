@@ -38,6 +38,12 @@ plane. The standard "disable, don't delete / re-pull a git tag" rollback does **
 - The DE node starts `status=test` and is never auto-promoted, so a bad install affects only the test node, not
   customer-facing live service.
 - Full readiness conditions and the snapshot prerequisite are in `PHASE2_MASTER_DE_HIDDIFY_PREFLIGHT.md`.
+- **[VERIFIED, Phase 3] Docker install is materially easier to roll back** (`docker compose down -v` + remove the
+  Docker state) than a host `install.sh` (which mutates nginx/HAProxy/MariaDB/Redis/iptables host-wide). The provider
+  snapshot (B2) remains mandatory regardless; Docker just narrows the blast radius. See
+  [PHASE3_HIDDIFY_AUDIT_PLAN.md](PHASE3_HIDDIFY_AUDIT_PLAN.md).
+- **SSH-lockout safety:** Hiddify manages iptables itself. Before relying on it, confirm SSH:22 from a **second
+  session** post-install and keep a **provider console/recovery** path — a firewall misstep must not be unrecoverable.
 
 ## Restore drill
 

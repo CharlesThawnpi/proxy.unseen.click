@@ -149,6 +149,19 @@ made), but **install must NOT proceed** until B1–B4 and the manual prerequisit
 and requires Charles's manual provider-snapshot confirmation** plus the port/TLS/firewall decisions before a
 separate "Phase 2 protected Hiddify install on Master/DE" task is authorized.
 
+## Phase 3 update (2026-06-15)
+
+The Phase 3 audit plan ([PHASE3_HIDDIFY_AUDIT_PLAN.md](PHASE3_HIDDIFY_AUDIT_PLAN.md)) has researched B1/B3/B4 from
+official Hiddify docs and is the live successor to this preflight's open blockers:
+- **B1** is now **resolvable** — recommended **Option A** (Docker Hiddify on remapped ports behind the Master nginx)
+  or **Option C** (separate DE VPS, lowest risk). Charles chooses.
+- **B3** has a documented firewall/SSH-safety plan (Hiddify manages iptables; verify SSH from a 2nd session).
+- **B4** is **reduced** (install path, host services, 24.04/Redis caveat, Docker coexistence now verified) but exact
+  ports/units/API fields remain **[LIVE]**.
+- **B2** (provider snapshot) is **still pending/manual** — unchanged.
+
+Readiness stays **PARTIAL / HOLD** until Charles's option decision + the B2 snapshot + the live-verify checklist.
+
 ## Exact next recommended task
 
 **Phase 3 — Hiddify API & subscription/port compatibility audit** (read-only probe of a pinned Hiddify version),

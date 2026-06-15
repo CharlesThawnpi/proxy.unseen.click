@@ -43,3 +43,17 @@ Observed via `ss -tulpn` (read-only). See `PHASE2_MASTER_DE_HIDDIFY_PREFLIGHT.md
 expects to own **80/443** — the same ports the Master control plane needs for `api/bot/panel/app/sub`. This is the
 central blocker (B1); the coexistence strategy (shared reverse proxy / SNI split / alternate ports) must be decided
 **before install**, informed by the Phase 3 audit. Hiddify's actual panel/proxy port layout is **not assumed** here.
+
+## Phase 3 audit — Hiddify port behavior (tiered)
+
+See [PHASE3_HIDDIFY_AUDIT_PLAN.md](PHASE3_HIDDIFY_AUDIT_PLAN.md) for sources.
+
+- **[VERIFIED]** Standard install runs its **own nginx + HAProxy** and **takes 80/443**. **Docker install** binds
+  `80:80`/`443:443` **by default but can be remapped** (e.g. `8443`) to run **behind an existing nginx** — the B1 path.
+- **[VERIFIED]** Panel + subscription are served over **443** (HTTP/TLS) on a **secret proxy path**.
+- **[LIVE/ASSUMPTION]** Protocol inbound ports are **panel-assigned/configurable** — typical: VLESS-Reality on 443/TCP
+  (SNI stealth), Hysteria2 on a high **UDP** port, Shadowsocks on its own port. **Exact numbers must be read from
+  `ss -tulpn` post-install; do NOT hardcode.**
+- **Key constraint:** Hysteria2 (UDP/QUIC), Reality (raw-TLS/SNI), and SS are **not HTTP** and **cannot be nginx
+  HTTP-reverse-proxied** — they need dedicated ports or HAProxy SNI fronting. Only the panel/subscription HTTP(S)
+  can sit behind the Master nginx.

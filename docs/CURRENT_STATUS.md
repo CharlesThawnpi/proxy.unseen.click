@@ -12,7 +12,7 @@ Where the UNSEEN PROXY build stands across the §34 deployment phases.
 | 0 | Clean-VPS verification (gate before any build) | DONE (gate passed) |
 | 1 | Documentation, repo & architecture planning | DONE (pushed to origin/main, 25e5ddc) |
 | 2 | Hiddify test VPS setup (Master/DE co-located) | **PREFLIGHT DONE — install on HOLD** (see PHASE2_MASTER_DE_HIDDIFY_PREFLIGHT.md) |
-| 3 | Hiddify API & subscription compatibility audit | PENDING |
+| 3 | Hiddify API & subscription compatibility audit | **AUDIT PLAN DONE (docs-verified) — live-verify + install on HOLD** (see PHASE3_HIDDIFY_AUDIT_PLAN.md) |
 | 4 | Database & backend clone design | PENDING |
 | 5 | Telegram bot implementation (Burmese-primary) | PENDING |
 | 6 | Hiddify subscription delivery integration | PENDING |
@@ -31,6 +31,8 @@ decision: install must not proceed until (B1) the 80/443 + TLS coexistence strat
 takes & confirms a provider snapshot, (B3) a firewall/exposure plan exists, and (B4) the Phase 3 Hiddify
 port/API audit is done. Details + risks in `PHASE2_MASTER_DE_HIDDIFY_PREFLIGHT.md`.
 
-**Next task:** Phase 3 — read-only Hiddify API & port/TLS audit (produces the verified `HIDDIFY_API_CONTRACT.md`),
-and in parallel Charles takes the Master provider snapshot. Only then is the protected co-located install authorized.
-The node will be created as `status=test` and never auto-promoted to `live`.
+**Next task:** the Phase 3 audit *plan* is done (docs-verified). Before any install: **Charles decides** co-location
+**Option A** (Docker Hiddify behind Master nginx) vs **Option C** (separate DE VPS), and **takes/confirms the B2
+provider snapshot**. Then a separate **"Phase 3 live-verify"** task installs the pinned Hiddify on the snapshot/
+sandbox, runs the live checklist, and fills the **[LIVE]** API/port fields. Only then does Phase 4 wire the
+orchestrator against the verified contract. The node stays `status=test` and is never auto-promoted to `live`.

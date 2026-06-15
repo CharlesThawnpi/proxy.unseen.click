@@ -50,4 +50,16 @@ The DB+`.env` backup before migrating is mandatory (see [BACKUPS.md](BACKUPS.md)
 - A node is configured/orchestrated by the Master over the Hiddify API v2 — not by a git checkout.
 - **Co-located DE node:** installing Hiddify on the Master itself is a **manual, host-level, snapshot-gated**
   operation — explicitly **not** part of `git pull` deploy. It is on HOLD pending the preflight prerequisites
-  (`PHASE2_MASTER_DE_HIDDIFY_PREFLIGHT.md`).
+  (`PHASE2_MASTER_DE_HIDDIFY_PREFLIGHT.md`) and the Phase 3 decision (`PHASE3_HIDDIFY_AUDIT_PLAN.md`).
+
+### Hiddify install method (Phase 3 audit, tiered)
+
+- **[VERIFIED]** Two methods: host `install.sh` (brings nginx/HAProxy/Xray/sing-box/MariaDB/Redis to the host) or
+  **Docker** (containerized; bundles Redis/MariaDB). Install path **`/opt/hiddify-manager/`** — separate from
+  `/opt/unseen-proxy/`, no collision.
+- **[VERIFIED]** Official OS is **Ubuntu 22.04**; **24.04** (this Master) hit Redis-7.0 install-order issues since fixed
+  — **not officially blessed**. **Docker bundles its own Redis, sidestepping that** → favored for the 24.04 Master.
+- **Recommendation for co-location:** **Docker install with remapped ports behind the Master nginx (Option A)**, OR a
+  **separate DE VPS (Option C)**. Both pin a known-good version. **Standard host install is NOT recommended on the
+  control plane** (it would seize 80/443 and mutate the host broadly).
+- Install is host-level and gated on the **B2 provider snapshot** + the live-verify checklist — never run blind.

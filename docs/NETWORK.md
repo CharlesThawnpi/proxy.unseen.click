@@ -36,3 +36,18 @@ The Master carries **no proxy traffic**, with the one documented exception: the 
   Hiddify proxy ports, and must guarantee SSH stays reachable. See `PHASE2_MASTER_DE_HIDDIFY_PREFLIGHT.md`.
 - **Co-location TLS conflict:** nginx (control plane) and Hiddify (DE node) both expect 80/443 — see
   [PORTS.md](PORTS.md). Unresolved until the Phase 3 audit informs the coexistence strategy.
+
+## Phase 3 audit — co-location TLS/SNI strategy (proposed)
+
+Full analysis in [PHASE3_HIDDIFY_AUDIT_PLAN.md](PHASE3_HIDDIFY_AUDIT_PLAN.md). Summary:
+
+- Only **one** process can bind public **443**; with a single shared IP, sharing it is an **SNI/host-routing**
+  problem, not a vhost add. Two viable shapes:
+  - **Option A (recommended for co-location):** **Master nginx fronts 443**, host-routing control-plane subdomains to
+    loopback services and reverse-proxying `node-de.unseen.click` panel/subscription HTTP to a **Docker Hiddify on a
+    remapped port** (e.g. `127.0.0.1:8443`). Proxy inbounds (Hysteria2 UDP, SS, Reality) get **dedicated ports**.
+  - **Option B:** Hiddify **HAProxy fronts 443** (SNI split) with the Master nginx behind it — native to Hiddify but
+    inverts the "nginx is sole 443 owner" design and couples control-plane TLS to Hiddify (higher risk).
+  - **Option C (lowest risk):** **separate DE VPS** — no 443 sharing at all (§6.1 makes this code-free).
+- Customers still receive only `https://sub.unseen.click/s/<token>`; the node's raw sub URL stays internal.
+- **[LIVE]** the final 443 owner and Reality's port are confirmed on a snapshot/sandbox before install is authorized.
