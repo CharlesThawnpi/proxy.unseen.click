@@ -5,7 +5,8 @@
 > **Status:** **PARTIAL / BLOCKED — Docker install executed (v12.3.3) but the panel is NON-FUNCTIONAL.**
 > Containers came up; SSH + control plane intact; **but** the panel web/API never served (443 → no response) due to a
 > Redis AUTH mis-wiring + DB migration errors in the experimental Docker build. **Live API/Swagger verification could
-> not be completed.** Node remains `status=test` (and is not even reachable). See "Actual install result" below.
+> not be completed.** The broken stack was then **torn down** (Master back to baseline); decision: provision DE on a
+> **separate Ubuntu-22.04 VPS** via the supported host installer (audit Option C). See sections below.
 
 ## Run metadata
 
@@ -173,10 +174,26 @@ serving; CLI hangs). **No API/Swagger/contract verification, and no disposable t
 `HIDDIFY_API_CONTRACT.md` [LIVE] fields remain unverified. This is a real, documented outcome — not a PASS — and it
 confirms the audit's caveat that the **Docker build is experimental / not for permanent use**.
 
+## Teardown + confirmed root cause (2026-06-15)
+
+**Decision (Charles): tear down + plan a separate DE VPS.** Executed `docker compose down -v` in `/opt/hiddify-manager`,
+removed the directory (incl. `docker.env` secrets + `docker-data`), and removed the abandoned install log. **Baseline
+restored:** no containers, **SSH:22 up, 80/443 free, iptables INPUT `ACCEPT`**; Docker engine 29.5.3 kept per decision;
+project git clean.
+
+**Root cause CONFIRMED at teardown:** compose emitted `The "REDIS_PASSWORD" variable is not set. Defaulting to a blank
+string.` — the redis service's `command: redis-server --requirepass "$REDIS_PASSWORD"` is interpolated by *compose*
+(which reads vars from the project `.env`/shell, **not** from the `env_file: docker.env`). So Redis started with a
+**blank** password while the panel authenticated *with* the `docker.env` password → the `AuthenticationError`, which
+cascaded into the panel failing to serve. A genuine bug in the experimental Docker compose, not a transient race.
+
+**Chosen path:** the DE node will be provisioned by the **supported host install on a separate Ubuntu-22.04 VPS**
+(audit Option C) — not Docker-on-Master. The protected Master stays clean (control-plane only, per its primary role).
+
 ## Exact next recommended task
 
-**Decide the engine path, then re-do live-verify on a working panel.** The Docker build is not viable as-is. Options
-(operator decision — see report):
+**Provision the DE node on a separate Ubuntu-22.04 VPS (audit Option C), then re-do live-verify there.** Options
+considered (decision made: tear-down + separate VPS):
 1. **Supported host install on Ubuntu 22.04, on a separate DE VPS** (audit **Option C** — lowest risk, keeps the
    protected 24.04 Master untouched, and matches Hiddify's officially supported OS). **Recommended.**
 2. **Debug the Docker build** (fix the compose Redis-password interpolation + re-run migrations) — only if staying on
@@ -186,4 +203,5 @@ confirms the audit's caveat that the **Docker build is experimental / not for pe
 
 Whichever path yields a serving panel, the live-verify checklist + field table above are then completed (admin link →
 `0600` file, Swagger → contract, one disposable test user created+deleted). Only then does Phase 4 build against a
-verified contract. **Current containers were left as-installed pending this decision.**
+verified contract. **The broken stack has been torn down; the Master is back to baseline.** Next concrete step: stand
+up a small Ubuntu-22.04 DE VPS and run the **supported host installer** there.

@@ -57,7 +57,7 @@ See [PHASE3_HIDDIFY_AUDIT_PLAN.md](PHASE3_HIDDIFY_AUDIT_PLAN.md) for sources.
 - **Key constraint:** Hysteria2 (UDP/QUIC), Reality (raw-TLS/SNI), and SS are **not HTTP** and **cannot be nginx
   HTTP-reverse-proxied** — they need dedicated ports or HAProxy SNI fronting. Only the panel/subscription HTTP(S)
   can sit behind the Master nginx.
-- **[LIVE 2026-06-15]** A test Docker install (v12.3.3) bound host **80 + 443 via `docker-proxy`** (bridge mode;
-  redis/mariadb stayed container-internal). The panel was non-functional, so these are the **only** ports it took.
-  When a working node + the Master nginx coexist, the §B1 strategy applies; today there is no control-plane nginx to
-  conflict. See `PHASE3_HIDDIFY_LIVE_VERIFY.md`.
+- **[LIVE 2026-06-15]** A test Docker install (v12.3.3) briefly bound host **80 + 443 via `docker-proxy`** (bridge
+  mode; redis/mariadb stayed container-internal), then was **torn down — 80/443 are FREE again**. Because the DE node
+  now moves to a **separate VPS**, the §B1 80/443 co-location conflict on the Master no longer applies; the Master
+  nginx (when built) will own 80/443 with no Hiddify contention. See `PHASE3_HIDDIFY_LIVE_VERIFY.md`.

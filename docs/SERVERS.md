@@ -23,8 +23,10 @@ co-located test DE node**. The DE node is **not disposable**.
 
 **Install attempt (2026-06-15):** Docker (29.5.3) + a pinned Hiddify Docker stack (v12.3.3) were installed to
 `/opt/hiddify-manager` (containers up; host safe — SSH up, control plane intact, only 80/443 published). **The panel
-was non-functional** (Redis AUTH + DB migration errors), so it is **not a usable node** and the API contract is still
-unverified. Recommended path for a working DE node: supported host install on a separate Ubuntu-22.04 VPS. See
+was non-functional** (compose Redis-password bug + DB migration errors), so it was **torn down** (`docker compose
+down -v` + dir removed); the Master is back to baseline (SSH up, 80/443 free, Docker engine kept). **Decision: the DE
+node moves to a separate Ubuntu-22.04 VPS** via the supported host installer — so DE is no longer co-located on the
+Master (the §4.1 exception is dropped for DE). The Master row above stays as the control-plane host only. See
 `PHASE3_HIDDIFY_LIVE_VERIFY.md`.
 
 ## Proxy nodes (data plane)

@@ -17,8 +17,12 @@ Chronological record of notable changes to the UNSEEN PROXY project.
   fix attempted (conservative mandate). Empirically confirms the official "Docker not for permanent use" caveat.
 - Secret-safe throughout: no admin link generated/printed/committed; install log `0600`; scratch removed.
 - Updated `PHASE3_HIDDIFY_LIVE_VERIFY.md` (actual result), `CURRENT_STATUS`, `HIDDIFY_API_CONTRACT`, `NODES`,
-  `SERVERS`, `PORTS`, `DEPLOYMENT`. **Decision needed:** host install on a separate DE VPS (Ubuntu 22.04, Option C)
-  vs debug Docker vs teardown. Containers left as-installed.
+  `SERVERS`, `PORTS`, `DEPLOYMENT`.
+- **Decision (Charles): tear down + separate DE VPS.** Removed the broken stack (`docker compose down -v` + deleted
+  `/opt/hiddify-manager`); Master back to baseline (SSH up, 80/443 free, INPUT ACCEPT; Docker engine kept).
+  **Root cause confirmed:** compose `$REDIS_PASSWORD` interpolation bug (Redis ran password-less while the panel used
+  a password). **DE node will move to a separate Ubuntu-22.04 VPS** via Hiddify's supported host installer — DE is no
+  longer the §4.1 co-location exception; the Master stays control-plane-only.
 
 ## 2026-06-15 — Phase 3 (Hiddify live-verify PREP — operator install pending)
 

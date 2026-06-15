@@ -12,7 +12,7 @@ Where the UNSEEN PROXY build stands across the §34 deployment phases.
 | 0 | Clean-VPS verification (gate before any build) | DONE (gate passed) |
 | 1 | Documentation, repo & architecture planning | DONE (pushed to origin/main, 25e5ddc) |
 | 2 | Hiddify test VPS setup (Master/DE co-located) | **PREFLIGHT DONE — install on HOLD** (see PHASE2_MASTER_DE_HIDDIFY_PREFLIGHT.md) |
-| 3 | Hiddify API & subscription compatibility audit | **PARTIAL / BLOCKED — Docker install ran (v12.3.3) but panel non-functional** (Redis AUTH + DB migration errors; 443 not serving). API contract still unverified. Engine decision needed. See PHASE3_HIDDIFY_LIVE_VERIFY.md |
+| 3 | Hiddify API & subscription compatibility audit | **PARTIAL — Docker build proven non-viable & torn down; API contract still unverified.** v12.3.3 Docker had a compose Redis-password bug (panel wouldn't serve); stack removed, Master back to baseline. **Decision: DE node → supported host install on a separate Ubuntu-22.04 VPS** (Option C). See PHASE3_HIDDIFY_LIVE_VERIFY.md |
 | 4 | Database & backend clone design | PENDING |
 | 5 | Telegram bot implementation (Burmese-primary) | PENDING |
 | 6 | Hiddify subscription delivery integration | PENDING |
@@ -35,6 +35,9 @@ port/API audit is done. Details + risks in `PHASE2_MASTER_DE_HIDDIFY_PREFLIGHT.m
 authorization. Host stayed safe (SSH up, control plane intact, isolated to `/opt/hiddify-manager`), **but the panel
 is non-functional** — Redis AUTH mis-wiring + DB migration errors mean 443 never served and the CLI hangs, so the
 live API/Swagger contract could **not** be verified. This empirically confirms Hiddify's "Docker not for permanent
-use" caveat. **Decision needed (operator):** (1) **supported host install on a separate DE VPS, Ubuntu 22.04**
-(audit Option C — recommended), (2) debug the Docker build, or (3) tear down. Broken containers left as-installed
-pending that decision. Phase 4 stays blocked until a serving panel yields a verified contract.
+use" caveat. **Decision made (Charles): tear down + separate DE VPS.** The broken Docker stack was removed (`docker compose
+down -v` + dir removed); Master is back to baseline (SSH up, 80/443 free, INPUT ACCEPT; Docker engine kept). Root
+cause confirmed: a compose `$REDIS_PASSWORD` interpolation bug (Redis ran password-less while the panel used one).
+**Next concrete step:** stand up a small **Ubuntu-22.04 DE VPS** and run Hiddify's **supported host installer**
+there, then re-do live-verify (admin link → `0600`, Swagger → contract, one disposable test user). Phase 4 stays
+blocked until that verified contract exists. The protected Master stays control-plane-only.

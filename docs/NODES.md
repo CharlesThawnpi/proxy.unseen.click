@@ -52,9 +52,10 @@ node's standard provisioning differs from a fresh-VPS node accordingly:
 - Provisioning step 1 ("fresh VPS") is replaced by an **in-place, protected install** on the Master, gated behind a
   **provider snapshot** (the only reliable rollback for a host-wide installer).
 - It starts as **`status=test`** in `proxy_nodes` and is **never auto-promoted to `live`**.
-- **Status (2026-06-15): Docker install ATTEMPTED — PARTIAL/BLOCKED.** Official pinned Docker (v12.3.3) installed
-  to `/opt/hiddify-manager`; containers came up; host stayed safe (SSH up, control plane intact). **But the panel is
-  non-functional** (Redis AUTH mis-wiring + DB migration errors → 443 not serving; CLI hangs), so the API contract is
-  still unverified. Confirms Hiddify's "Docker not for permanent use" caveat. **Engine decision pending:** supported
-  **host install on a separate DE VPS (Ubuntu 22.04, audit Option C)** is the recommended path. Node remains
-  `status=test`, never auto-promoted. See `PHASE3_HIDDIFY_LIVE_VERIFY.md`.
+- **Status (2026-06-15): Docker build proven non-viable & TORN DOWN; DE will move to a separate VPS.** The pinned
+  v12.3.3 Docker stack came up but the panel never served (compose `$REDIS_PASSWORD` interpolation bug → Redis ran
+  password-less; DB migration errors). It was removed (`docker compose down -v` + dir deleted); Master back to
+  baseline. **Decision: the DE node is provisioned by Hiddify's supported host installer on a separate Ubuntu-22.04
+  VPS (audit Option C), NOT Docker-on-Master.** This makes DE a normal node (no longer the §4.1 co-location
+  exception). Node will start `status=test`. API contract still unverified pending that install. See
+  `PHASE3_HIDDIFY_LIVE_VERIFY.md`.
