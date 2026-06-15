@@ -5,6 +5,21 @@
 
 Chronological record of notable changes to the UNSEEN PROXY project.
 
+## 2026-06-15 — Phase 3 (Hiddify Docker install attempt — PARTIAL/BLOCKED)
+
+- With Charles's authorization (snapshot confirmed), the agent ran the **official pinned Docker install
+  (v12.3.3)** from `/opt` → isolated `/opt/hiddify-manager`. Docker 29.5.3 installed; 3 containers came up.
+- **Host stayed safe:** SSH:22 up throughout; iptables INPUT policy `ACCEPT` (Docker added only its own
+  NAT/FORWARD chains; Hiddify firewall left OFF); only 80/443 published (bridge); project git clean.
+- **Panel is NON-FUNCTIONAL:** 443 returns no response; logs show a **Redis AUTH mis-wiring** + **DB migration
+  errors**; the `hiddifypanel` CLI **hangs** on app import. MariaDB reachable, `admin_user` row exists, but the
+  web/API never started. → **Live API/Swagger/contract verification BLOCKED; no test user created.** No destructive
+  fix attempted (conservative mandate). Empirically confirms the official "Docker not for permanent use" caveat.
+- Secret-safe throughout: no admin link generated/printed/committed; install log `0600`; scratch removed.
+- Updated `PHASE3_HIDDIFY_LIVE_VERIFY.md` (actual result), `CURRENT_STATUS`, `HIDDIFY_API_CONTRACT`, `NODES`,
+  `SERVERS`, `PORTS`, `DEPLOYMENT`. **Decision needed:** host install on a separate DE VPS (Ubuntu 22.04, Option C)
+  vs debug Docker vs teardown. Containers left as-installed.
+
 ## 2026-06-15 — Phase 3 (Hiddify live-verify PREP — operator install pending)
 
 - **No install performed by the agent; no Hiddify API call; no system change.** Docs/scripts only.

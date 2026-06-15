@@ -2,8 +2,10 @@
 
 > **Source of truth:** [IMPLEMENTATION_PLAN.md](../IMPLEMENTATION_PLAN.md) §14, §34; builds on
 > [PHASE3_HIDDIFY_AUDIT_PLAN.md](PHASE3_HIDDIFY_AUDIT_PLAN.md) and [PHASE2_MASTER_DE_HIDDIFY_PREFLIGHT.md](PHASE2_MASTER_DE_HIDDIFY_PREFLIGHT.md)
-> **Status:** **PARTIAL / HOLD — install NOT executed by the agent.** Pre-install safety gate PASSED; by decision the
-> **operator (Charles) runs the install**, then the agent performs live verification. Node stays `status=test`.
+> **Status:** **PARTIAL / BLOCKED — Docker install executed (v12.3.3) but the panel is NON-FUNCTIONAL.**
+> Containers came up; SSH + control plane intact; **but** the panel web/API never served (443 → no response) due to a
+> Redis AUTH mis-wiring + DB migration errors in the experimental Docker build. **Live API/Swagger verification could
+> not be completed.** Node remains `status=test` (and is not even reachable). See "Actual install result" below.
 
 ## Run metadata
 
@@ -12,7 +14,40 @@
 | Date/time (UTC) | 2026-06-15T13:08:48Z |
 | Host | Master `crimson-gorilla-49484` — Ubuntu 24.04.4, 4 vCPU / 16 GB / 100 GB (co-located DE test node) |
 | Snapshot (B2) | **CONFIRMED by Charles** (provider-side Master snapshot taken before any install). |
-| Execution decision | **"Operator installs, agent verifies."** The agent did **not** install — it cannot hold a second SSH session / provider console, and the official Docker method is **experimental** + long-running, unsafe to drive one-shot non-interactively on a protected control plane. |
+| Execution decision | **Charles authorized the agent to install** (accepting the no-console limitation; snapshot as backstop). Earlier "operator installs" stance was superseded by that explicit authorization. |
+| Install run (UTC) | 2026-06-15 ~13:25Z |
+
+## Actual install result (2026-06-15) — PARTIAL / BLOCKED
+
+**What worked:**
+- Official pinned install ran: `curl -fsSL .../common/docker-installer.sh | bash -s -- v12.3.3` from `/opt`
+  (→ isolated `/opt/hiddify-manager/`, outside the project tree; project git stayed clean).
+- Docker engine **29.5.3** installed by the script; three containers came up: `hiddify-manager-hiddify-1`
+  (`ghcr.io/hiddify/hiddify-manager:v12.3.3`), `mariadb_container`, `redis_container`.
+- **SSH:22 stayed up throughout** (verified repeatedly). **iptables INPUT policy remained `ACCEPT`** with 0 INPUT
+  rules — Docker added only its own NAT/FORWARD/DOCKER chains; Hiddify firewall feature **left OFF**. Control plane unharmed.
+- Host ports published: **80 + 443 via `docker-proxy`** (bridge mode; redis/mariadb stay container-internal). No other
+  host ports taken. Resource delta tiny: RAM used 1.7→1.9 GiB; disk 9.0→13 GB (Docker + images); 82 GB free.
+
+**What is broken (why verification is blocked):**
+- **Panel does not serve** — `curl -sk https://127.0.0.1/` → `http=000` (nothing listening inside the container on 443;
+  the panel web server failed to start).
+- **Redis AUTH mis-wiring** — panel logs: `redis.exceptions.AuthenticationError: AUTH <password> called without any
+  password configured for the default user` (a docker-compose password-interpolation bug in the experimental build).
+- **DB migration errors on first boot** — e.g. `Unknown column 'monthly_usage_limit_GB'`, `Table 'dailyusage' doesn't
+  exist`, `Can't DROP INDEX` (migration ran against a partially-initialised schema). MariaDB itself is reachable and an
+  `admin_user` row exists, but the panel never came up.
+- **CLI unusable** — `python3 -m hiddifypanel <cmd>` (admin-links / spec / --help) **hangs** (timeout) on app import,
+  so neither the admin link nor the OpenAPI spec could be obtained.
+
+**Conclusion:** this **empirically confirms Hiddify's official caveat that the Docker version is "experimental / not
+recommended for permanent use."** No `admin-links`/Swagger/test-user verification was possible. No destructive fix was
+attempted (per the conservative mandate). The containers were **left as-installed** pending an operator disposition
+decision (teardown / debug / retry via supported host install or separate DE VPS — see "Exact next recommended task").
+
+**Secret-safety:** the install log (`/root/hiddify-install.log`, `0600`) never received an admin link (none was
+generated); the library masked the Redis password as `<password>`. No admin path/UUID/key/proxy/sub link was produced,
+printed, or committed. The earlier `/root/hiddify-de-admin.link` scratch held only non-admin URLs and was removed.
 
 ## Pre-install safety gate — RESULT: PASS (read-only)
 
@@ -127,16 +162,28 @@ All read-only / sanitized; one disposable test user max; nothing customer-facing
 - **80/443 coexistence** with the future Master nginx is still a design item (§B1) — not triggered yet because no
   control-plane nginx exists.
 
+> **Live-verification checklist + field table above remain UNFILLED** — the panel never served, so none of the
+> [LIVE] items could be completed. They stay as the to-do for a working install.
+
 ## PASS / PARTIAL / FAIL decision
 
-**PARTIAL / HOLD.** Safety gate passed and the install is fully prepared, but per the agreed decision the **agent has
-not installed Hiddify**. Completion requires: (1) Charles runs the runbook above with the recovery net; (2) the agent
-(next task) runs the probe + Swagger inspection, fills the verified contract, creates/【deletes】one disposable test
-user. Node remains `status=test`; nothing live, no production DB, no customer delivery.
+**PARTIAL / BLOCKED.** The install *ran* and the host stayed safe (SSH up, control plane intact, isolated to
+`/opt/hiddify-manager`), but the **panel is non-functional** (Redis AUTH mis-wiring + DB migration errors → 443 not
+serving; CLI hangs). **No API/Swagger/contract verification, and no disposable test user, were possible.** The
+`HIDDIFY_API_CONTRACT.md` [LIVE] fields remain unverified. This is a real, documented outcome — not a PASS — and it
+confirms the audit's caveat that the **Docker build is experimental / not for permanent use**.
 
 ## Exact next recommended task
 
-**"Phase 3 live-verify — post-install"**: after Charles completes the runbook and shares only the `0600` admin-link
-**path** (never the value), the agent runs `scripts/phase3_post_install_probe.sh`, inspects the panel Swagger, fills
-[HIDDIFY_API_CONTRACT.md](HIDDIFY_API_CONTRACT.md) with verified values, creates and then deletes one disposable test
-user, and updates this doc to PASS. Only then does Phase 4 (DB/backend orchestrator) build against the verified contract.
+**Decide the engine path, then re-do live-verify on a working panel.** The Docker build is not viable as-is. Options
+(operator decision — see report):
+1. **Supported host install on Ubuntu 22.04, on a separate DE VPS** (audit **Option C** — lowest risk, keeps the
+   protected 24.04 Master untouched, and matches Hiddify's officially supported OS). **Recommended.**
+2. **Debug the Docker build** (fix the compose Redis-password interpolation + re-run migrations) — only if staying on
+   Docker is required; treat as a bounded, separate task. Hiddify still labels Docker "not for permanent use."
+3. **Tear down** the current broken stack now (`cd /opt/hiddify-manager && docker compose down -v`; optionally remove
+   the dir) to return the Master toward baseline; reinstall later by the chosen path.
+
+Whichever path yields a serving panel, the live-verify checklist + field table above are then completed (admin link →
+`0600` file, Swagger → contract, one disposable test user created+deleted). Only then does Phase 4 build against a
+verified contract. **Current containers were left as-installed pending this decision.**

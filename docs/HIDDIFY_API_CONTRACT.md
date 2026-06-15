@@ -4,8 +4,10 @@
 > **Status:** Phase 3 audit (docs) — base/auth **verified from official docs**; CRUD/fields/units **need live Swagger**.
 > Tiers: **[VERIFIED]** official docs · **[LIVE]** confirm on a real install · **[ASSUMPTION]** do not depend yet.
 > See [PHASE3_HIDDIFY_AUDIT_PLAN.md](PHASE3_HIDDIFY_AUDIT_PLAN.md).
-> **[LIVE] fields are still pending** — they are filled in the post-install verify task once the operator installs
-> Hiddify (see [PHASE3_HIDDIFY_LIVE_VERIFY.md](PHASE3_HIDDIFY_LIVE_VERIFY.md)); no live panel has been inspected yet.
+> **[LIVE] fields STILL pending — a Docker install was attempted (v12.3.3) but the panel was non-functional**
+> (Redis AUTH mis-wiring + DB migration errors; 443 never served; CLI hangs), so no live Swagger/contract could be
+> read. See [PHASE3_HIDDIFY_LIVE_VERIFY.md](PHASE3_HIDDIFY_LIVE_VERIFY.md). These fields await a **working** panel
+> (recommended: supported host install on a separate DE VPS, Ubuntu 22.04).
 
 The verified Hiddify Manager **API v2** contract — endpoints, fields, units, and link/deep-link formats — pinned per Hiddify version per node.
 

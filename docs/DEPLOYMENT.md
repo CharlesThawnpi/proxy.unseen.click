@@ -64,7 +64,10 @@ The DB+`.env` backup before migrating is mandatory (see [BACKUPS.md](BACKUPS.md)
   control plane** (it would seize 80/443 and mutate the host broadly).
 - Install is host-level and gated on the **B2 provider snapshot** + the live-verify checklist — never run blind.
 - **[VERIFIED] Current official Docker install command** (the script installs Docker itself; pin a version, don't use
-  `latest`): `bash <(curl https://i.hiddify.com/docker/<version>)` (e.g. `…/docker/v10.80.0`). **[VERIFIED]** Hiddify
-  states the Docker version is **"not recommended for permanent use"** → acceptable for the **test** node; the engine
-  for a *live* DE node is revisited before promotion. Operator runbook + recovery net: see
-  [PHASE3_HIDDIFY_LIVE_VERIFY.md](PHASE3_HIDDIFY_LIVE_VERIFY.md).
+  `latest`): `bash <(curl https://i.hiddify.com/docker/<version>)` (e.g. `…/docker/v12.3.3`). Internally it runs
+  `common/docker-installer.sh`, creates `./hiddify-manager` in the **CWD** (run from `/opt`), and brings up a 3-container
+  stack (hiddify + mariadb + redis, bridge mode, only 80/443 published, `privileged`+`NET_ADMIN`).
+- **[VERIFIED-LIVE, 2026-06-15] The v12.3.3 Docker build did NOT produce a working panel** on this 24.04 Master:
+  Redis AUTH mis-wiring + first-boot DB migration errors left 443 not serving and the CLI hanging. Confirms Hiddify's
+  **"Docker not recommended for permanent use"** caveat. **Recommended path for a usable DE node: the supported host
+  install on Ubuntu 22.04 (separate DE VPS, audit Option C).** See [PHASE3_HIDDIFY_LIVE_VERIFY.md](PHASE3_HIDDIFY_LIVE_VERIFY.md).

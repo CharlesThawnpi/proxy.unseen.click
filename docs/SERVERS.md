@@ -19,9 +19,13 @@ Current server inventory (recorded 2026-06-15). These seed the `proxy_nodes` row
 **Preflight-observed state (2026-06-15, read-only).** Hostname `crimson-gorilla-49484`, Ubuntu 24.04.4 LTS,
 kernel 6.8.0-45, KVM/QEMU. Live readings: 4 vCPU (Xeon E5-2680 v4), 15 GiB RAM (~13 GiB free, 1.6 GiB used),
 4 GiB swap (0 used), 100 GB disk (86 GB free, 10% used) — consistent with the spec above and **sufficient for a
-co-located test DE node**. nginx/docker/certbot/Hiddify **not yet installed**; no active firewall. The DE node is
-**not disposable** and its install is on **HOLD** pending a provider snapshot + port/TLS decision — see
-`PHASE2_MASTER_DE_HIDDIFY_PREFLIGHT.md`.
+co-located test DE node**. The DE node is **not disposable**.
+
+**Install attempt (2026-06-15):** Docker (29.5.3) + a pinned Hiddify Docker stack (v12.3.3) were installed to
+`/opt/hiddify-manager` (containers up; host safe — SSH up, control plane intact, only 80/443 published). **The panel
+was non-functional** (Redis AUTH + DB migration errors), so it is **not a usable node** and the API contract is still
+unverified. Recommended path for a working DE node: supported host install on a separate Ubuntu-22.04 VPS. See
+`PHASE3_HIDDIFY_LIVE_VERIFY.md`.
 
 ## Proxy nodes (data plane)
 
