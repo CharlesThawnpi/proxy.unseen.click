@@ -48,13 +48,17 @@ Ubuntu 20.04.6, not the required 22.04.**
 **✅ de1 is back on Ubuntu 22.04.5 (re-verified 2026-06-15T18:57Z).** Charles reinstalled to 22.04.5 live-server, fixed
 networking, and re-added the Master key. Re-verify: **SSH root key works** (host key changed by reinstall → refreshed),
 **OS 22.04.5 LTS** ✓, node **clean**, **ufw active** (SSH allowed), network **persistent** (static netplan, `ens18`).
-**Result PARTIAL.** Resolved 2026-06-15: root LV **extended to 23 GB (17 GB free)**; DNS `node-de.unseen.click` A
-record **added**; network persistence **confirmed across a reboot**. **Only open item: RAM detected 1.8 GiB** (under
-the 4 GB purchased *and* the prior 3.1 GiB — pending provider clarification; non-blocking for a light test).
-Detail: [PHASE2_DE1_PREFLIGHT.md](PHASE2_DE1_PREFLIGHT.md).
+**Resolved:** root LV **23 GB (17 GB free)**; DNS `node-de.unseen.click` added; network persistent across reboot.
 
-**Next:** clarify RAM with the provider, then **Phase 3-DE** Hiddify supported host install + live API-contract
-verification (allow ports through ufw, keep SSH open). Phase 4 stays blocked until that verified contract exists.
+**Phase 3-DE attempt (2026-06-15T19:25Z) — HOLD at the gate: RAM still ~1.8 GiB.** After Charles toggled "disable
+ballooning," de1 **still detects ~1.8 GiB** (it hadn't been power-cycled — uptime ~1h31m; a RAM/ballooning change
+needs a full **VM stop→start**, not a soft reboot). Per the gate, **Hiddify was NOT installed** (no node changes). All
+other gates passed (OS 22.04.5, disk, DNS, ufw+SSH, 80/443 free, clean). Detail:
+[PHASE3_DE1_HIDDIFY_LIVE_VERIFY.md](PHASE3_DE1_HIDDIFY_LIVE_VERIFY.md).
+
+**Next:** Charles **power-cycles de1** (stop→start) so the 4 GB takes effect → agent re-checks RAM; if ~3.5–4.0 GiB,
+proceed with the **Phase 3-DE Hiddify host install** + live API-contract verification. If still 1.8 GiB → provider
+ticket. Phase 4 stays blocked until the verified contract exists.
 
 **OS path decided (2026-06-15):** in-place `do-release-upgrade` was considered, but since `de1` is **empty** the
 safer, same-outcome choice is a **clean provider reinstall to Ubuntu 22.04** (Charles). A read-only pre-upgrade gate

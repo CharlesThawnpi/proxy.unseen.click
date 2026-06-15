@@ -72,8 +72,11 @@
 
 ## Risks / blockers
 
-- ⚠ **RAM 1.8 GiB (still open)** — materially under the 4 GB purchased *and* the earlier 3.1 GiB reading. Non-blocking
-  for a light test, but **clarify with the provider** whether the VM has the purchased 4 GB; tight for production proxy load.
+- ⚠ **RAM 1.8 GiB (still open, BLOCKING Phase 3-DE).** Re-checked 2026-06-15T19:25Z after Charles toggled "disable
+  ballooning": **still ~1.8 GiB** (`MemTotal 1908140 kB`). The node had **not been power-cycled** (uptime ~1h31m) — a
+  provider RAM/ballooning change needs a full **VM stop→start** (not a soft reboot) to apply. Per the Phase 3-DE gate,
+  install is **HELD** until RAM re-detects at ~3.5–4.0 GiB after a power cycle (else provider ticket). See
+  [PHASE3_DE1_HIDDIFY_LIVE_VERIFY.md](PHASE3_DE1_HIDDIFY_LIVE_VERIFY.md).
 - ✓ **Root disk — RESOLVED** (extended to 23 GB / 17 GB free, 2026-06-15).
 - ✓ **DNS — RESOLVED** (`node-de.unseen.click` A record added).
 - **ufw is active** (INPUT DROP). Good for security, but Phase 3-DE must ensure Hiddify's proxy/panel ports are

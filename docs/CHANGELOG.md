@@ -5,6 +5,17 @@
 
 Chronological record of notable changes to the UNSEEN PROXY project.
 
+## 2026-06-15 — Phase 3-DE: pre-install gate HOLD — RAM still ~1.8 GiB (Hiddify NOT installed)
+
+- Ran the Phase 3-DE pre-install gate on de1. **All gates PASS except RAM.** OS 22.04.5 ✓, disk 23 GB/17 free ✓,
+  network static + egress 5.249.160.59 ✓, **DNS `node-de.unseen.click` → 5.249.160.59 resolves (Master + node) ✓**,
+  ufw active + 22/tcp allowed ✓, 80/443 free ✓, clean ✓.
+- **RAM re-detect: still ~1.8 GiB** (`MemTotal 1908140 kB`) despite "disable ballooning" — node **not power-cycled**
+  (uptime ~1h31m); the change needs a full **VM stop→start**, not a soft reboot. Per the gate, **STOPPED — Hiddify
+  not installed, no node changes.**
+- New `PHASE3_DE1_HIDDIFY_LIVE_VERIFY.md` (HOLD result + operator power-cycle step + pending contract fields);
+  updated PHASE2_DE1_PREFLIGHT/CURRENT_STATUS. Docs only.
+
 ## 2026-06-15 — Phase 2-DE: extend de1 root volume (+ reboot/DNS resolved)
 
 - **Authorized node change on `de1`:** safety gate PASS (SSH root key; OS 22.04.5; `/` = ext4 on
