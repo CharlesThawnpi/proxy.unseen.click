@@ -52,6 +52,15 @@ The verified Hiddify Manager **API v2** contract — endpoints, fields, units, a
 > Verified in Phase 3
 > Format suffixes: `/auto/`, `/sub/`, `/sub64/`, `/singbox/`, `/clash/`, `/clashmeta/` (and normal/xray). `auto` detects the client by User-Agent and returns the best format. Confirm the best output format for the Hiddify App in Phase 3.
 
+## Ports, nginx & install behavior (Master/DE co-location)
+
+> **Not verified yet — Phase 3 pending.**
+> Hiddify Manager's actual public/panel/proxy port layout, its bundled web-server/TLS behavior, and whether its
+> installer touches the host firewall (ufw/iptables) are **unknown and must not be assumed**. The Phase 2 preflight
+> (`PHASE2_MASTER_DE_HIDDIFY_PREFLIGHT.md`) flagged the 80/443 + TLS ownership conflict (B1) and firewall exposure
+> (B3) as install blockers. These are resolved by the Phase 3 read-only audit on a pinned version before any
+> co-located install on the Master is authorized.
+
 ## Deep-link scheme variants
 
 > Verified in Phase 3

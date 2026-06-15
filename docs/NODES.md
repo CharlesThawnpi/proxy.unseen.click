@@ -42,3 +42,15 @@ A single node being damaged, cancelled, overloaded, or unreachable must **never*
 - **Honest customer-facing status.** A customer on a `down` region sees an honest message (e.g. "DE is temporarily unavailable — please use SG/US, or try again shortly") instead of silent failure.
 - **No single point of proxy failure for multi-region plans.** A PRO/MAX customer entitled to DE+US+SG keeps working on the survivors if one region drops.
 - **Master/DE caveat.** Because DE is co-located on the Master (§4.1), a Master outage affects both control plane and DE node together — mitigated by headroom alerts and by DE being movable to its own VPS without code change.
+
+## DE node — co-located on the Master (NOT disposable)
+
+The DE node is the §4.1 exception: it runs **on the Master control-plane VPS**. The general "test nodes carry no
+backup, wipe freely" rule in this doc **does not apply to DE** — the Master must never be wiped/re-imaged. The DE
+node's standard provisioning differs from a fresh-VPS node accordingly:
+
+- Provisioning step 1 ("fresh VPS") is replaced by an **in-place, protected install** on the Master, gated behind a
+  **provider snapshot** (the only reliable rollback for a host-wide installer).
+- It starts as **`status=test`** in `proxy_nodes` and is **never auto-promoted to `live`**.
+- **Status (2026-06-15): protected preflight COMPLETE, install on HOLD (PARTIAL).** See
+  `PHASE2_MASTER_DE_HIDDIFY_PREFLIGHT.md` for the readiness decision and the B1–B4 prerequisites.

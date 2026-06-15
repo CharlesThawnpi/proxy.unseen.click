@@ -24,6 +24,21 @@ How to safely undo a change. Code rollback and data rollback are **separate** me
 - Data is restored from the WAL-safe backups (DB + `.env` together; see [BACKUPS.md](BACKUPS.md)).
 - After any restore, run the no-send token-decrypt smoke test before reporting success.
 
+## Co-located Hiddify install on the Master (special rollback case)
+
+Installing Hiddify Manager on the **Master** (the §4.1 co-located DE node) is **host-wide and invasive**: the
+installer changes nginx, systemd units, packages, and may modify the firewall — on a **non-disposable** control
+plane. The standard "disable, don't delete / re-pull a git tag" rollback does **not** cover host-level damage.
+
+- **A provider/VPS snapshot taken immediately BEFORE install is the required rollback path.** In-place uninstall
+  is not trusted to restore the prior state. Snapshot → install → if the control plane destabilizes, restore the
+  snapshot.
+- Git (`origin/main`) independently protects project code/docs; the DB (when it exists) has its own §30.3 backup.
+  Neither substitutes for the host snapshot.
+- The DE node starts `status=test` and is never auto-promoted, so a bad install affects only the test node, not
+  customer-facing live service.
+- Full readiness conditions and the snapshot prerequisite are in `PHASE2_MASTER_DE_HIDDIFY_PREFLIGHT.md`.
+
 ## Restore drill
 
 > Verified in Phase 10

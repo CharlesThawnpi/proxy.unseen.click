@@ -7,9 +7,19 @@ How UNSEEN PROXY is deployed: a manual **pull onto the Master**, never a push-to
 
 ## Deploy key on the Master
 
-- The Master holds a **read-only deploy key** (or a fine-scoped deploy token) for the private repo `https://github.com/CharlesThawnpi/proxy.unseen.click.git`.
-- It is least-privilege; its **private half stays on the Master and never enters the repo**.
-- Generated/stored per the secret rules: `0600`, root-owned.
+- The Master holds a deploy key for the private repo; its **private half stays on the Master and never enters the
+  repo**. Stored per the secret rules: `0600`, root-owned.
+
+### Current setup (2026-06-15)
+
+- **Origin (SSH):** `git@github.com:CharlesThawnpi/proxy.unseen.click.git`.
+- **Deploy key:** `/root/.ssh/unseenproxy_github_deploy_ed25519` (private `600`, public `644`); `github.com` host
+  key pinned in `/root/.ssh/known_hosts` (`StrictHostKeyChecking=yes`).
+- **Access level:** this key currently has **write** access (added to the repo's GitHub deploy keys), used so the
+  Master can push its own project docs/code commits. The plan's §31A.5 *read-only* intent is a future tightening
+  option once a separate CI/build path publishes commits; revisit when that exists.
+- **Pull/push command:**
+  `GIT_SSH_COMMAND='ssh -i /root/.ssh/unseenproxy_github_deploy_ed25519 -o IdentitiesOnly=yes' git <pull|push>`.
 
 ## Deploy = pull, not push-to-server
 
@@ -38,3 +48,6 @@ The DB+`.env` backup before migrating is mandatory (see [BACKUPS.md](BACKUPS.md)
 
 - Node VPS run **stock Hiddify Manager**; only the Master pulls project code.
 - A node is configured/orchestrated by the Master over the Hiddify API v2 — not by a git checkout.
+- **Co-located DE node:** installing Hiddify on the Master itself is a **manual, host-level, snapshot-gated**
+  operation — explicitly **not** part of `git pull` deploy. It is on HOLD pending the preflight prerequisites
+  (`PHASE2_MASTER_DE_HIDDIFY_PREFLIGHT.md`).

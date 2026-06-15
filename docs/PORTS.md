@@ -26,3 +26,20 @@ The bot uses long-poll (no inbound port) or webhook mode via `bot.unseen.click`.
 nginx is the **sole** owner of `:80`/`:443` on the Master. Node proxy ports are managed independently on each node by Hiddify Manager (not Master concerns).
 
 > Node-side proxy inbound ports: Verified in Phase 3 (node test gate).
+
+## Phase 2 preflight — current live port map (Master, 2026-06-15)
+
+Observed via `ss -tulpn` (read-only). See `PHASE2_MASTER_DE_HIDDIFY_PREFLIGHT.md`.
+
+| Port | Bind | Owner now | Status |
+|---|---|---|---|
+| 22/tcp | `0.0.0.0` + `[::]` | sshd | in use (keep) |
+| 53 udp/tcp | `127.0.0.x` | systemd-resolved | loopback stub |
+| 43417 / 22815 tcp | `127.0.0.1` | transient tooling (ephemeral) | not project services |
+| **80, 443** | — | **FREE** | reserved for nginx — see conflict below |
+| 8190 / 8191 / 8192 / 8197 | — | **FREE** | reserved for admin/portal/api/sidecar |
+
+**⚠ Co-location port conflict (Master = DE node).** Hiddify Manager bundles its own web/proxy stack and TLS and
+expects to own **80/443** — the same ports the Master control plane needs for `api/bot/panel/app/sub`. This is the
+central blocker (B1); the coexistence strategy (shared reverse proxy / SNI split / alternate ports) must be decided
+**before install**, informed by the Phase 3 audit. Hiddify's actual panel/proxy port layout is **not assumed** here.

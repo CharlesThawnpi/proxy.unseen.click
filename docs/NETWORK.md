@@ -25,3 +25,14 @@ Customers' proxy connections terminate on the regional node's own proxy inbounds
 ## Master never proxies (except co-located DE)
 
 The Master carries **no proxy traffic**, with the one documented exception: the **co-located DE node** runs on the Master box (§4.1). That DE proxy traffic is budgeted and watched so it cannot starve the control plane, and the DE node is movable to its own VPS with no code change if it outgrows the shared box.
+
+## Phase 2 preflight — current network state (2026-06-15, read-only)
+
+- **Public surface:** only **SSH:22** (`0.0.0.0` + IPv6) is listening publicly. Ports **80/443 are free** (nginx not
+  installed yet). All planned Master service ports (8190/8191/8192/8197) are free.
+- **Firewall: none active** — `ufw inactive`, `iptables` policies all `ACCEPT` with no rules, empty `nft` ruleset.
+  In practice exposure is limited today (only SSH is bound publicly), but **any future port bound to `0.0.0.0`
+  becomes internet-reachable with no filtering**. A firewall/exposure plan (B3) is a prerequisite before opening
+  Hiddify proxy ports, and must guarantee SSH stays reachable. See `PHASE2_MASTER_DE_HIDDIFY_PREFLIGHT.md`.
+- **Co-location TLS conflict:** nginx (control plane) and Hiddify (DE node) both expect 80/443 — see
+  [PORTS.md](PORTS.md). Unresolved until the Phase 3 audit informs the coexistence strategy.

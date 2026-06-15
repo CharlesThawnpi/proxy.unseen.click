@@ -1,7 +1,7 @@
 # CURRENT STATUS
 
 > **Source of truth:** [IMPLEMENTATION_PLAN.md](../IMPLEMENTATION_PLAN.md) §34
-> **Status:** Phase 1 skeleton — phase tracker; updated as phases progress
+> **Status:** live phase tracker; updated as phases progress
 
 Where the UNSEEN PROXY build stands across the §34 deployment phases.
 
@@ -10,8 +10,8 @@ Where the UNSEEN PROXY build stands across the §34 deployment phases.
 | Phase | Title | Status |
 |---|---|---|
 | 0 | Clean-VPS verification (gate before any build) | DONE (gate passed) |
-| 1 | Documentation, repo & architecture planning | IN PROGRESS |
-| 2 | Hiddify test VPS setup | PENDING |
+| 1 | Documentation, repo & architecture planning | DONE (pushed to origin/main, 25e5ddc) |
+| 2 | Hiddify test VPS setup (Master/DE co-located) | **PREFLIGHT DONE — install on HOLD** (see PHASE2_MASTER_DE_HIDDIFY_PREFLIGHT.md) |
 | 3 | Hiddify API & subscription compatibility audit | PENDING |
 | 4 | Database & backend clone design | PENDING |
 | 5 | Telegram bot implementation (Burmese-primary) | PENDING |
@@ -25,4 +25,12 @@ Where the UNSEEN PROXY build stands across the §34 deployment phases.
 
 ## Next up
 
-Phase 2 — stand up a disposable DE Hiddify Manager test node (default/entry region) with FAST1/FAST2/Secure inbounds and a least-privilege API key, reachable over API v2 from the Master. No backup; wipe freely.
+The DE node is **co-located on the Master** (§4.1 exception), so it is **not disposable** — the standard
+"wipe freely" rule does not apply. The protected preflight is complete with a **PARTIAL / HOLD** readiness
+decision: install must not proceed until (B1) the 80/443 + TLS coexistence strategy is decided, (B2) Charles
+takes & confirms a provider snapshot, (B3) a firewall/exposure plan exists, and (B4) the Phase 3 Hiddify
+port/API audit is done. Details + risks in `PHASE2_MASTER_DE_HIDDIFY_PREFLIGHT.md`.
+
+**Next task:** Phase 3 — read-only Hiddify API & port/TLS audit (produces the verified `HIDDIFY_API_CONTRACT.md`),
+and in parallel Charles takes the Master provider snapshot. Only then is the protected co-located install authorized.
+The node will be created as `status=test` and never auto-promoted to `live`.

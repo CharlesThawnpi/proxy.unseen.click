@@ -16,6 +16,13 @@ Current server inventory (recorded 2026-06-15). These seed the `proxy_nodes` row
 | Bandwidth budget | 30 TB / month |
 | `proxy_nodes` row | `node_code=de-master`, `region_code=de`, `is_master_colocated=1`, `vcpu_count=4`, `ram_mb=16384`, `disk_gb=100`, `bandwidth_budget_gb=30000` |
 
+**Preflight-observed state (2026-06-15, read-only).** Hostname `crimson-gorilla-49484`, Ubuntu 24.04.4 LTS,
+kernel 6.8.0-45, KVM/QEMU. Live readings: 4 vCPU (Xeon E5-2680 v4), 15 GiB RAM (~13 GiB free, 1.6 GiB used),
+4 GiB swap (0 used), 100 GB disk (86 GB free, 10% used) — consistent with the spec above and **sufficient for a
+co-located test DE node**. nginx/docker/certbot/Hiddify **not yet installed**; no active firewall. The DE node is
+**not disposable** and its install is on **HOLD** pending a provider snapshot + port/TLS decision — see
+`PHASE2_MASTER_DE_HIDDIFY_PREFLIGHT.md`.
+
 ## Proxy nodes (data plane)
 
 | node_code | region | Public IP | vCPU | RAM | Disk | Bandwidth budget |
