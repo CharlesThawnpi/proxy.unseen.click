@@ -1,0 +1,50 @@
+# secrets
+.env
+.env.*
+!.env.example
+*.key
+*.pem
+*.crt
+*.p12
+*.pfx
+*secret*
+*token*
+*credential*
+# Negations: tracked infra/code whose NAME legitimately contains these words.
+# (The broad globs above are a belt-and-suspenders net for secret DATA files; the
+# real guard against secret CONTENT is the pre-commit scanner. NOTE for Phase 4+:
+# lowercase source files like token_service.py / secret_rotation.py would be caught
+# by these globs — add explicit negations for code dirs, or tighten the globs, when
+# service code lands. See docs/VERSION_CONTROL.md.)
+!scripts/pre-commit-secret-scan.sh
+
+# database and runtime state
+*.sqlite3
+*.sqlite3-*
+*.db
+*.db-*
+data/
+backups/
+logs/
+tmp/
+
+# generated/private payloads
+*.qr.png
+*.qr.svg
+screenshots/
+uploads/
+receipts/generated/
+invoices/generated/
+
+# python/runtime
+__pycache__/
+*.pyc
+.venv/
+venv/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+
+# editor/system
+.DS_Store
+.vscode/settings.json
