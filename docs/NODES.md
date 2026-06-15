@@ -62,6 +62,6 @@ above applies normally (fresh VPS, host install, least-privilege API key, manage
   remains unverified until that install succeeds; **Phase 4 is blocked** until then.
 - **Preflight (re-verified 2026-06-15 after 22.04 reinstall): PARTIAL.** SSH root key login works; **OS now Ubuntu
   22.04.5 LTS** ✓; node **clean** (no legacy/proxy artifacts; only SSH:22 public); **ufw active** (SSH allowed);
-  network **persistent** (static netplan, `ens18`). **Resource items before Hiddify:** RAM detected **1.8 GiB**
-  (under 4 GB est — clarify w/ provider) and root LV **~12 GB / 5.6 GB free** (extend into the ~11.5 GB unallocated VG).
-  Detail: [PHASE2_DE1_PREFLIGHT.md](PHASE2_DE1_PREFLIGHT.md).
+  network **persistent** (static netplan, `ens18`; survived a reboot). **Resolved:** root LV extended to **23 GB
+  (17 GB free)**; DNS `node-de.unseen.click` added. **Remaining:** RAM detected **1.8 GiB** (under 4 GB purchased —
+  clarify w/ provider). Detail: [PHASE2_DE1_PREFLIGHT.md](PHASE2_DE1_PREFLIGHT.md).

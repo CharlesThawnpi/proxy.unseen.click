@@ -5,6 +5,18 @@
 
 Chronological record of notable changes to the UNSEEN PROXY project.
 
+## 2026-06-15 — Phase 2-DE: extend de1 root volume (+ reboot/DNS resolved)
+
+- **Authorized node change on `de1`:** safety gate PASS (SSH root key; OS 22.04.5; `/` = ext4 on
+  `/dev/mapper/ubuntu--vg-ubuntu--lv`; LV path `/dev/ubuntu-vg/ubuntu-lv`; VG free 11.5 GB). Ran `lvextend -l
+  +100%FREE` then online `resize2fs`. **Root `/` 12 GB → 23 GB (5.6 GB → 17 GB free)**; VG now fully allocated. No
+  reboot, no firewall/SSH/Hiddify changes.
+- **Network persistence CONFIRMED across reboot** (de1 came back; host key unchanged; static netplan `ens18` +
+  default route up automatically).
+- **DNS resolved:** `node-de.unseen.click → 5.249.160.59` A record added (Charles).
+- **Still open:** RAM detected **1.8 GiB** vs 4 GB purchased — pending provider clarification. Updated
+  PHASE2_DE1_PREFLIGHT/PHASE2_3_DE_NODE_PLAN/SERVERS/NODES/CURRENT_STATUS. Docs committed; Hiddify NOT installed.
+
 ## 2026-06-15 — Phase 2-DE: de1 re-verified on Ubuntu 22.04.5 — PARTIAL (resource items)
 
 - de1 reinstalled to **Ubuntu 22.04.5 LTS** (Charles); networking fixed; Master key re-added. Host key changed by

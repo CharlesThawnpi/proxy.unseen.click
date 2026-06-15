@@ -48,9 +48,13 @@ Ubuntu 20.04.6, not the required 22.04.**
 **✅ de1 is back on Ubuntu 22.04.5 (re-verified 2026-06-15T18:57Z).** Charles reinstalled to 22.04.5 live-server, fixed
 networking, and re-added the Master key. Re-verify: **SSH root key works** (host key changed by reinstall → refreshed),
 **OS 22.04.5 LTS** ✓, node **clean**, **ufw active** (SSH allowed), network **persistent** (static netplan, `ens18`).
-**Result PARTIAL** — two resource items before Hiddify: **RAM detected 1.8 GiB** (under the 4 GB purchased *and* the
-prior 3.1 GiB — clarify with provider) and **root LV ~12 GB / 5.6 GB free** (extend into ~11.5 GB unallocated VG).
+**Result PARTIAL.** Resolved 2026-06-15: root LV **extended to 23 GB (17 GB free)**; DNS `node-de.unseen.click` A
+record **added**; network persistence **confirmed across a reboot**. **Only open item: RAM detected 1.8 GiB** (under
+the 4 GB purchased *and* the prior 3.1 GiB — pending provider clarification; non-blocking for a light test).
 Detail: [PHASE2_DE1_PREFLIGHT.md](PHASE2_DE1_PREFLIGHT.md).
+
+**Next:** clarify RAM with the provider, then **Phase 3-DE** Hiddify supported host install + live API-contract
+verification (allow ports through ufw, keep SSH open). Phase 4 stays blocked until that verified contract exists.
 
 **OS path decided (2026-06-15):** in-place `do-release-upgrade` was considered, but since `de1` is **empty** the
 safer, same-outcome choice is a **clean provider reinstall to Ubuntu 22.04** (Charles). A read-only pre-upgrade gate

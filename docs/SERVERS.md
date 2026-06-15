@@ -52,14 +52,14 @@ Hiddify's **supported host installer on Ubuntu 22.04** (not Docker, not on the M
 > | vCPU | 4 | 4 (Xeon E5-2690 v4) ✓ | detected |
 > | RAM | 4 GB | **1.8 GiB** (+2.1 GiB swap) ⚠ under estimate — clarify w/ provider | detected |
 > | Disk (raw) | 25 GB | 25 GB `sda` ✓ | detected |
-> | Disk (usable `/`) | — | **~12 GB LV, 5.6 GB free** (LVM; ~11.5 GB unallocated in VG) ⚠ extend before Hiddify | detected |
+> | Disk (usable `/`) | — | **23 GB LV, 17 GB free** (extended 2026-06-15; VG fully allocated) ✓ | detected |
 > | Public IP | 5.249.160.59 | 5.249.160.59 (`ens18` + egress) ✓ | detected |
 > | Bandwidth | 30 TB/mo | not node-detectable | estimate (unconfirmed) |
 >
 > Hostname `de1`. Node is **clean** (no legacy/proxy artifacts; only SSH:22 public; no nginx/docker); **ufw active**;
-> network **persistent** (static netplan for `ens18`). **OS blocker resolved** (now 22.04.5). **Remaining before
-> Hiddify install:** extend root LV into the unallocated VG, and clarify the 1.8 GiB RAM vs 4 GB purchased. Detail:
-> [PHASE2_DE1_PREFLIGHT.md](PHASE2_DE1_PREFLIGHT.md).
+> network **persistent** (static netplan for `ens18`). **Resolved:** OS now 22.04.5; root LV extended to **23 GB
+> (17 GB free)**; DNS `node-de.unseen.click` A record added. **Remaining:** clarify the **1.8 GiB RAM** vs 4 GB
+> purchased (provider). Detail: [PHASE2_DE1_PREFLIGHT.md](PHASE2_DE1_PREFLIGHT.md).
 
 Seed values (SG/US): `ram_mb` = 2048/2048/6144; `disk_gb` = 60/20/100; `bandwidth_budget_gb` = 10000/2000/9800. SG has two nodes — the offering/sidecar logic supports multiple nodes per region, and graceful degradation means if `sg1` is down, `sg2` still serves SG (§6.2).
 

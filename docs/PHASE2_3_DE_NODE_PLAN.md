@@ -39,8 +39,10 @@ Run as a **separate authorized task** (this plan does not connect yet). Steps:
    `CLEAN_VPS_CHECKLIST` entry (mirror the Master's Phase 0).
 4. **Resources/ports/firewall baseline** — `ss -tulpn`, disk/RAM, firewall state; confirm SSH:22 and that
    80/443 + the protocol ports are free.
-5. **DNS readiness** — plan `node-de.unseen.click` → `5.249.160.59` (A record). **Document only; do not change DNS
-   here.** Hiddify's host installer needs the domain resolving before TLS issuance.
+5. **DNS readiness** — `node-de.unseen.click` → `5.249.160.59` (A record). **DONE 2026-06-15** (Charles added it).
+   Hiddify's host installer needs the domain resolving before TLS issuance.
+6. **Disk fit** — root LV **extended to 23 GB / 17 GB free** (2026-06-15, `lvextend +100%FREE` + `resize2fs`), above
+   Hiddify's ≥10 GB rec. **Open item:** RAM detected 1.8 GiB vs 4 GB purchased — clarify with provider.
 6. **Snapshot** — a fresh node is disposable, so a provider snapshot is optional (unlike the protected Master); note
    the rebuild path instead.
 
