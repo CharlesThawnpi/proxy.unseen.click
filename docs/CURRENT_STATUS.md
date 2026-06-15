@@ -45,6 +45,12 @@ preflight ran: `de1` is **clean** (no legacy/proxy artifacts, no nginx/docker/ce
 firewall), CPU 4 ✓, disk 25 GB ✓, public IP `5.249.160.59` ✓, RAM **3.1 GiB** (vs 4 GB estimate). **BLOCKER: OS is
 Ubuntu 20.04.6, not the required 22.04.**
 
+**⚠ de1 is OFFLINE (2026-06-15T16:36Z).** After a custom-ISO install attempt (that still booted 20.04), `de1` is
+**unreachable** from the Master — 100% ICMP loss, TCP 22/1022/80/443 all timeout. SSH-based diagnosis/upgrade is
+impossible; the agent **STOPPED** (no node changes). **Recovery is an operator/console action:** check de1's boot
+state in the provider panel and **reinstall to Ubuntu 22.04 LTS (EN)** with the Master public key added (recommended;
+de1 is empty). Then ping the agent to re-test + re-run preflight. Detail: [PHASE2_DE1_OS_UPGRADE.md](PHASE2_DE1_OS_UPGRADE.md).
+
 **OS path decided (2026-06-15):** in-place `do-release-upgrade` was considered, but since `de1` is **empty** the
 safer, same-outcome choice is a **clean provider reinstall to Ubuntu 22.04** (Charles). A read-only pre-upgrade gate
 passed; **no in-place upgrade was run** (no node changes). → Charles reinstalls to 22.04, **re-adds the Master public

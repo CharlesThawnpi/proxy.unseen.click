@@ -71,9 +71,43 @@ The original task proposed an **in-place `do-release-upgrade`** over SSH. Given 
 then verified by a re-run of `PHASE2_DE1_PREFLIGHT.md`. Not a FAIL (node healthy/clean), not a PASS (still on 20.04
 until the reinstall + verification complete).
 
+## Update 2026-06-15T16:36Z — de1 is OFFLINE after a custom-ISO attempt (upgrade attempt = HOLD)
+
+A follow-up task tried to diagnose/fix release-upgrade connectivity (Charles reported `do-release-upgrade` failing on
+the console with "Failed to connect to https://changelogs.ubuntu.com/meta-release-lts" after a **custom ISO install
+attempt that still booted into 20.04**). From the Master, **`de1` is now completely unreachable**:
+
+- ICMP `ping`: **100% packet loss** (0/3).
+- TCP **22, 1022, 80, 443**: all **closed/timeout**.
+- SSH: `connect to host 5.249.160.59 port 22: Connection timed out`.
+
+**Conclusion:** this is no longer a DNS/CA/APT issue — the **whole node is offline/unresponsive**, almost certainly
+left in a broken state by the custom-ISO attempt (stuck in the installer, powered off, or networking misconfigured).
+**SSH-based diagnosis/fix is impossible**, so per the task's Step-1 rule the agent **STOPPED**. No node changes, no
+upgrade run. (The earlier `changelogs.ubuntu.com` failure is itself a sign de1's outbound networking was already
+disrupted — both point to a node-networking/boot problem only the provider console can resolve.)
+
+### Operator recovery steps (Charles — via provider panel / console)
+
+1. **Check de1's power/boot state** in the provider panel: is it powered on? Is it stuck in the **ISO installer** /
+   rescue, or did it boot with broken networking? Open the **console/VNC** to see the actual screen.
+2. **Stop using custom ISO.** It hasn't taken and has left the node unreachable. Use the provider's **stock image
+   "Reinstall / Rebuild → Ubuntu 22.04 LTS 64-bit (EN)"** instead — this is the agreed path ([decision above]) and
+   sidesteps both the boot problem and the release-upgrade connectivity issue entirely. `de1` is empty; nothing to lose.
+3. In the reinstall wizard, **add the Master public key** (`ssh-ed25519 …unseen-proxy-master-to-de1`, fingerprint
+   `SHA256:jUYAdY0ONdXKzOg2s4OKO27yBGqLvBwapkEy25oA3+I`) so it boots key-ready.
+4. If you instead just want it back online on 20.04 first (e.g. to retry in-place): from the console, fix
+   networking/boot so the node pings and SSH:22 answers, then tell the agent — but **reinstall to 22.04 is the
+   recommended and simpler resolution.**
+5. Once de1 responds to ping/SSH again, tell the agent → it refreshes the (likely changed) host key, re-tests SSH,
+   and re-runs the Phase 2-DE preflight.
+
+**Result of the connectivity/upgrade attempt: HOLD** — node unreachable; recovery is an operator/console action.
+
 ## Exact next recommended task
 
-After Charles reinstalls `de1` to **Ubuntu 22.04** and re-adds the Master public key: **re-run the Phase 2-DE
-preflight** (agent refreshes the changed host key). On PASS → **Phase 3-DE** Hiddify supported host install + live
-API-contract verification + one disposable test user + FAST1/FAST2/Secure checks. **Phase 4 stays blocked** until
-that verified-live contract exists.
+**`de1` is currently OFFLINE — recover it first (operator/console).** Recommended: provider **Reinstall → Ubuntu
+22.04 LTS (EN)** with the Master public key added in the wizard (steps above). Once de1 answers ping/SSH again, the
+agent refreshes the host key, re-tests SSH, and **re-runs the Phase 2-DE preflight**. On PASS → **Phase 3-DE**
+Hiddify supported host install + live API-contract verification. **Phase 4 stays blocked** until that verified-live
+contract exists.

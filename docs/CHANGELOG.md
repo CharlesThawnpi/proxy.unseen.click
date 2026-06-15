@@ -5,6 +5,16 @@
 
 Chronological record of notable changes to the UNSEEN PROXY project.
 
+## 2026-06-15 — Phase 2-DE: de1 OFFLINE after custom-ISO attempt — upgrade on HOLD
+
+- Tried to diagnose/fix de1's release-upgrade connectivity (`changelogs.ubuntu.com` unreachable on console after a
+  custom-ISO attempt). From the Master, **de1 is now fully unreachable**: 100% ICMP loss; TCP 22/1022/80/443 all
+  timeout; SSH connect timed out. **Whole node offline**, not a DNS/CA issue.
+- Per the task Step-1 rule, **STOPPED** — cannot SSH in to diagnose/fix; no node changes, no upgrade run.
+- **Recovery = operator/console:** check de1 boot state in the provider panel; **reinstall to Ubuntu 22.04 LTS (EN)**
+  with the Master public key added (recommended; node is empty). Then re-test + re-run preflight. Updated
+  `PHASE2_DE1_OS_UPGRADE.md`, `CURRENT_STATUS`. Docs only.
+
 ## 2026-06-15 — Phase 2-DE: OS-to-22.04 path decided = clean reinstall (no in-place upgrade)
 
 - Ran a **read-only pre-upgrade gate** on `de1` (SSH OK; 20.04.6; 18 GB free; RAM 3.1 GiB + 1.9 GiB swap; apt/dpkg
