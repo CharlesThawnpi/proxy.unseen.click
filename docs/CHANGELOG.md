@@ -5,6 +5,19 @@
 
 Chronological record of notable changes to the UNSEEN PROXY project.
 
+## 2026-06-15 — Requirement: future Master cleanup of co-location leftovers (ADR-003)
+
+- Recorded **[DECISIONS.md](DECISIONS.md) ADR-003** ("Master minimalism and cleanup of abandoned co-location
+  dependencies"): the Master is control-plane only; anything installed solely for the retired co-location path is a
+  **cleanup candidate**. The idle **Docker engine** (leftover from the failed Hiddify-on-Master test) is the primary
+  candidate, to be removed in a **future audited "Master cleanup after retired co-location attempt" task** — **not
+  now**, and not during node onboarding.
+- Documented the pre-removal verification gate (no containers/volumes/deps, no docs/scripts need Docker, no Hiddify
+  remnants, 80/443 free, SSH untouched) and a backup-first rule (snapshot or git-clean + service-state backup).
+- Added cleanup-candidate notes to `DEPLOYMENT`, `SECURITY`, `ROLLBACK`, `SERVERS`, `CURRENT_STATUS`,
+  `PHASE3_HIDDIFY_LIVE_VERIFY`, and a "not during onboarding" note to `PHASE2_3_DE_NODE_PLAN`. **Docs only — nothing
+  uninstalled, no services touched.**
+
 ## 2026-06-15 — Requirement: verify ACTUAL node specs at onboarding (ADR-002)
 
 - Recorded **[DECISIONS.md](DECISIONS.md) ADR-002**: provider/purchase specs are **estimates only**; on real node

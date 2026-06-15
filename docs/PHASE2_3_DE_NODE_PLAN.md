@@ -94,3 +94,6 @@ Phase 4 (DB/backend orchestrator) unblocked.**
 - **30 TB bandwidth** is strong for the role.
 - **No business DB / customer data on the node** — proxy traffic only.
 - Node is **dynamic/replaceable** (§6.1): IP/host/specs are data in `proxy_nodes`, not code.
+
+> **Out of scope here:** Master cleanup (removing the idle Docker engine, [DECISIONS.md](DECISIONS.md) ADR-003) is a
+> **separate audited task** — do **not** mix it into node onboarding.

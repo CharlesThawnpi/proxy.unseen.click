@@ -92,3 +92,44 @@ version actually installed, the bandwidth cap the provider truly enforces).
   (unverified)** and reserve a place for detected/confirmed values.
 - When the DB schema exists (Phase 4), `proxy_nodes` should store both the estimate and the detected value (or a
   provenance flag per field) rather than a single unqualified number.
+
+---
+
+## ADR-003 — Master minimalism and cleanup of abandoned co-location dependencies
+
+- **Date:** 2026-06-15
+- **Status:** ACCEPTED (Charles) — **future requirement; NOT executed now.**
+- **Relates to:** ADR-001 (co-location retired).
+
+### Decision
+
+The **Master is control-plane only.** Any package/service/feature installed **solely** for the abandoned co-located
+DE-Hiddify path is a **cleanup candidate**. In particular, the **Docker engine** remains installed only as a leftover
+from the failed Hiddify-on-Master test (ADR-001); if no control-plane task needs it, it should be **removed in a
+future audited cleanup task**, *not* during node onboarding.
+
+### Rationale
+
+Unused infrastructure packages add attack surface, maintenance burden, port/firewall confusion, and operational
+drift. The Master should run **only** what the control plane needs: bots, DB, payments, admin, customer portal, API,
+the subscription sidecar, monitoring, backups, Git-based deployment, and node orchestration.
+
+### Future cleanup task — "Master cleanup after retired co-location attempt"
+
+Done in a **safe, audited phase of its own** (not during node onboarding). **Pre-removal verification (all must hold):**
+- no running containers; no Docker volumes/networks/images that are needed;
+- no project **service** depends on Docker; no **docs/scripts** currently require Docker;
+- no Hiddify remnants remain on the Master (no `/opt/hiddify-manager`, no hiddify units/images);
+- Master **80/443 remain free**; **SSH untouched**.
+
+**If safe, may remove:** the unused Docker engine/packages; unused Docker networks/volumes/images; any abandoned
+Hiddify-on-Master remnants; any other package/service installed only for the retired co-location path.
+
+**Safety:** consider a provider snapshot — or at minimum a **git-clean tree + a recorded service/package-state
+backup** — before host package removal. Removal steps are dry-run/audited; **stop and report** on any unexpected
+dependency. Update docs + commit/push afterward.
+
+### Current state (for the cleanup task to act on)
+
+Docker **29.5.3** is installed and **idle** (no Hiddify; `/opt/hiddify-manager` already removed; 80/443 free) — it is
+the primary cleanup candidate. Left installed for now per ADR-001; removal deferred to the audited cleanup task above.

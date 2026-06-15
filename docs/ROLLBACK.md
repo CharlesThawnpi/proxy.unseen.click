@@ -50,6 +50,14 @@ plane. The standard "disable, don't delete / re-pull a git tag" rollback does **
 - **SSH-lockout safety:** Hiddify manages iptables itself. Before relying on it, confirm SSH:22 from a **second
   session** post-install and keep a **provider console/recovery** path — a firewall misstep must not be unrecoverable.
 
+## Master cleanup (ADR-003) — backup before host package removal
+
+The future "Master cleanup after retired co-location attempt" task ([DECISIONS.md](DECISIONS.md) ADR-003) removes
+unused leftovers (e.g. the idle Docker engine). Because it changes **host packages on the protected control plane**,
+take a **provider snapshot** — or at minimum a **git-clean tree + a recorded service/package-state backup** — first,
+run removals dry-run/audited, verify no dependency breaks (containers/volumes/deps, 80/443 free, SSH up), and **stop +
+report** on anything unexpected. Rollback = restore the snapshot / re-install the package.
+
 ## Restore drill
 
 > Verified in Phase 10

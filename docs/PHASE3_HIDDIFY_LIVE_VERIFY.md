@@ -50,6 +50,9 @@ decision (teardown / debug / retry via supported host install or separate DE VPS
 generated); the library masked the Redis password as `<password>`. No admin path/UUID/key/proxy/sub link was produced,
 printed, or committed. The earlier `/root/hiddify-de-admin.link` scratch held only non-admin URLs and was removed.
 
+**Leftover:** the **Docker engine remains installed on the Master** (idle; `/opt/hiddify-manager` gone, 80/443 free).
+It is a **cleanup candidate** — removal deferred to the audited "Master cleanup" task ([DECISIONS.md](DECISIONS.md) ADR-003).
+
 ## Pre-install safety gate — RESULT: PASS (read-only)
 
 | # | Check | Result |

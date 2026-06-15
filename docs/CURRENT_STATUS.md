@@ -28,7 +28,8 @@ Where the UNSEEN PROXY build stands across the §34 deployment phases.
 **Architecture (current):** the **Master is control-plane only** — co-location is **retired**
 ([DECISIONS.md](DECISIONS.md) ADR-001). The Master was tested as a co-located DE node via Hiddify's experimental
 Docker (v12.3.3); the panel was non-functional (compose `$REDIS_PASSWORD` bug + DB migration errors), so it was torn
-down and the Master returned to baseline (SSH up, 80/443 free, Docker engine left installed but unused).
+down and the Master returned to baseline (SSH up, 80/443 free, Docker engine left installed but unused — a **cleanup
+candidate** per [DECISIONS.md](DECISIONS.md) ADR-003, to be removed in a future audited "Master cleanup" task).
 
 **DE node is now a dedicated separate VPS:** `de1`, `5.249.160.59`, 4 vCPU / 4 GB / 25 GB SSD / 30 TB, **Ubuntu
 22.04 LTS**, `status=test`, domain `node-de.unseen.click` — managed from the Master only, proxy traffic only.

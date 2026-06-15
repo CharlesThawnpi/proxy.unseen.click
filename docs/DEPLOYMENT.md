@@ -55,6 +55,10 @@ The DB+`.env` backup before migrating is mandatory (see [BACKUPS.md](BACKUPS.md)
 - **Verify node specs before install ([DECISIONS.md](DECISIONS.md) ADR-002).** Purchase specs are estimates; the
   preflight runs a read-only node-facts probe and records **detected** values (OS/CPU/RAM/disk/ports), confirming
   role-fit (enough disk/RAM for Hiddify) **before** the installer runs, and re-checking after if usage changes.
+- **Master stays minimal ([DECISIONS.md](DECISIONS.md) ADR-003).** Docker engine on the Master is now an **unused
+  leftover** from the failed Hiddify-on-Master test and is a **cleanup candidate** — to be removed in a future audited
+  "Master cleanup after retired co-location attempt" task (verify no containers/volumes/deps, 80/443 free, SSH
+  untouched, git-clean/backup first), **not** during node onboarding.
 
 ### Hiddify install method (Phase 3 audit, tiered)
 

@@ -19,7 +19,7 @@ Current server inventory (recorded 2026-06-15). These seed the `proxy_nodes` row
 | Public IP | `88.214.56.96` |
 | Spec | 4 vCPU, 16 GB RAM, 100 GB SSD |
 | Bandwidth budget | 30 TB / month |
-| Note | NOT a `proxy_nodes` row (it is the control plane, not a node). Docker engine remains installed but unused. |
+| Note | NOT a `proxy_nodes` row (it is the control plane, not a node). Docker engine remains installed but **unused** — a **cleanup candidate** per [DECISIONS.md](DECISIONS.md) ADR-003 (removed in a future audited cleanup task if no control-plane need). |
 
 **Master history (2026-06-15):** the Master is Ubuntu 24.04.4 (`crimson-gorilla-49484`, KVM/QEMU; 4 vCPU Xeon
 E5-2680 v4, ~13 GiB RAM free, 4 GiB swap, 86 GB disk free). A co-location attempt installed Hiddify via Docker
