@@ -19,6 +19,10 @@ co-location. Each step is gated, secret-safe, and managed **from the Master only
 | Management | from the **Master only**, over Hiddify API v2 |
 | Node domain | `node-de.unseen.click` (never shown to customers) |
 
+> **Specs above are provider/purchase ESTIMATES (unverified).** Per [DECISIONS.md](DECISIONS.md) ADR-002, the Master
+> must detect and record the node's **actual** facts (read-only) during preflight and treat those as authoritative —
+> see "Node-facts verification" below.
+
 ## Phase 2-DE — clean-VPS preflight (read-only on the node)
 
 Run as a **separate authorized task** (this plan does not connect yet). Steps:
@@ -35,7 +39,28 @@ Run as a **separate authorized task** (this plan does not connect yet). Steps:
 6. **Snapshot** — a fresh node is disposable, so a provider snapshot is optional (unlike the protected Master); note
    the rebuild path instead.
 
-**Exit:** node verified Ubuntu 22.04, clean, reachable from Master over SSH (key-only); DNS plan agreed.
+**Exit:** node verified Ubuntu 22.04, clean, reachable from Master over SSH (key-only); DNS plan agreed; **actual node
+facts detected and recorded (see below), overriding the provider estimates.**
+
+### Node-facts verification ([DECISIONS.md](DECISIONS.md) ADR-002) — read-only, run only when Phase 2-DE begins
+
+The provider/purchase specs (4 vCPU / 4 GB / 25 GB / 30 TB / Ubuntu 22.04) are **estimates only**. During this
+preflight the Master runs a **read-only** probe over SSH (suggested `scripts/node_preflight_probe.sh` — written when
+Phase 2-DE starts, **not now**) that **never mutates the node and never prints secrets**, and records detected facts
+that **override** the estimates.
+
+**Facts to detect (read-only):** OS + version (`/etc/os-release`), kernel (`uname -a`), CPU model/count
+(`nproc`/`/proc/cpuinfo`), RAM total/free (`free`), disk layout + usable storage (`lsblk`/`df`), public IP as seen
+**from the node** (vs the documented `5.249.160.59`), default route/interface (`ip route`), listening ports
+(`ss -tulpn`), firewall state (ufw/iptables/nft), Docker/nginx/Hiddify/service presence, clean-of-legacy check, and
+**role-fit** (is disk/RAM sufficient for Hiddify?). Bandwidth allowance is **not** node-detectable — leave it
+`estimate` unless a provider API/dashboard later makes it `provider-confirmed`.
+
+**Provenance tiers (record per value):** `estimate` (provider/purchase) · `detected` (from the node) ·
+`provider-confirmed` (provider API/dashboard) · `unknown` (not yet verified). Results are saved **sanitized** to
+docs/status now, and to the `proxy_nodes` DB metadata once the schema exists (Phase 4) — storing detected separately
+from estimate (or a per-field provenance flag), never a single unqualified number. **Re-run the probe after the
+Hiddify install** if resource usage changes materially.
 
 ## Phase 3-DE — Hiddify supported host install + live verification (on the node)
 

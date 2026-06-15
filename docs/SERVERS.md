@@ -42,6 +42,12 @@ E5-2680 v4, ~13 GiB RAM free, 4 GiB swap, 86 GB disk free). A co-location attemp
 Hiddify's **supported host installer on Ubuntu 22.04** (not Docker, not on the Master) — see
 [PHASE2_3_DE_NODE_PLAN.md](PHASE2_3_DE_NODE_PLAN.md). Node domain `node-de.unseen.click`.
 
+> **These values are provider/purchase ESTIMATES (provenance = `estimate`, unverified).** Per
+> [DECISIONS.md](DECISIONS.md) ADR-002, the Master must **detect** the node's real OS/CPU/RAM/disk/ports (read-only)
+> at preflight and record them as `detected` (authoritative), overriding the estimates here; the **30 TB bandwidth**
+> stays `estimate` until `provider-confirmed` via a provider API/dashboard. Don't treat the table as measured fact
+> until preflight runs.
+
 Seed values (SG/US): `ram_mb` = 2048/2048/6144; `disk_gb` = 60/20/100; `bandwidth_budget_gb` = 10000/2000/9800. SG has two nodes — the offering/sidecar logic supports multiple nodes per region, and graceful degradation means if `sg1` is down, `sg2` still serves SG (§6.2).
 
 ## Capacity notes

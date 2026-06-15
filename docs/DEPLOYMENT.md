@@ -52,6 +52,9 @@ The DB+`.env` backup before migrating is mandatory (see [BACKUPS.md](BACKUPS.md)
   on the Master. The DE node (`5.249.160.59`, Ubuntu 22.04) is provisioned by Hiddify's **supported host installer**
   on its own VPS, configured/orchestrated from the Master over API v2 — never by `git pull`. Workflow:
   [PHASE2_3_DE_NODE_PLAN.md](PHASE2_3_DE_NODE_PLAN.md).
+- **Verify node specs before install ([DECISIONS.md](DECISIONS.md) ADR-002).** Purchase specs are estimates; the
+  preflight runs a read-only node-facts probe and records **detected** values (OS/CPU/RAM/disk/ports), confirming
+  role-fit (enough disk/RAM for Hiddify) **before** the installer runs, and re-checking after if usage changes.
 
 ### Hiddify install method (Phase 3 audit, tiered)
 

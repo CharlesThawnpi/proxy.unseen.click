@@ -5,6 +5,21 @@
 
 Chronological record of notable changes to the UNSEEN PROXY project.
 
+## 2026-06-15 — Requirement: verify ACTUAL node specs at onboarding (ADR-002)
+
+- Recorded **[DECISIONS.md](DECISIONS.md) ADR-002**: provider/purchase specs are **estimates only**; on real node
+  onboarding the Master must collect the node's **actual** facts via **read-only** SSH probes (no mutation, no
+  secrets) and treat detected values as authoritative.
+- Established per-value **provenance tiers**: `estimate` / `detected` / `provider-confirmed` / `unknown`. Bandwidth
+  stays `estimate` until `provider-confirmed`. Verify before Hiddify install + re-check after if usage changes;
+  role-fit (disk/RAM sufficient) gated before install.
+- Documented the future read-only probe (`scripts/node_preflight_probe.sh`) in `PHASE2_3_DE_NODE_PLAN.md` (facts to
+  detect: OS/kernel/CPU/RAM/disk/public-IP/route/ports/firewall/service-presence/clean-check/role-fit). **Written/run
+  only when Phase 2-DE begins — not now.**
+- Labelled `de1` specs as **provider-estimate (unverified)** in `SERVERS.md`/`NODES.md`/`CURRENT_STATUS.md`; added
+  notes to `DEPLOYMENT.md` (verify-before-install) and `SECURITY.md` (probe is read-only, no secrets, don't trust
+  manual specs). **Docs only — no node connection.**
+
 ## 2026-06-15 — Decision: Master control-plane-only; DE node → separate VPS (ADR-001)
 
 - Recorded **[DECISIONS.md](DECISIONS.md) ADR-001**: the §4.1 **co-location exception is RETIRED**. The Master is

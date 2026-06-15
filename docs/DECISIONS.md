@@ -51,3 +51,44 @@ official pinned **Docker** install (v12.3.3) on the Ubuntu-24.04 Master.
   new DE node (see [PHASE2_3_DE_NODE_PLAN.md](PHASE2_3_DE_NODE_PLAN.md)).
 - Affected docs updated: ARCHITECTURE, SYSTEM_OVERVIEW, SERVERS, NODES, NETWORK, PORTS, DEPLOYMENT, ROLLBACK,
   SECURITY, HIDDIFY_API_CONTRACT, the PHASE2/PHASE3 docs, CURRENT_STATUS, CHANGELOG.
+
+---
+
+## ADR-002 — Provider/purchase specs are ESTIMATES; the Master must verify actual node facts on onboarding
+
+- **Date:** 2026-06-15
+- **Status:** ACCEPTED (Charles) — **requirement for the future node-preflight phase; not executed now.**
+
+### Context
+
+Node specs/limits in our docs (e.g. `de1`: 4 vCPU / 4 GB / 25 GB / 30 TB / Ubuntu 22.04) currently come **only** from
+the provider/purchase page. These are **expected values**, not measured facts — a provider page can be rounded,
+mislabelled, or differ from what the OS actually reports (CPU count, usable disk after the image, real RAM, the OS
+version actually installed, the bandwidth cap the provider truly enforces).
+
+### Decision
+
+1. **Treat all pre-provided specs as preliminary estimates only.** The Master **must not blindly trust** manually
+   entered/purchase specs for operational decisions.
+2. **On node onboarding (the real preflight phase), the Master collects actual node facts** directly from the node via
+   **read-only SSH probes** — never mutating the node, never printing secrets.
+3. **Detected facts override estimates** in operational docs/status and (later) in the DB node metadata.
+4. **Every spec value carries a provenance tier:**
+   - `estimate` — provider/purchase value (unverified)
+   - `detected` — read by the Master from the node itself (authoritative for hardware/OS/ports)
+   - `provider-confirmed` — from a provider API/dashboard (e.g. the real bandwidth allowance), where available
+   - `unknown` — not yet verified
+   Bandwidth allowance stays **`estimate`** until **`provider-confirmed`** (the node can't self-report its contractual cap).
+5. **Verify before Hiddify install, and re-check after install** if resource usage materially changes.
+6. **Role-fit gate:** the preflight must confirm detected resources meet the node's role (enough disk/RAM for Hiddify)
+   and that the node is clean of legacy artifacts, before any install proceeds.
+
+### Consequences
+
+- The future probe (read-only, no-secrets, no-mutation) is specified in
+  [PHASE2_3_DE_NODE_PLAN.md](PHASE2_3_DE_NODE_PLAN.md); suggested name `scripts/node_preflight_probe.sh`. It is
+  **written/run only when Phase 2-DE actually begins** — not now.
+- Operational docs ([SERVERS.md](SERVERS.md), [NODES.md](NODES.md)) now label `de1`'s specs as **provider-estimate
+  (unverified)** and reserve a place for detected/confirmed values.
+- When the DB schema exists (Phase 4), `proxy_nodes` should store both the estimate and the detected value (or a
+  provenance flag per field) rather than a single unqualified number.

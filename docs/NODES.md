@@ -51,6 +51,9 @@ above applies normally (fresh VPS, host install, least-privilege API key, manage
 
 - **Node:** `de1` — `5.249.160.59`, 4 vCPU / 4 GB / 25 GB SSD / 30 TB, **Ubuntu 22.04 LTS**, domain
   `node-de.unseen.click`. Starts **`status=test`**, never auto-promoted to `live`; proxy traffic only.
+  **Specs are provider/purchase ESTIMATES (unverified)** — per [DECISIONS.md](DECISIONS.md) ADR-002 the Master detects
+  and records the node's **actual** facts (read-only) at preflight and those override the estimates; bandwidth stays
+  `estimate` until provider-confirmed.
 - **Why separate (not co-located):** the Master co-location attempt used Hiddify's experimental Docker (v12.3.3) and
   the panel was non-functional (compose `$REDIS_PASSWORD` interpolation bug → Redis password-less; DB migration
   errors); it was torn down. Hiddify officially labels Docker "not for permanent use." A separate VPS with the
