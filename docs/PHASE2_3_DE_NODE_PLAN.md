@@ -30,6 +30,8 @@ Run as a **separate authorized task** (this plan does not connect yet). Steps:
    `/root/.ssh/unseenproxy_de1_ed25519` (`0600`, root-owned; comment `unseen-proxy-master-to-de1`). Its **public**
    half is added by Charles in the VPS provider panel before first login; pin the node host key in `known_hosts` at
    first connect. Private key never leaves the Master, never enters git.
+   **Status (2026-06-15):** host key pinned; node reachable, but the key is **not yet authorized** (`root`+`ubuntu`
+   → publickey denied). Pending Charles installing the public key on `de1` via the provider console, then a re-test.
 2. **Verify OS = Ubuntu 22.04 LTS** (`/etc/os-release`). If not 22.04, STOP and reinstall the OS first.
 3. **Clean-VPS check** — no legacy Marzban/Happ/Xray/sing-box/old-UNSEEN artifacts; record a per-node
    `CLEAN_VPS_CHECKLIST` entry (mirror the Master's Phase 0).

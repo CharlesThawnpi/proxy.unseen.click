@@ -5,6 +5,16 @@
 
 Chronological record of notable changes to the UNSEEN PROXY project.
 
+## 2026-06-15 — de1 SSH connectivity test — PARTIAL/HOLD (key not yet authorized)
+
+- Tested Master→`de1` SSH with the dedicated key (`/root/.ssh/unseenproxy_de1_ed25519`, `IdentitiesOnly`,
+  `BatchMode`, `accept-new`, `ConnectTimeout=10`). **Node reachable** (handshake OK, host key pinned) but
+  **`Permission denied (publickey)`** for **both** `root@5.249.160.59` and `ubuntu@5.249.160.59` — the public key is
+  not in `authorized_keys` yet. No brute-force, no password login, no node changes.
+- **Action for Charles (run on `de1` via provider console):**
+  `mkdir -p /root/.ssh && chmod 700 /root/.ssh && echo 'ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIABHKgQZkRTmmQw5D0ECI+SljBYeCBqXSoOLwDttg7be unseen-proxy-master-to-de1' >> /root/.ssh/authorized_keys && chmod 600 /root/.ssh/authorized_keys`
+  (for a `ubuntu`-only image, run the same under `/home/ubuntu/.ssh` owned by `ubuntu`). Then re-run the connectivity test.
+
 ## 2026-06-15 — Prepared Master→de1 SSH key (no connection yet)
 
 - Generated a dedicated ed25519 keypair on the Master for `de1`: `/root/.ssh/unseenproxy_de1_ed25519` (private
