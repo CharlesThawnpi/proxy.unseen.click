@@ -5,6 +5,22 @@
 
 Chronological record of notable changes to the UNSEEN PROXY project.
 
+## 2026-06-15 — Phase 3 (Hiddify live-verify PREP — operator install pending)
+
+- **No install performed by the agent; no Hiddify API call; no system change.** Docs/scripts only.
+- B2 provider snapshot **confirmed by Charles**; co-location-via-Docker chosen.
+- Ran the **read-only pre-install safety gate** → **PASS** (git clean, SSH:22 listening, 80/443 free, no firewall,
+  ~13 GiB RAM / 86 GB disk free, legacy-clean, Master ports free). Verified the environment is capable (root,
+  internet) but **cannot hold an SSH-recovery session/console**; the official Docker install is **experimental +
+  long-running**. Decision: **operator installs, agent verifies after**.
+- Verified the **current official Docker install command** (`bash <(curl https://i.hiddify.com/docker/<version>)`;
+  it installs Docker itself) and the official caveat: **Docker version "not recommended for permanent use"** — OK
+  for a test node; engine revisited before any live promotion.
+- New `PHASE3_HIDDIFY_LIVE_VERIFY.md` (operator runbook + safety-gate evidence + live-verify checklist + sanitized
+  contract placeholders) and `scripts/phase3_post_install_probe.sh` (read-only, secret-free post-install probe).
+  Updated `CURRENT_STATUS`, `HIDDIFY_API_CONTRACT`, `PHASE3_HIDDIFY_AUDIT_PLAN`, `DEPLOYMENT`, `NODES`.
+  Status: **PARTIAL / HOLD** — node remains `status=test`.
+
 ## 2026-06-15 — Phase 3 (Hiddify install & API audit PLAN)
 
 - **Read-only research only — no install, no Hiddify API call, no system change.** Docs-only.

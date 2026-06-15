@@ -52,5 +52,8 @@ node's standard provisioning differs from a fresh-VPS node accordingly:
 - Provisioning step 1 ("fresh VPS") is replaced by an **in-place, protected install** on the Master, gated behind a
   **provider snapshot** (the only reliable rollback for a host-wide installer).
 - It starts as **`status=test`** in `proxy_nodes` and is **never auto-promoted to `live`**.
-- **Status (2026-06-15): protected preflight COMPLETE, install on HOLD (PARTIAL).** See
-  `PHASE2_MASTER_DE_HIDDIFY_PREFLIGHT.md` for the readiness decision and the B1–B4 prerequisites.
+- **Status (2026-06-15): preflight + audit + live-verify PREP done; awaiting OPERATOR install (PARTIAL/HOLD).**
+  Snapshot confirmed; install method = **Docker** (officially "not recommended for permanent use" → fine for test,
+  revisit before live). Charles runs the operator runbook; the agent then verifies. See
+  `PHASE2_MASTER_DE_HIDDIFY_PREFLIGHT.md`, `PHASE3_HIDDIFY_AUDIT_PLAN.md`, `PHASE3_HIDDIFY_LIVE_VERIFY.md`.
+  Node remains `status=test`, never auto-promoted.

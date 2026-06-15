@@ -63,3 +63,8 @@ The DB+`.env` backup before migrating is mandatory (see [BACKUPS.md](BACKUPS.md)
   **separate DE VPS (Option C)**. Both pin a known-good version. **Standard host install is NOT recommended on the
   control plane** (it would seize 80/443 and mutate the host broadly).
 - Install is host-level and gated on the **B2 provider snapshot** + the live-verify checklist — never run blind.
+- **[VERIFIED] Current official Docker install command** (the script installs Docker itself; pin a version, don't use
+  `latest`): `bash <(curl https://i.hiddify.com/docker/<version>)` (e.g. `…/docker/v10.80.0`). **[VERIFIED]** Hiddify
+  states the Docker version is **"not recommended for permanent use"** → acceptable for the **test** node; the engine
+  for a *live* DE node is revisited before promotion. Operator runbook + recovery net: see
+  [PHASE3_HIDDIFY_LIVE_VERIFY.md](PHASE3_HIDDIFY_LIVE_VERIFY.md).

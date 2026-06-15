@@ -176,6 +176,14 @@ Recorded in [HIDDIFY_API_CONTRACT.md](HIDDIFY_API_CONTRACT.md):
 is taken & confirmed; (3) the **live verification checklist** is executed on the snapshot/sandbox. No Hiddify code may be
 written against the API until step 5–7 produce a verified contract.
 
+## Live-verify status (2026-06-15)
+
+Snapshot confirmed; co-location-via-Docker chosen; safety gate PASSED. Per decision the **operator runs the install**
+and the agent verifies after — see [PHASE3_HIDDIFY_LIVE_VERIFY.md](PHASE3_HIDDIFY_LIVE_VERIFY.md). New official finding:
+the current Docker install is `bash <(curl https://i.hiddify.com/docker/<version>)` and Hiddify labels the Docker
+version **"not recommended for permanent use"** — fine for the test node, but reinforces revisiting **Option C
+(separate DE VPS, host install on 22.04)** for a *live* DE node.
+
 ## Exact next recommended task
 
 **Decision + snapshot, then a sandbox live-verify.** Recommended sequence:
