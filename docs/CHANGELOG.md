@@ -5,6 +5,18 @@
 
 Chronological record of notable changes to the UNSEEN PROXY project.
 
+## 2026-06-15 — Phase 2-DE: OS-to-22.04 path decided = clean reinstall (no in-place upgrade)
+
+- Ran a **read-only pre-upgrade gate** on `de1` (SSH OK; 20.04.6; 18 GB free; RAM 3.1 GiB + 1.9 GiB swap; apt/dpkg
+  healthy & unlocked; only SSH:22 + 80/443 free; clean; **`reboot-required` flag set**). Gate **PASS** (upgrade
+  feasible).
+- **Decision (Charles): clean provider reinstall to Ubuntu 22.04, NOT in-place `do-release-upgrade`** — `de1` is
+  empty, so reinstall is the same end-state with far less risk (in-place over SSH could drop SSH/brick the node, and
+  its failure mode is a reinstall anyway). **No upgrade command run; no node changes.**
+- New `PHASE2_DE1_OS_UPGRADE.md` (gate result + decision/rationale + operator reinstall steps incl. re-add key +
+  known_hosts refresh). Updated `CURRENT_STATUS`, `PHASE2_DE1_PREFLIGHT`, `PHASE2_3_DE_NODE_PLAN`. Docs only.
+- **Next:** Charles reinstalls to 22.04 + re-adds the Master key → agent re-runs Phase 2-DE preflight → Phase 3-DE.
+
 ## 2026-06-15 — Clarify de1 preflight blocker + reinstall requirement (docs audit)
 
 - Audited all DE docs for the Phase 2-DE finding (PARTIAL; clean node; detected specs; OS-mismatch blocker). Most was

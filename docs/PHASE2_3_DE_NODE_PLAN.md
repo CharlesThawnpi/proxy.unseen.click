@@ -33,6 +33,8 @@ Run as a **separate authorized task** (this plan does not connect yet). Steps:
    **Status (2026-06-15):** host key pinned; node reachable, but the key is **not yet authorized** (`root`+`ubuntu`
    → publickey denied). Pending Charles installing the public key on `de1` via the provider console, then a re-test.
 2. **Verify OS = Ubuntu 22.04 LTS** (`/etc/os-release`). If not 22.04, STOP and reinstall the OS first.
+   **(2026-06-15: `de1` shipped on 20.04 → being reinstalled to 22.04, not in-place-upgraded — see
+   [PHASE2_DE1_OS_UPGRADE.md](PHASE2_DE1_OS_UPGRADE.md).)**
 3. **Clean-VPS check** — no legacy Marzban/Happ/Xray/sing-box/old-UNSEEN artifacts; record a per-node
    `CLEAN_VPS_CHECKLIST` entry (mirror the Master's Phase 0).
 4. **Resources/ports/firewall baseline** — `ss -tulpn`, disk/RAM, firewall state; confirm SSH:22 and that

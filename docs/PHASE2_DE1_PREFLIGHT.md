@@ -77,7 +77,8 @@ supported Hiddify host install. Not a FAIL (node is reachable and clean), not a 
 
 1. **Charles reinstalls `de1` to Ubuntu 22.04 LTS** (provider panel), then **re-adds the Master public key**
    (`ssh-ed25519 …unseen-proxy-master-to-de1` — see CHANGELOG) to root `authorized_keys`. (The reinstall changes the
-   node's host key — the Master will refresh `known_hosts` for `5.249.160.59` on the next connect.)
+   node's host key — the Master will refresh `known_hosts` for `5.249.160.59` on the next connect.) **Reinstall (not
+   in-place upgrade) is the chosen path** — see [PHASE2_DE1_OS_UPGRADE.md](PHASE2_DE1_OS_UPGRADE.md).
 2. **Re-run this Phase 2-DE preflight** to confirm OS 22.04, clean, key access, resources.
 3. Then **Phase 3-DE**: Hiddify **supported host install** on 22.04 + live API-contract verification + one disposable
    test user + FAST1/FAST2/Secure inbound checks. **Phase 4 stays blocked** until that verified-live contract exists.
