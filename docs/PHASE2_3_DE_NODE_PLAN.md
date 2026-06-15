@@ -26,9 +26,10 @@ co-location. Each step is gated, secret-safe, and managed **from the Master only
 ## Phase 2-DE — clean-VPS preflight (read-only on the node)
 
 Run as a **separate authorized task** (this plan does not connect yet). Steps:
-1. **SSH key setup, Master → DE** (least privilege): generate/managed key at `/root/.ssh/unseenproxy_de_ed25519`
-   (`0600`, root-owned) on the Master; install its **public** half on the node; pin the node host key in
-   `known_hosts`. Private key never leaves the Master, never enters git.
+1. **SSH key setup, Master → DE** (least privilege): the dedicated key is **already prepared** at
+   `/root/.ssh/unseenproxy_de1_ed25519` (`0600`, root-owned; comment `unseen-proxy-master-to-de1`). Its **public**
+   half is added by Charles in the VPS provider panel before first login; pin the node host key in `known_hosts` at
+   first connect. Private key never leaves the Master, never enters git.
 2. **Verify OS = Ubuntu 22.04 LTS** (`/etc/os-release`). If not 22.04, STOP and reinstall the OS first.
 3. **Clean-VPS check** — no legacy Marzban/Happ/Xray/sing-box/old-UNSEEN artifacts; record a per-node
    `CLEAN_VPS_CHECKLIST` entry (mirror the Master's Phase 0).

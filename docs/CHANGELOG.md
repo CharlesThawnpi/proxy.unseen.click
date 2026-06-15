@@ -5,6 +5,14 @@
 
 Chronological record of notable changes to the UNSEEN PROXY project.
 
+## 2026-06-15 — Prepared Master→de1 SSH key (no connection yet)
+
+- Generated a dedicated ed25519 keypair on the Master for `de1`: `/root/.ssh/unseenproxy_de1_ed25519` (private
+  `600`, root-only) / `.pub` (`644`), comment `unseen-proxy-master-to-de1`, fingerprint
+  `SHA256:jUYAdY0ONdXKzOg2s4OKO27yBGqLvBwapkEy25oA3+I`. Private key stays on the Master, never in git.
+- **Action for Charles:** add the **public** key in the VPS provider panel before first login. No SSH/connection to
+  `de1` performed. Reconciled the key path in `PHASE2_3_DE_NODE_PLAN.md`. Docs only.
+
 ## 2026-06-15 — Requirement: future Master cleanup of co-location leftovers (ADR-003)
 
 - Recorded **[DECISIONS.md](DECISIONS.md) ADR-003** ("Master minimalism and cleanup of abandoned co-location

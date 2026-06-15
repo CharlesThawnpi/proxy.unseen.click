@@ -36,6 +36,11 @@ candidate** per [DECISIONS.md](DECISIONS.md) ADR-003, to be removed in a future 
 These specs are **provider estimates (unverified)**; per [DECISIONS.md](DECISIONS.md) ADR-002 the Master detects the
 node's real facts (read-only) at preflight and those override the estimates.
 
+**SSH key prepared (2026-06-15):** a dedicated Master→`de1` ed25519 keypair exists at
+`/root/.ssh/unseenproxy_de1_ed25519` (private `600`, root-only) / `.pub` (`644`), comment `unseen-proxy-master-to-de1`,
+fingerprint `SHA256:jUYAdY0ONdXKzOg2s4OKO27yBGqLvBwapkEy25oA3+I`. **Awaiting Charles to add the public key in the VPS
+provider panel** before first login. Not yet used — no connection to `de1` has occurred.
+
 **Next task — Phase 2-DE / 3-DE** (see [PHASE2_3_DE_NODE_PLAN.md](PHASE2_3_DE_NODE_PLAN.md)): clean-VPS preflight on
 `de1` (verify 22.04, no legacy, ports/firewall/resources, DNS plan), Master→node SSH key setup, then Hiddify's
 **supported host install**, live Swagger/API-contract verification, one disposable test user, and FAST1/FAST2/Secure
