@@ -5,6 +5,14 @@
 
 Chronological record of notable changes to the UNSEEN PROXY project.
 
+## 2026-06-15 — Clarify de1 preflight blocker + reinstall requirement (docs audit)
+
+- Audited all DE docs for the Phase 2-DE finding (PARTIAL; clean node; detected specs; OS-mismatch blocker). Most was
+  already recorded in the prior commit. **Gap patched:** made the **host-key-change → `known_hosts` refresh** point
+  explicit (alongside the existing re-add-public-key note) in `PHASE2_DE1_PREFLIGHT.md` and `CURRENT_STATUS.md` — the
+  reinstall changes the node's SSH host key, so the Master must `ssh-keygen -R 5.249.160.59` / re-pin on next connect
+  (host-key-mismatch warning expected, not an attack). Docs only.
+
 ## 2026-06-15 — Phase 2-DE: de1 SSH verified + clean preflight — PARTIAL (OS = 20.04)
 
 - Root key SSH to `de1` now **works** (key-only, host key pinned). Ran a **read-only** node-facts preflight (no

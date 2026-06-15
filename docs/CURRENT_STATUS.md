@@ -43,8 +43,10 @@ fingerprint `SHA256:jUYAdY0ONdXKzOg2s4OKO27yBGqLvBwapkEy25oA3+I`.
 **Phase 2-DE preflight (2026-06-15) — PARTIAL.** Root key SSH now **works** (Charles installed the key). Read-only
 preflight ran: `de1` is **clean** (no legacy/proxy artifacts, no nginx/docker/certbot, only SSH:22 public, no
 firewall), CPU 4 ✓, disk 25 GB ✓, public IP `5.249.160.59` ✓, RAM **3.1 GiB** (vs 4 GB estimate). **BLOCKER: OS is
-Ubuntu 20.04.6, not the required 22.04.** → Charles **reinstalls `de1` to Ubuntu 22.04**, re-adds the Master public
-key, then we **re-run preflight** before the Phase 3-DE Hiddify host install. Full report:
+Ubuntu 20.04.6, not the required 22.04.** → Charles **reinstalls `de1` to Ubuntu 22.04**, **re-adds the Master public
+key** to root `authorized_keys` (reinstall wipes it), then we **re-run preflight** before the Phase 3-DE Hiddify host
+install. (Reinstall also changes the node host key — the Master refreshes its `known_hosts` for `5.249.160.59` on the
+next connect; the host-key-mismatch warning is expected, not an attack.) Full report:
 [PHASE2_DE1_PREFLIGHT.md](PHASE2_DE1_PREFLIGHT.md). No node changes made.
 
 **Next task — Phase 2-DE / 3-DE** (see [PHASE2_3_DE_NODE_PLAN.md](PHASE2_3_DE_NODE_PLAN.md)): clean-VPS preflight on

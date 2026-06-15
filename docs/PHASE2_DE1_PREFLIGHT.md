@@ -58,8 +58,10 @@
 ## Risks / blockers
 
 - **BLOCKER — OS = 20.04, not 22.04.** Requires an **OS reinstall to Ubuntu 22.04 LTS** via the provider panel
-  before Phase 3-DE. After reinstall the node is wiped, so the **Master public key must be re-added** and this
-  **preflight re-run**.
+  before Phase 3-DE. After reinstall the node is wiped, so: (a) the **Master public key must be re-added** to root
+  `authorized_keys`; (b) the node's **SSH host key changes**, so the Master's `known_hosts` entry for `5.249.160.59`
+  must be **refreshed** on the next connect (`ssh-keygen -R 5.249.160.59` then re-pin via `accept-new`) — otherwise
+  SSH will warn of a host-key mismatch (expected, not an attack); (c) this **preflight is re-run**.
 - **RAM under estimate** (3.1 GiB vs 4 GB) — non-blocking for testing; monitor.
 - **No active firewall** + **password login still enabled** on the node — to be addressed during Phase 3-DE
   hardening (after key access is confirmed on the 22.04 rebuild). Not changed now (per task scope).
@@ -74,7 +76,8 @@ supported Hiddify host install. Not a FAIL (node is reachable and clean), not a 
 ## Exact next recommended task
 
 1. **Charles reinstalls `de1` to Ubuntu 22.04 LTS** (provider panel), then **re-adds the Master public key**
-   (`ssh-ed25519 …unseen-proxy-master-to-de1` — see CHANGELOG) to root `authorized_keys`.
+   (`ssh-ed25519 …unseen-proxy-master-to-de1` — see CHANGELOG) to root `authorized_keys`. (The reinstall changes the
+   node's host key — the Master will refresh `known_hosts` for `5.249.160.59` on the next connect.)
 2. **Re-run this Phase 2-DE preflight** to confirm OS 22.04, clean, key access, resources.
 3. Then **Phase 3-DE**: Hiddify **supported host install** on 22.04 + live API-contract verification + one disposable
    test user + FAST1/FAST2/Secure inbound checks. **Phase 4 stays blocked** until that verified-live contract exists.
