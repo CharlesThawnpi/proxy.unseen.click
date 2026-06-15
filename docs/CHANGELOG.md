@@ -5,6 +5,19 @@
 
 Chronological record of notable changes to the UNSEEN PROXY project.
 
+## 2026-06-15 — Decision: Master control-plane-only; DE node → separate VPS (ADR-001)
+
+- Recorded **[DECISIONS.md](DECISIONS.md) ADR-001**: the §4.1 **co-location exception is RETIRED**. The Master is
+  **control-plane only** (no proxy traffic); the DE Hiddify node moves to a **dedicated separate VPS**.
+- New DE node `de1` registered in inventory: **`5.249.160.59`**, 4 vCPU / 4 GB / 25 GB SSD / 30 TB, **Ubuntu 22.04**,
+  `status=test`, domain `node-de.unseen.click` — to be provisioned by Hiddify's **supported host installer**.
+- New `PHASE2_3_DE_NODE_PLAN.md` (forward workflow: preflight, Master→node SSH key, DNS plan, host install, live
+  Swagger/API verify, disposable test user, FAST1/FAST2/Secure checks).
+- Updated ARCHITECTURE / SYSTEM_OVERVIEW / SERVERS / NODES / NETWORK / PORTS (co-location retired; Master never
+  proxies; 80/443 conflict resolved by separation), DEPLOYMENT / ROLLBACK / SECURITY / HIDDIFY_API_CONTRACT
+  (point to the DE VPS host install), and marked PHASE2/PHASE3 docs superseded/historical. `IMPLEMENTATION_PLAN.md`
+  left as source-history; the decision lives in `DECISIONS.md`. **Docs only — no node connection, no install.**
+
 ## 2026-06-15 — Phase 3 (Hiddify Docker install attempt — PARTIAL/BLOCKED)
 
 - With Charles's authorization (snapshot confirmed), the agent ran the **official pinned Docker install

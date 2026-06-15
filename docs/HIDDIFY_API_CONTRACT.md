@@ -6,8 +6,9 @@
 > See [PHASE3_HIDDIFY_AUDIT_PLAN.md](PHASE3_HIDDIFY_AUDIT_PLAN.md).
 > **[LIVE] fields STILL pending — a Docker install was attempted (v12.3.3) but the panel was non-functional**
 > (Redis AUTH mis-wiring + DB migration errors; 443 never served; CLI hangs), so no live Swagger/contract could be
-> read. See [PHASE3_HIDDIFY_LIVE_VERIFY.md](PHASE3_HIDDIFY_LIVE_VERIFY.md). These fields await a **working** panel
-> (recommended: supported host install on a separate DE VPS, Ubuntu 22.04).
+> read. See [PHASE3_HIDDIFY_LIVE_VERIFY.md](PHASE3_HIDDIFY_LIVE_VERIFY.md). These fields will be filled from the
+> **dedicated DE node VPS** (`5.249.160.59`, Ubuntu 22.04) supported **host install** — see
+> [PHASE2_3_DE_NODE_PLAN.md](PHASE2_3_DE_NODE_PLAN.md). Phase 4 stays blocked until then.
 
 The verified Hiddify Manager **API v2** contract — endpoints, fields, units, and link/deep-link formats — pinned per Hiddify version per node.
 

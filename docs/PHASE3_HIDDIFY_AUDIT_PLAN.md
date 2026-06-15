@@ -176,6 +176,12 @@ Recorded in [HIDDIFY_API_CONTRACT.md](HIDDIFY_API_CONTRACT.md):
 is taken & confirmed; (3) the **live verification checklist** is executed on the snapshot/sandbox. No Hiddify code may be
 written against the API until step 5–7 produce a verified contract.
 
+## Outcome (2026-06-15): Option C chosen — separate DE VPS
+
+The co-located Docker attempt failed live-verify, so **Option C (separate DE VPS, supported Ubuntu-22.04 host install)
+was chosen** — co-location is retired ([DECISIONS.md](DECISIONS.md) ADR-001). The B1 80/443 options below are now
+historical. Forward workflow: [PHASE2_3_DE_NODE_PLAN.md](PHASE2_3_DE_NODE_PLAN.md). DE node: `de1`, `5.249.160.59`.
+
 ## Live-verify status (2026-06-15)
 
 Snapshot confirmed; co-location-via-Docker chosen; safety gate PASSED. Per decision the **operator runs the install**

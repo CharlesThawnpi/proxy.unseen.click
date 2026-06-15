@@ -10,15 +10,22 @@ How UNSEEN PROXY separates business logic from proxy traffic, and the orchestrat
 - **Control plane (Master VPS, "brain").** All business logic, all customer data, all secrets, all bot/admin/portal/API surfaces, and all provisioning orchestration. The Master is the only place that knows who a customer is. It calls each region's Hiddify panel over HTTPS **API v2** to create/update/disable users and read usage.
 - **Data plane (Nodes).** Each regional VPS runs **Hiddify Manager** and carries proxy traffic only. A node knows about Hiddify *users* (UUIDs with quotas/expiry) but nothing about payments, identities, or other regions. Customer VPN traffic goes **customer → node directly**; the Master never proxies traffic.
 
-## The co-location exception (DE node on Master)
+## The co-location exception — RETIRED (DE moved to its own VPS)
 
-The general rule is *the Master carries no proxy traffic*. There is **one deliberate, contained exception**: the Master in Germany also hosts the **DE Hiddify node** on the same box, so the default/entry region (DE) is served without a second VPS.
+> **Superseded by [DECISIONS.md](DECISIONS.md) ADR-001 (2026-06-15).** The §4.1 co-location exception is **retired for
+> this build.** **The Master carries no proxy traffic — full stop, no exception.**
 
-- The DE node is still modeled as an ordinary node in the DB (`node_code=de-master`, `is_master_colocated=1`), addressed through the same API v2 path, subject to the same health/capacity monitoring.
-- **Guardrail:** the DE node's proxy resource use is budgeted and watched (Master CPU/RAM/bandwidth headroom is first-class in alerts) so it cannot starve the control plane.
-- **Movable:** if DE traffic outgrows the shared box, the DE node moves to its own VPS **with no schema or code change** (the dynamic-node property, §6.1).
-- The exception applies **only** to DE-on-Master; no other region is ever co-located on the control plane.
-- **Caveat:** a Master outage affects both the control plane and the DE node together — the one place co-location trades isolation for cost.
+**The rule is now absolute:** the Master is **control-plane only**. The DE Hiddify node runs on its **own dedicated
+VPS** (`de1`, `5.249.160.59`, Ubuntu 22.04 — see [SERVERS.md](SERVERS.md)), an ordinary node managed from the Master
+over API v2 like any other region.
+
+**Historical note (why retired):** co-location was planned (§4.1), preflighted (Phase 2), audited (Phase 3), and
+**tested** — Hiddify's experimental **Docker** install (v12.3.3) on the Ubuntu-24.04 Master. The panel was
+non-functional (compose `$REDIS_PASSWORD` interpolation bug → Redis password-less; DB migration errors); Hiddify
+officially calls Docker "not for permanent use." It was torn down and the decision made to keep the control plane
+clean and run DE on a separate, supported Ubuntu-22.04 host install. The dynamic-node property (§6.1) made this a
+data-only move (no schema/code change). A bonus: there is no longer a single box whose outage takes down both control
+plane and DE together.
 
 ## Why "Master + independent regional Hiddify panels" (not native multi-server)
 

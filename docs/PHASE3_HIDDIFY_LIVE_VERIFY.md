@@ -203,5 +203,6 @@ considered (decision made: tear-down + separate VPS):
 
 Whichever path yields a serving panel, the live-verify checklist + field table above are then completed (admin link →
 `0600` file, Swagger → contract, one disposable test user created+deleted). Only then does Phase 4 build against a
-verified contract. **The broken stack has been torn down; the Master is back to baseline.** Next concrete step: stand
-up a small Ubuntu-22.04 DE VPS and run the **supported host installer** there.
+verified contract. **The broken stack has been torn down; the Master is back to baseline.** Next concrete step: the
+**dedicated DE node VPS is purchased** (`de1`, `5.249.160.59`, Ubuntu 22.04) — run the **supported host installer**
+there per [PHASE2_3_DE_NODE_PLAN.md](PHASE2_3_DE_NODE_PLAN.md). Co-location is retired ([DECISIONS.md](DECISIONS.md) ADR-001).

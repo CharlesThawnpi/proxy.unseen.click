@@ -24,9 +24,14 @@ How to safely undo a change. Code rollback and data rollback are **separate** me
 - Data is restored from the WAL-safe backups (DB + `.env` together; see [BACKUPS.md](BACKUPS.md)).
 - After any restore, run the no-send token-decrypt smoke test before reporting success.
 
-## Co-located Hiddify install on the Master (special rollback case)
+## Co-located Hiddify install on the Master — SUPERSEDED (co-location retired)
 
-Installing Hiddify Manager on the **Master** (the §4.1 co-located DE node) is **host-wide and invasive**: the
+> **[DECISIONS.md](DECISIONS.md) ADR-001:** the DE node now runs on its **own VPS**, so Hiddify is never installed on
+> the Master and this "host-wide install on the control plane" rollback case **no longer applies**. The DE node uses
+> the **ordinary node rollback** (rebuild/re-provision from the Master; a fresh node VPS is disposable, so a snapshot
+> is optional). The text below is retained as history of the attempted co-location.
+
+Installing Hiddify Manager on the **Master** (the former §4.1 co-located DE node) is **host-wide and invasive**: the
 installer changes nginx, systemd units, packages, and may modify the firewall — on a **non-disposable** control
 plane. The standard "disable, don't delete / re-pull a git tag" rollback does **not** cover host-level damage.
 

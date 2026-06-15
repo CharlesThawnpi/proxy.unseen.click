@@ -43,19 +43,17 @@ A single node being damaged, cancelled, overloaded, or unreachable must **never*
 - **No single point of proxy failure for multi-region plans.** A PRO/MAX customer entitled to DE+US+SG keeps working on the survivors if one region drops.
 - **Master/DE caveat.** Because DE is co-located on the Master (§4.1), a Master outage affects both control plane and DE node together — mitigated by headroom alerts and by DE being movable to its own VPS without code change.
 
-## DE node — co-located on the Master (NOT disposable)
+## DE node — dedicated separate VPS (co-location RETIRED)
 
-The DE node is the §4.1 exception: it runs **on the Master control-plane VPS**. The general "test nodes carry no
-backup, wipe freely" rule in this doc **does not apply to DE** — the Master must never be wiped/re-imaged. The DE
-node's standard provisioning differs from a fresh-VPS node accordingly:
+The DE node is now an **ordinary, dedicated node on its own VPS** — **not** co-located on the Master. The §4.1
+co-location exception is **retired** ([DECISIONS.md](DECISIONS.md) ADR-001); the standard node-provisioning standard
+above applies normally (fresh VPS, host install, least-privilege API key, managed from Master).
 
-- Provisioning step 1 ("fresh VPS") is replaced by an **in-place, protected install** on the Master, gated behind a
-  **provider snapshot** (the only reliable rollback for a host-wide installer).
-- It starts as **`status=test`** in `proxy_nodes` and is **never auto-promoted to `live`**.
-- **Status (2026-06-15): Docker build proven non-viable & TORN DOWN; DE will move to a separate VPS.** The pinned
-  v12.3.3 Docker stack came up but the panel never served (compose `$REDIS_PASSWORD` interpolation bug → Redis ran
-  password-less; DB migration errors). It was removed (`docker compose down -v` + dir deleted); Master back to
-  baseline. **Decision: the DE node is provisioned by Hiddify's supported host installer on a separate Ubuntu-22.04
-  VPS (audit Option C), NOT Docker-on-Master.** This makes DE a normal node (no longer the §4.1 co-location
-  exception). Node will start `status=test`. API contract still unverified pending that install. See
-  `PHASE3_HIDDIFY_LIVE_VERIFY.md`.
+- **Node:** `de1` — `5.249.160.59`, 4 vCPU / 4 GB / 25 GB SSD / 30 TB, **Ubuntu 22.04 LTS**, domain
+  `node-de.unseen.click`. Starts **`status=test`**, never auto-promoted to `live`; proxy traffic only.
+- **Why separate (not co-located):** the Master co-location attempt used Hiddify's experimental Docker (v12.3.3) and
+  the panel was non-functional (compose `$REDIS_PASSWORD` interpolation bug → Redis password-less; DB migration
+  errors); it was torn down. Hiddify officially labels Docker "not for permanent use." A separate VPS with the
+  **supported Ubuntu-22.04 host install** is the chosen path, and it keeps the protected control plane clean.
+- **Provisioning + live-verify workflow:** see [PHASE2_3_DE_NODE_PLAN.md](PHASE2_3_DE_NODE_PLAN.md). API contract
+  remains unverified until that install succeeds; **Phase 4 is blocked** until then.

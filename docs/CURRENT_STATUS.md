@@ -11,8 +11,8 @@ Where the UNSEEN PROXY build stands across the §34 deployment phases.
 |---|---|---|
 | 0 | Clean-VPS verification (gate before any build) | DONE (gate passed) |
 | 1 | Documentation, repo & architecture planning | DONE (pushed to origin/main, 25e5ddc) |
-| 2 | Hiddify test VPS setup (Master/DE co-located) | **PREFLIGHT DONE — install on HOLD** (see PHASE2_MASTER_DE_HIDDIFY_PREFLIGHT.md) |
-| 3 | Hiddify API & subscription compatibility audit | **PARTIAL — Docker build proven non-viable & torn down; API contract still unverified.** v12.3.3 Docker had a compose Redis-password bug (panel wouldn't serve); stack removed, Master back to baseline. **Decision: DE node → supported host install on a separate Ubuntu-22.04 VPS** (Option C). See PHASE3_HIDDIFY_LIVE_VERIFY.md |
+| 2 | Hiddify test node setup | **RE-SCOPED to a separate DE VPS** (`de1`, `5.249.160.59`, Ubuntu 22.04, planned/test). Master-co-location preflight done then RETIRED. Forward plan: PHASE2_3_DE_NODE_PLAN.md |
+| 3 | Hiddify API & subscription compatibility audit | **PARTIAL — Docker-on-Master proven non-viable & torn down; API contract still unverified.** Decision (ADR-001): DE → supported host install on a separate Ubuntu-22.04 VPS. Live-verify to be re-done on `de1`. See PHASE3_HIDDIFY_LIVE_VERIFY.md |
 | 4 | Database & backend clone design | PENDING |
 | 5 | Telegram bot implementation (Burmese-primary) | PENDING |
 | 6 | Hiddify subscription delivery integration | PENDING |
@@ -25,19 +25,16 @@ Where the UNSEEN PROXY build stands across the §34 deployment phases.
 
 ## Next up
 
-The DE node is **co-located on the Master** (§4.1 exception), so it is **not disposable** — the standard
-"wipe freely" rule does not apply. The protected preflight is complete with a **PARTIAL / HOLD** readiness
-decision: install must not proceed until (B1) the 80/443 + TLS coexistence strategy is decided, (B2) Charles
-takes & confirms a provider snapshot, (B3) a firewall/exposure plan exists, and (B4) the Phase 3 Hiddify
-port/API audit is done. Details + risks in `PHASE2_MASTER_DE_HIDDIFY_PREFLIGHT.md`.
+**Architecture (current):** the **Master is control-plane only** — co-location is **retired**
+([DECISIONS.md](DECISIONS.md) ADR-001). The Master was tested as a co-located DE node via Hiddify's experimental
+Docker (v12.3.3); the panel was non-functional (compose `$REDIS_PASSWORD` bug + DB migration errors), so it was torn
+down and the Master returned to baseline (SSH up, 80/443 free, Docker engine left installed but unused).
 
-**Next task:** the agent installed Hiddify via the official pinned Docker method (v12.3.3) with Charles's
-authorization. Host stayed safe (SSH up, control plane intact, isolated to `/opt/hiddify-manager`), **but the panel
-is non-functional** — Redis AUTH mis-wiring + DB migration errors mean 443 never served and the CLI hangs, so the
-live API/Swagger contract could **not** be verified. This empirically confirms Hiddify's "Docker not for permanent
-use" caveat. **Decision made (Charles): tear down + separate DE VPS.** The broken Docker stack was removed (`docker compose
-down -v` + dir removed); Master is back to baseline (SSH up, 80/443 free, INPUT ACCEPT; Docker engine kept). Root
-cause confirmed: a compose `$REDIS_PASSWORD` interpolation bug (Redis ran password-less while the panel used one).
-**Next concrete step:** stand up a small **Ubuntu-22.04 DE VPS** and run Hiddify's **supported host installer**
-there, then re-do live-verify (admin link → `0600`, Swagger → contract, one disposable test user). Phase 4 stays
-blocked until that verified contract exists. The protected Master stays control-plane-only.
+**DE node is now a dedicated separate VPS:** `de1`, `5.249.160.59`, 4 vCPU / 4 GB / 25 GB SSD / 30 TB, **Ubuntu
+22.04 LTS**, `status=test`, domain `node-de.unseen.click` — managed from the Master only, proxy traffic only.
+
+**Next task — Phase 2-DE / 3-DE** (see [PHASE2_3_DE_NODE_PLAN.md](PHASE2_3_DE_NODE_PLAN.md)): clean-VPS preflight on
+`de1` (verify 22.04, no legacy, ports/firewall/resources, DNS plan), Master→node SSH key setup, then Hiddify's
+**supported host install**, live Swagger/API-contract verification, one disposable test user, and FAST1/FAST2/Secure
+inbound checks. **No connection to the node yet** — that's the next authorized task. **Phase 4 stays blocked** until
+the DE node yields a verified-live API contract.

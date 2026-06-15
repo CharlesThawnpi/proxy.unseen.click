@@ -36,13 +36,13 @@ Observed via `ss -tulpn` (read-only). See `PHASE2_MASTER_DE_HIDDIFY_PREFLIGHT.md
 | 22/tcp | `0.0.0.0` + `[::]` | sshd | in use (keep) |
 | 53 udp/tcp | `127.0.0.x` | systemd-resolved | loopback stub |
 | 43417 / 22815 tcp | `127.0.0.1` | transient tooling (ephemeral) | not project services |
-| **80, 443** | — | **FREE** | reserved for nginx — see conflict below |
+| **80, 443** | — | **FREE** | reserved for the **control-plane nginx** (no Hiddify contention — co-location retired) |
 | 8190 / 8191 / 8192 / 8197 | — | **FREE** | reserved for admin/portal/api/sidecar |
 
-**⚠ Co-location port conflict (Master = DE node).** Hiddify Manager bundles its own web/proxy stack and TLS and
-expects to own **80/443** — the same ports the Master control plane needs for `api/bot/panel/app/sub`. This is the
-central blocker (B1); the coexistence strategy (shared reverse proxy / SNI split / alternate ports) must be decided
-**before install**, informed by the Phase 3 audit. Hiddify's actual panel/proxy port layout is **not assumed** here.
+**Co-location port conflict — RESOLVED (historical).** The original worry was that a co-located Hiddify would fight
+the control-plane nginx for **80/443**. With the DE node moved to its **own VPS** ([DECISIONS.md](DECISIONS.md)
+ADR-001), the Master nginx owns 80/443 **solely** for `api/bot/panel/app/sub/www`, and Hiddify owns 80/443 on the
+separate DE VPS (`5.249.160.59`). No shared-443 problem remains on the Master.
 
 ## Phase 3 audit — Hiddify port behavior (tiered)
 

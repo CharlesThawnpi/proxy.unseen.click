@@ -1,8 +1,10 @@
 # PHASE 2 — Protected Master/DE Hiddify Preflight
 
 > **Source of truth:** [IMPLEMENTATION_PLAN.md](../IMPLEMENTATION_PLAN.md) §4.1 (co-location exception), §6 (nodes), §34 Phase 2
-> **Status:** Preflight COMPLETE — **read-only**, no system changes made. Hiddify NOT installed.
-> **Readiness decision:** **PARTIAL / HOLD** — install must not proceed until the manual prerequisites below are met.
+> **Status:** Preflight COMPLETE (read-only). **SUPERSEDED for the Master** — co-location is RETIRED
+> ([DECISIONS.md](DECISIONS.md) ADR-001): this preflight targeted DE-on-Master, which was tested and abandoned. The
+> Master is now control-plane-only. The equivalent preflight for the **separate DE node VPS** lives in
+> [PHASE2_3_DE_NODE_PLAN.md](PHASE2_3_DE_NODE_PLAN.md). Retained as history.
 
 This is the protective, read-only preflight for later co-locating the **DE Hiddify test node** on the **Master**
 control-plane VPS (the documented §4.1 exception). It installs nothing and changes nothing. It records system

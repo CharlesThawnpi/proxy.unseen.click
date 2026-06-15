@@ -22,9 +22,11 @@ On the Master, **nginx is the only process bound to public `:80` and `:443`**. I
 
 Customers' proxy connections terminate on the regional node's own proxy inbounds (Hysteria2 / SS / VLESS-Reality) and its own TLS for its own node domain. The Master is not in the data path.
 
-## Master never proxies (except co-located DE)
+## Master never proxies (no exception)
 
-The Master carries **no proxy traffic**, with the one documented exception: the **co-located DE node** runs on the Master box (§4.1). That DE proxy traffic is budgeted and watched so it cannot starve the control plane, and the DE node is movable to its own VPS with no code change if it outgrows the shared box.
+The Master carries **no proxy traffic — full stop.** The former §4.1 co-location exception is **retired**
+([DECISIONS.md](DECISIONS.md) ADR-001): the DE node now runs on its **own dedicated VPS** (`de1`, `5.249.160.59`),
+reached by customers directly like any other node. The Master is control-plane only.
 
 ## Phase 2 preflight — current network state (2026-06-15, read-only)
 
@@ -34,20 +36,19 @@ The Master carries **no proxy traffic**, with the one documented exception: the 
   In practice exposure is limited today (only SSH is bound publicly), but **any future port bound to `0.0.0.0`
   becomes internet-reachable with no filtering**. A firewall/exposure plan (B3) is a prerequisite before opening
   Hiddify proxy ports, and must guarantee SSH stays reachable. See `PHASE2_MASTER_DE_HIDDIFY_PREFLIGHT.md`.
-- **Co-location TLS conflict:** nginx (control plane) and Hiddify (DE node) both expect 80/443 — see
-  [PORTS.md](PORTS.md). Unresolved until the Phase 3 audit informs the coexistence strategy.
+- **Co-location TLS conflict — RESOLVED by removing co-location.** Because the DE node now lives on its **own VPS**
+  ([DECISIONS.md](DECISIONS.md) ADR-001), there is **no 443 contention on the Master**: the Master nginx will own
+  80/443 solely for the control-plane subdomains (`api/bot/panel/app/sub/www`), and Hiddify owns 80/443 on the
+  separate DE VPS. The §B1 audit options below are now **historical** (kept for the record).
 
-## Phase 3 audit — co-location TLS/SNI strategy (proposed)
+## Phase 3 audit — co-location TLS/SNI strategy (HISTORICAL — co-location retired)
 
-Full analysis in [PHASE3_HIDDIFY_AUDIT_PLAN.md](PHASE3_HIDDIFY_AUDIT_PLAN.md). Summary:
+> These options were evaluated while DE-on-Master was still planned. **Option C (separate DE VPS) was chosen**, so the
+> 443-sharing problem no longer exists on the Master. Retained for history; see [PHASE3_HIDDIFY_AUDIT_PLAN.md](PHASE3_HIDDIFY_AUDIT_PLAN.md).
 
-- Only **one** process can bind public **443**; with a single shared IP, sharing it is an **SNI/host-routing**
-  problem, not a vhost add. Two viable shapes:
-  - **Option A (recommended for co-location):** **Master nginx fronts 443**, host-routing control-plane subdomains to
-    loopback services and reverse-proxying `node-de.unseen.click` panel/subscription HTTP to a **Docker Hiddify on a
-    remapped port** (e.g. `127.0.0.1:8443`). Proxy inbounds (Hysteria2 UDP, SS, Reality) get **dedicated ports**.
-  - **Option B:** Hiddify **HAProxy fronts 443** (SNI split) with the Master nginx behind it — native to Hiddify but
-    inverts the "nginx is sole 443 owner" design and couples control-plane TLS to Hiddify (higher risk).
-  - **Option C (lowest risk):** **separate DE VPS** — no 443 sharing at all (§6.1 makes this code-free).
+- Only **one** process can bind public **443**; with a single shared IP, sharing it would have been an **SNI/host-routing**
+  problem. The shapes considered:
+  - **Option A:** Master nginx fronts 443, reverse-proxying the co-located Hiddify HTTP; proxy inbounds on dedicated ports.
+  - **Option B:** Hiddify HAProxy fronts 443 (SNI split) with the Master nginx behind it.
+  - **Option C (CHOSEN):** **separate DE VPS** — no 443 sharing at all (§6.1 made this a code-free move).
 - Customers still receive only `https://sub.unseen.click/s/<token>`; the node's raw sub URL stays internal.
-- **[LIVE]** the final 443 owner and Reality's port are confirmed on a snapshot/sandbox before install is authorized.

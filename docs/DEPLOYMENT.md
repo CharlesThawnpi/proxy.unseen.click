@@ -48,9 +48,10 @@ The DB+`.env` backup before migrating is mandatory (see [BACKUPS.md](BACKUPS.md)
 
 - Node VPS run **stock Hiddify Manager**; only the Master pulls project code.
 - A node is configured/orchestrated by the Master over the Hiddify API v2 — not by a git checkout.
-- **Co-located DE node:** installing Hiddify on the Master itself is a **manual, host-level, snapshot-gated**
-  operation — explicitly **not** part of `git pull` deploy. It is on HOLD pending the preflight prerequisites
-  (`PHASE2_MASTER_DE_HIDDIFY_PREFLIGHT.md`) and the Phase 3 decision (`PHASE3_HIDDIFY_AUDIT_PLAN.md`).
+- **DE node = separate VPS (co-location retired, [DECISIONS.md](DECISIONS.md) ADR-001).** Hiddify is **not** installed
+  on the Master. The DE node (`5.249.160.59`, Ubuntu 22.04) is provisioned by Hiddify's **supported host installer**
+  on its own VPS, configured/orchestrated from the Master over API v2 — never by `git pull`. Workflow:
+  [PHASE2_3_DE_NODE_PLAN.md](PHASE2_3_DE_NODE_PLAN.md).
 
 ### Hiddify install method (Phase 3 audit, tiered)
 
@@ -69,5 +70,6 @@ The DB+`.env` backup before migrating is mandatory (see [BACKUPS.md](BACKUPS.md)
   stack (hiddify + mariadb + redis, bridge mode, only 80/443 published, `privileged`+`NET_ADMIN`).
 - **[VERIFIED-LIVE, 2026-06-15] The v12.3.3 Docker build did NOT produce a working panel** on this 24.04 Master:
   Redis AUTH mis-wiring + first-boot DB migration errors left 443 not serving and the CLI hanging. Confirms Hiddify's
-  **"Docker not recommended for permanent use"** caveat. **Recommended path for a usable DE node: the supported host
-  install on Ubuntu 22.04 (separate DE VPS, audit Option C).** See [PHASE3_HIDDIFY_LIVE_VERIFY.md](PHASE3_HIDDIFY_LIVE_VERIFY.md).
+  **"Docker not recommended for permanent use"** caveat. **Decision taken (ADR-001): the DE node uses the supported
+  host install on Ubuntu 22.04 on a separate VPS** (`5.249.160.59`). See [PHASE3_HIDDIFY_LIVE_VERIFY.md](PHASE3_HIDDIFY_LIVE_VERIFY.md)
+  and [PHASE2_3_DE_NODE_PLAN.md](PHASE2_3_DE_NODE_PLAN.md).
