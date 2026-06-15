@@ -57,6 +57,9 @@ See [PHASE3_HIDDIFY_AUDIT_PLAN.md](PHASE3_HIDDIFY_AUDIT_PLAN.md) for sources.
 - **Key constraint:** Hysteria2 (UDP/QUIC), Reality (raw-TLS/SNI), and SS are **not HTTP** and **cannot be nginx
   HTTP-reverse-proxied** — they need dedicated ports or HAProxy SNI fronting. Only the panel/subscription HTTP(S)
   can sit behind the Master nginx.
+- **[DE node `de1` preflight, 2026-06-15]** Detected listeners on `5.249.160.59`: **only SSH `:22`** (public) +
+  `systemd-resolved :53` (loopback). **80/443 and all proxy ports are FREE**; no nginx/docker. Real Hiddify
+  panel/sub/Hysteria2/SS/Reality ports will be recorded at Phase 3-DE (after the 22.04 reinstall + host install).
 - **[LIVE 2026-06-15]** A test Docker install (v12.3.3) briefly bound host **80 + 443 via `docker-proxy`** (bridge
   mode; redis/mariadb stayed container-internal), then was **torn down — 80/443 are FREE again**. Because the DE node
   now moves to a **separate VPS**, the §B1 80/443 co-location conflict on the Master no longer applies; the Master

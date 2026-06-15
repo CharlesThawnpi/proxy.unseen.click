@@ -5,6 +5,19 @@
 
 Chronological record of notable changes to the UNSEEN PROXY project.
 
+## 2026-06-15 — Phase 2-DE: de1 SSH verified + clean preflight — PARTIAL (OS = 20.04)
+
+- Root key SSH to `de1` now **works** (key-only, host key pinned). Ran a **read-only** node-facts preflight (no
+  writes/installs/changes on the node).
+- **Detected (authoritative, ADR-002):** Ubuntu **20.04.6** LTS / kernel 5.4 (hostname `white-cobra-75504`); 4 vCPU
+  (Xeon E5-2690 v4); **3.1 GiB RAM** (+1.9 GiB swap); 25 GB disk (18 GB free); `eth0 5.249.160.59`, egress matches;
+  only SSH:22 public, 80/443 free; **no firewall**; nginx/docker/certbot absent; **legacy scan CLEAN**.
+- **Estimate vs detected:** CPU ✓, disk ✓, IP ✓; **RAM under** (3.1 vs 4 GB); **OS MISMATCH** (20.04 vs required 22.04).
+- **Result: PARTIAL — blocker is OS.** `de1` must be **reinstalled to Ubuntu 22.04 LTS** (then re-add the Master key,
+  re-run preflight) before the Hiddify host install. Node hardening (disable password login, firewall) deferred to
+  Phase 3-DE. New report `PHASE2_DE1_PREFLIGHT.md`; updated SERVERS/NODES/NETWORK/PORTS/DEPLOYMENT/SECURITY/
+  CURRENT_STATUS. Docs only.
+
 ## 2026-06-15 — de1 SSH connectivity test — PARTIAL/HOLD (key not yet authorized)
 
 - Tested Master→`de1` SSH with the dedicated key (`/root/.ssh/unseenproxy_de1_ed25519`, `IdentitiesOnly`,

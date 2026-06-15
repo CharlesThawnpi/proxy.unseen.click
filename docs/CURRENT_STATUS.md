@@ -40,11 +40,12 @@ node's real facts (read-only) at preflight and those override the estimates.
 `/root/.ssh/unseenproxy_de1_ed25519` (private `600`, root-only) / `.pub` (`644`), comment `unseen-proxy-master-to-de1`,
 fingerprint `SHA256:jUYAdY0ONdXKzOg2s4OKO27yBGqLvBwapkEy25oA3+I`.
 
-**SSH connectivity test (2026-06-15) — PARTIAL / HOLD.** `de1` is **reachable** (TCP/22 open, SSH handshake OK, host
-key pinned in `known_hosts`), but the Master key is **not yet authorized**: both `root@5.249.160.59` and
-`ubuntu@5.249.160.59` return `Permission denied (publickey)`. The provider-panel key add hasn't taken effect for
-either user. **Charles must install the public key on `de1`** via the provider console/terminal (fallback command in
-CHANGELOG / below), then we re-test. No node changes made; password login not attempted.
+**Phase 2-DE preflight (2026-06-15) — PARTIAL.** Root key SSH now **works** (Charles installed the key). Read-only
+preflight ran: `de1` is **clean** (no legacy/proxy artifacts, no nginx/docker/certbot, only SSH:22 public, no
+firewall), CPU 4 ✓, disk 25 GB ✓, public IP `5.249.160.59` ✓, RAM **3.1 GiB** (vs 4 GB estimate). **BLOCKER: OS is
+Ubuntu 20.04.6, not the required 22.04.** → Charles **reinstalls `de1` to Ubuntu 22.04**, re-adds the Master public
+key, then we **re-run preflight** before the Phase 3-DE Hiddify host install. Full report:
+[PHASE2_DE1_PREFLIGHT.md](PHASE2_DE1_PREFLIGHT.md). No node changes made.
 
 **Next task — Phase 2-DE / 3-DE** (see [PHASE2_3_DE_NODE_PLAN.md](PHASE2_3_DE_NODE_PLAN.md)): clean-VPS preflight on
 `de1` (verify 22.04, no legacy, ports/firewall/resources, DNS plan), Master→node SSH key setup, then Hiddify's

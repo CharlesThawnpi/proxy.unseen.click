@@ -42,11 +42,22 @@ E5-2680 v4, ~13 GiB RAM free, 4 GiB swap, 86 GB disk free). A co-location attemp
 Hiddify's **supported host installer on Ubuntu 22.04** (not Docker, not on the Master) — see
 [PHASE2_3_DE_NODE_PLAN.md](PHASE2_3_DE_NODE_PLAN.md). Node domain `node-de.unseen.click`.
 
-> **These values are provider/purchase ESTIMATES (provenance = `estimate`, unverified).** Per
-> [DECISIONS.md](DECISIONS.md) ADR-002, the Master must **detect** the node's real OS/CPU/RAM/disk/ports (read-only)
-> at preflight and record them as `detected` (authoritative), overriding the estimates here; the **30 TB bandwidth**
-> stays `estimate` until `provider-confirmed` via a provider API/dashboard. Don't treat the table as measured fact
-> until preflight runs.
+> **These values were provider/purchase ESTIMATES; preflight has now DETECTED actuals (2026-06-15).** Per
+> [DECISIONS.md](DECISIONS.md) ADR-002 the detected values are authoritative. Full report:
+> [PHASE2_DE1_PREFLIGHT.md](PHASE2_DE1_PREFLIGHT.md).
+>
+> | Field | Estimate | **Detected** | Provenance |
+> |---|---|---|---|
+> | OS | Ubuntu 22.04 | **Ubuntu 20.04.6 LTS (focal)** ❌ mismatch — reinstall to 22.04 required | detected |
+> | vCPU | 4 | 4 (Xeon E5-2690 v4) | detected |
+> | RAM | 4 GB | **3.1 GiB** (+1.9 GiB swap) ⚠ under | detected |
+> | Disk | 25 GB | 25 GB (18 GB free) | detected |
+> | Public IP | 5.249.160.59 | 5.249.160.59 (eth0 + egress) | detected |
+> | Bandwidth | 30 TB/mo | not node-detectable | estimate (unconfirmed) |
+>
+> Hostname `white-cobra-75504`. Node is **clean** (no legacy/proxy artifacts; only SSH:22 public; no nginx/docker).
+> **Blocker:** OS must be reinstalled to **Ubuntu 22.04** (then re-add the Master key + re-run preflight) before the
+> Hiddify host install.
 
 Seed values (SG/US): `ram_mb` = 2048/2048/6144; `disk_gb` = 60/20/100; `bandwidth_budget_gb` = 10000/2000/9800. SG has two nodes — the offering/sidecar logic supports multiple nodes per region, and graceful degradation means if `sg1` is down, `sg2` still serves SG (§6.2).
 

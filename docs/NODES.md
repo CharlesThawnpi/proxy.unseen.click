@@ -60,3 +60,6 @@ above applies normally (fresh VPS, host install, least-privilege API key, manage
   **supported Ubuntu-22.04 host install** is the chosen path, and it keeps the protected control plane clean.
 - **Provisioning + live-verify workflow:** see [PHASE2_3_DE_NODE_PLAN.md](PHASE2_3_DE_NODE_PLAN.md). API contract
   remains unverified until that install succeeds; **Phase 4 is blocked** until then.
+- **Preflight (2026-06-15): PARTIAL** — SSH root key login works; node **clean** (no legacy/proxy artifacts; only
+  SSH:22 public; no firewall). **Blocker: OS is Ubuntu 20.04.6, not 22.04** → reinstall to 22.04, re-add key, re-run
+  preflight before Phase 3-DE. RAM detected 3.1 GiB (vs 4 GB estimate). Detail: [PHASE2_DE1_PREFLIGHT.md](PHASE2_DE1_PREFLIGHT.md).
