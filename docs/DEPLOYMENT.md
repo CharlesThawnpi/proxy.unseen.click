@@ -99,6 +99,12 @@ The portal HTTP adapter (`backend/portal_http.py` + `portal_middleware`/`portal_
 
 ### Hiddify install method (Phase 3 audit, tiered)
 
+> **➡ Baseline for all future nodes: [HIDDIFY_NODE_INSTALL_RUNBOOK.md](HIDDIFY_NODE_INSTALL_RUNBOOK.md).** Future US/SG
+> node installs (`us1`, `sg1`, `sg2`, …) **must** follow that runbook — the de1 success pattern (dedicated VPS, Ubuntu
+> 22.04 **host** install version-pinned under **umask 022**, disk/LVM grown first, admin link `0600`, API verified with
+> the bounded `marshmallow==3.26.1` pin if the v4 issue appears, disposable-user check, protocols, SSH hardening,
+> firewall, `status=test`). **Do not repeat Master co-location or Docker-on-Master** (both retired/failed — ADR-001).
+
 - **[VERIFIED]** Two methods: host `install.sh` (brings nginx/HAProxy/Xray/sing-box/MariaDB/Redis to the host) or
   **Docker** (containerized; bundles Redis/MariaDB). Install path **`/opt/hiddify-manager/`** — separate from
   `/opt/unseen-proxy/`, no collision.

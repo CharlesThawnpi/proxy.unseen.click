@@ -1,6 +1,6 @@
 # UNSEEN PROXY — SOURCE OF TRUTH (consolidated, auto-generated)
 
-> **Generated:** 2026-06-16T12:50:34Z — by `scripts/build_source_of_truth.sh`.
+> **Generated:** 2026-06-16T13:03:13Z — by `scripts/build_source_of_truth.sh`.
 > **This is the live project state for external readers (e.g. the Custom GPT).** It is DERIVED from the
 > canonical docs below and regenerated each task. Upload THIS file to the GPT (not IMPLEMENTATION_PLAN.md,
 > which is the static v1.9 plan). Re-download after updates.
@@ -205,6 +205,14 @@ Firewall: 22/80/443 tcp + 443 udp allowed, SSH safe. **`leaked_key_rebuild_pendi
 seed blocker swapped to `realdevice_protocol_test_pending`). **de1 stays `status=test`; live still hard-disabled by
 `phase4c_live_disabled`.** Admin link stored only at `/root/hiddify-de1-admin.link` (0600); no secrets committed.
 225 tests PASS.
+
+**Reusable node install runbook (2026-06-16)** ([HIDDIFY_NODE_INSTALL_RUNBOOK.md](HIDDIFY_NODE_INSTALL_RUNBOOK.md)):
+the de1 success pattern is now the **baseline install method for all future Hiddify nodes (US, SG1, SG2, …)** —
+dedicated VPS (never Master co-location), Ubuntu 22.04 host install (never Docker), version-pinned under **umask 022**,
+disk/LVM grown first, admin link `0600` outside git, API verified (bounded `marshmallow==3.26.1` pin if the v4 issue
+appears), disposable-user lifecycle, protocols present, SSH hardened, firewall verified, `status=test` until
+Charles-gated promotion. Future US/SG installs **must** follow this runbook and must **not** repeat Master co-location
+or Docker-on-Master.
 
 **Next: Charles records the real-device FAST1/FAST2/Secure connect PASS** (clears `realdevice_protocol_test_pending`;
 `#TASK_for_Charles` in PHASE9_DE1_REBUILD_FRESH_HIDDIFY.md). Then separately-gated tasks remain (public portal
@@ -574,6 +582,20 @@ The verified Hiddify Manager **API v2** contract — endpoints, fields, units, a
 
 Chronological record of notable changes to the UNSEEN PROXY project.
 
+## 2026-06-16 — Reusable Hiddify node install runbook — docs only
+
+- Added [HIDDIFY_NODE_INSTALL_RUNBOOK.md](HIDDIFY_NODE_INSTALL_RUNBOOK.md): the baseline, secret-safe install method for
+  all **future Hiddify nodes** (US, SG1, SG2, future regions), distilled from the successful de1 rebuild/install.
+  Captures the working order (dedicated VPS → 22.04 → SSH/known_hosts → DNS → 80/443 free → clean scan → disk/LVM grow →
+  pinned host install under **umask 022** → admin link `0600` → verify services/API → bounded `marshmallow==3.26.1` pin
+  if needed → disposable user → protocols → SSH hardening → firewall → `status=test`), the problems/lessons table
+  (no co-location, no Docker, preflight OS/network/RAM/disk, umask 022, marshmallow pin, leaked-secret rebuild,
+  firewall-after-Hiddify, real-device test), a per-node checklist, node naming/domain examples, secret-safety, rollback,
+  and PASS criteria.
+- Referenced the runbook from PHASE9, DEPLOYMENT, NODES, SECURITY, ROLLBACK, CURRENT_STATUS; future US/SG installs must
+  follow it and must **not** repeat Master co-location or Docker-on-Master. Docs only — no node access, no install, no
+  Hiddify calls, no service changes; SOURCE_OF_TRUTH regenerated.
+
 ## 2026-06-16 — Phase 9: de1 rebuild + fresh Hiddify reinstall + API/protocol verify — PASS
 
 - Verified the freshly rebuilt de1 (Ubuntu 22.04.5), refreshed only its `known_hosts` entry, ran read-only preflight.
@@ -643,20 +665,6 @@ Chronological record of notable changes to the UNSEEN PROXY project.
 - Added `backend/timezone.py` helpers: `now_mmt`, `to_mmt`, `format_mmt`, `today_mmt`, `parse_mmt`, `storage_mmt`.
 - Added tests for offset, aware datetimes, UTC→MMT conversion, formatting labels, subscription-style examples, and
   rejection of naive external datetimes.
-- Documented legacy SQLite `datetime('now')` behavior as a pre-live follow-up; no production DB data or migrations were
-  changed in this task.
-
-## 2026-06-16 — Phase 8B: portal auth/session foundation (render-only, dry-run) — PASS
-
-- **Hash-only portal auth/session primitives:** additive migration `0006_phase8b.sql` creates `portal_access_tokens`
-  and `portal_sessions`; both store only hashes/handles, FK refs, status, expiry, and revocation timestamps. No raw
-  portal token or raw session id column exists.
-- **Modules:** `portal_tokens` (secure randomness, SHA-256 handles, redaction, constant-time compare),
-  `portal_access` (issue/verify/revoke), `portal_sessions` (create/verify/revoke + future cookie attributes),
-  `branded_link_resolver` (`/s/<opaque-token>` boundary). Audit rows are sanitized.
-- **Route guards:** `/customer/status` and `/subscriptions/<id>` now require a `PortalSessionContext`; public pages stay
-  public. `/s/<token>` resolves synthetic hash-backed tokens and creates a dry-run session row; unknown/expired/revoked
-  tokens render safe not-found/expired pages without leaking the token.
 
 
 ---

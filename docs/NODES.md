@@ -15,6 +15,10 @@ Each region is one or more independent node VPS, each running a full **Hiddify M
 
 ## Node provisioning standard (per node)
 
+> **Step-by-step runbook: [HIDDIFY_NODE_INSTALL_RUNBOOK.md](HIDDIFY_NODE_INSTALL_RUNBOOK.md)** — the reusable, ordered,
+> secret-safe install guide derived from the successful de1 build. **All future nodes (US, SG1, SG2, …) follow it**; the
+> summary below is the high-level standard. Do **not** repeat Master co-location or Docker-on-Master (ADR-001).
+
 1. Fresh VPS, hardened SSH (key-only; managed keys held on Master under `/root/.ssh/unseenproxy_<region>_ed25519`).
 2. Install Hiddify Manager (official installer).
 3. Configure the protocol inbounds: **Hysteria2 (FAST1)**, **Shadowsocks (FAST2)**, **VLESS-Reality (Secure)**. Keep the panel admin path secret; expose only proxy ports + the sub domain publicly.

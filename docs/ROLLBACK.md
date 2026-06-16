@@ -31,6 +31,13 @@ How to safely undo a change. Code rollback and data rollback are **separate** me
 > the **ordinary node rollback** (rebuild/re-provision from the Master; a fresh node VPS is disposable, so a snapshot
 > is optional). The text below is retained as history of the attempted co-location.
 
+## Node install rollback (reusable)
+
+Per [HIDDIFY_NODE_INSTALL_RUNBOOK.md](HIDDIFY_NODE_INSTALL_RUNBOOK.md) §7: a fresh node with no real customers is
+**provider-reinstallable** (the Master holds the authoritative user set, so a node is disposable); **rebuild is
+preferred if any protocol secret leaks**; the node **remains `status=test`** until verified. These apply to every
+future node (US, SG1, SG2, …), not just de1.
+
 ## de1 fresh-rebuild + reinstall rollback (Phase 9, 2026-06-16)
 
 The de1 rebuild/reinstall ([PHASE9_DE1_REBUILD_FRESH_HIDDIFY.md](PHASE9_DE1_REBUILD_FRESH_HIDDIFY.md)) is reversible:

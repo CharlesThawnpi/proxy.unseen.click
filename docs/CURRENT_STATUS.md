@@ -174,6 +174,14 @@ seed blocker swapped to `realdevice_protocol_test_pending`). **de1 stays `status
 `phase4c_live_disabled`.** Admin link stored only at `/root/hiddify-de1-admin.link` (0600); no secrets committed.
 225 tests PASS.
 
+**Reusable node install runbook (2026-06-16)** ([HIDDIFY_NODE_INSTALL_RUNBOOK.md](HIDDIFY_NODE_INSTALL_RUNBOOK.md)):
+the de1 success pattern is now the **baseline install method for all future Hiddify nodes (US, SG1, SG2, …)** —
+dedicated VPS (never Master co-location), Ubuntu 22.04 host install (never Docker), version-pinned under **umask 022**,
+disk/LVM grown first, admin link `0600` outside git, API verified (bounded `marshmallow==3.26.1` pin if the v4 issue
+appears), disposable-user lifecycle, protocols present, SSH hardened, firewall verified, `status=test` until
+Charles-gated promotion. Future US/SG installs **must** follow this runbook and must **not** repeat Master co-location
+or Docker-on-Master.
+
 **Next: Charles records the real-device FAST1/FAST2/Secure connect PASS** (clears `realdevice_protocol_test_pending`;
 `#TASK_for_Charles` in PHASE9_DE1_REBUILD_FRESH_HIDDIFY.md). Then separately-gated tasks remain (public portal
 deployment: nginx/TLS + systemd + public-bind approval for the portal HTTP adapter & `sub.unseen.click` sidecar;

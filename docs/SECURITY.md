@@ -78,6 +78,10 @@ A no-downtime rotation runbook exists for the two long-lived secret classes — 
 
 ## Hiddify-specific secret & exposure rules (Phase 3 audit)
 
+> **Future node installs follow [HIDDIFY_NODE_INSTALL_RUNBOOK.md](HIDDIFY_NODE_INSTALL_RUNBOOK.md)** §6 (secret safety):
+> admin link only in `/root/hiddify-<node>-admin.link` (`0600`); API verification emits only status codes / JSON key
+> names / counts (never bodies); always `curl -o` to files + quote UA/headers; disposable test users only.
+
 From the verified Hiddify model (see [PHASE3_HIDDIFY_AUDIT_PLAN.md](PHASE3_HIDDIFY_AUDIT_PLAN.md) /
 [HIDDIFY_API_CONTRACT.md](HIDDIFY_API_CONTRACT.md)):
 

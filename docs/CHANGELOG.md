@@ -5,6 +5,20 @@
 
 Chronological record of notable changes to the UNSEEN PROXY project.
 
+## 2026-06-16 — Reusable Hiddify node install runbook — docs only
+
+- Added [HIDDIFY_NODE_INSTALL_RUNBOOK.md](HIDDIFY_NODE_INSTALL_RUNBOOK.md): the baseline, secret-safe install method for
+  all **future Hiddify nodes** (US, SG1, SG2, future regions), distilled from the successful de1 rebuild/install.
+  Captures the working order (dedicated VPS → 22.04 → SSH/known_hosts → DNS → 80/443 free → clean scan → disk/LVM grow →
+  pinned host install under **umask 022** → admin link `0600` → verify services/API → bounded `marshmallow==3.26.1` pin
+  if needed → disposable user → protocols → SSH hardening → firewall → `status=test`), the problems/lessons table
+  (no co-location, no Docker, preflight OS/network/RAM/disk, umask 022, marshmallow pin, leaked-secret rebuild,
+  firewall-after-Hiddify, real-device test), a per-node checklist, node naming/domain examples, secret-safety, rollback,
+  and PASS criteria.
+- Referenced the runbook from PHASE9, DEPLOYMENT, NODES, SECURITY, ROLLBACK, CURRENT_STATUS; future US/SG installs must
+  follow it and must **not** repeat Master co-location or Docker-on-Master. Docs only — no node access, no install, no
+  Hiddify calls, no service changes; SOURCE_OF_TRUTH regenerated.
+
 ## 2026-06-16 — Phase 9: de1 rebuild + fresh Hiddify reinstall + API/protocol verify — PASS
 
 - Verified the freshly rebuilt de1 (Ubuntu 22.04.5), refreshed only its `known_hosts` entry, ran read-only preflight.

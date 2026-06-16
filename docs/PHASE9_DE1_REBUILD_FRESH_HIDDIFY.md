@@ -13,6 +13,11 @@ API v2 contract + protocols on a real install, run a single disposable test-user
 firewall/ports, and clear the leaked-key blocker **only** if the clean rebuild + install verification pass. No live
 promotion.
 
+> **Reusable runbook:** the working method documented here is generalized into
+> [HIDDIFY_NODE_INSTALL_RUNBOOK.md](HIDDIFY_NODE_INSTALL_RUNBOOK.md) — the baseline for all future nodes (US, SG1, SG2,
+> …). Future installs follow that runbook (dedicated VPS, host install, umask 022, the marshmallow pin if needed, etc.)
+> and must not repeat Master co-location or Docker-on-Master.
+
 ## Node identity
 
 | Field | Value |
