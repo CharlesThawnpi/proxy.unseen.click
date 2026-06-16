@@ -5,6 +5,25 @@
 
 Chronological record of notable changes to the UNSEEN PROXY project.
 
+## 2026-06-16 — Phase 7: health monitor foundation (read-only, dry-run) — PASS
+
+- **Read-only, dry-run only** (stdlib): no daemon, no systemd, no node modified, no Hiddify mutation, no secrets
+  fetched, no Telegram send; de1 stays `status=test`. See [PHASE7_HEALTH_MONITOR_FOUNDATION.md](PHASE7_HEALTH_MONITOR_FOUNDATION.md).
+  **No schema change** (existing `node_metrics`/`node_alerts`/`settings` suffice).
+- **`node_probe`** — sanitized `ProbeResult` + `MockProber` (default; no network) + opt-in `PublicTcpProber`
+  (read-only public TCP 22/80/443; no payload, no admin path). **`probe_sanitizer`** — raw errors → reason codes
+  (`probe_timeout`/`probe_error_sanitized`), never host/URL/IP.
+- **`alerting`** — thresholds from `settings` (warn≈75/critical≈90); idempotent WARN/CRITICAL/DOWN reconcile (one open
+  alert per node+metric; level-change clears+raises; resolved clears). **`metric_writer`** — append-only `node_metrics`.
+  **`health_monitor.monitor_once`** — single pass; dry-run default writes nothing; `--write-metrics` writes only to the
+  explicit `--db`. No daemon/scheduler.
+- **Resilience integration:** `node_resilience.node_health` refined — reachability **DOWN → down** (dropped); resource
+  **CRITICAL/WARN → degraded** (dry-run candidate, not live-ready). Degraded policy documented + tested. de1 still
+  blocks live (`node_status_test` + `leaked_key_rebuild_pending`).
+- New CLIs: `bin/node_health_probe_dry_run.py`, `bin/node_health_monitor_once.py`, `bin/node_alerts_preview.py`.
+  **Tests: 163 PASS** (144 + 19 new, incl. no-network guard + sanitization). Updated DATABASE/NODES/SECURITY/
+  DEPLOYMENT/CURRENT_STATUS; new health-monitor doc.
+
 ## 2026-06-16 — Phase 7: entitlement + node-resilience foundation (dry-run) — PASS
 
 - **DB-driven, dry-run only** (stdlib): no node marked live, no live Hiddify, no de1 metrics fetched, no Telegram send;

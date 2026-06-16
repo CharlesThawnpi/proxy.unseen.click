@@ -57,14 +57,23 @@ class NodeReadiness:
 
 
 def node_health(conn: sqlite3.Connection, node_code: str) -> str:
-    """Derive health from OPEN node_alerts (cleared_at IS NULL). No real metrics needed."""
+    """Derive health from OPEN node_alerts (cleared_at IS NULL).
+
+    Policy (Phase 7 health monitor):
+      - a **DOWN** alert (reachability: tcp_443/tcp_80/panel) → `down` → node is DROPPED from all
+        candidates (no traffic to an unreachable node).
+      - a **CRITICAL** or **WARN** alert (resource pressure: cpu/ram/disk, or ssh/management) →
+        `degraded`. A degraded node REMAINS a dry-run candidate (previews still show it) but is
+        NOT live-ready (we don't route live traffic to a stressed node — `node_degraded` is an open
+        reason, so `live_ready` is False).
+    """
     rows = conn.execute(
         "SELECT level FROM node_alerts WHERE node_code=? AND cleared_at IS NULL", (node_code,)
     ).fetchall()
     levels = {(r[0] or "").upper() for r in rows}
-    if "DOWN" in levels or "CRITICAL" in levels:
+    if "DOWN" in levels:
         return HEALTH_DOWN
-    if "WARN" in levels:
+    if "CRITICAL" in levels or "WARN" in levels:
         return HEALTH_DEGRADED
     return HEALTH_HEALTHY
 

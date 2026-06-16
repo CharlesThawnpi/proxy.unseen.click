@@ -1,6 +1,6 @@
 # UNSEEN PROXY — SOURCE OF TRUTH (consolidated, auto-generated)
 
-> **Generated:** 2026-06-16T05:38:45Z — by `scripts/build_source_of_truth.sh`.
+> **Generated:** 2026-06-16T06:13:31Z — by `scripts/build_source_of_truth.sh`.
 > **This is the live project state for external readers (e.g. the Custom GPT).** It is DERIVED from the
 > canonical docs below and regenerated each task. Upload THIS file to the GPT (not IMPLEMENTATION_PLAN.md,
 > which is the static v1.9 plan). Re-download after updates.
@@ -142,14 +142,19 @@ normalizer + NotificationService/Telegram render integration. Additive migration
 no raw-link column). 122 tests PASS. **No raw links persisted/logged; no network/send.**
 
 **Phase 7 entitlement + node-resilience foundation complete (2026-06-16)** ([PHASE7_ENTITLEMENT_NODE_RESILIENCE.md](PHASE7_ENTITLEMENT_NODE_RESILIENCE.md)):
-DB-driven entitlement resolver + node status/health readiness (graceful degradation; data-driven `node_live_blockers`)
-+ availability resolver + provisioning-plan integration + honest Burmese availability copy. Additive migration `0005`
-(`proxy_node_protocols`, `node_live_blockers`). 144 tests PASS. **No node live; no metrics fetch; no send.**
+DB-driven entitlement resolver + node status/health readiness + availability resolver + provisioning-plan integration.
+Additive migration `0005`.
 
-**Next: Phase 7 health monitor (gated) or Phase 8 (web portal).** **Before de1 goes live:** rebuild the node (clears
+**Phase 7 health monitor foundation complete (2026-06-16)** ([PHASE7_HEALTH_MONITOR_FOUNDATION.md](PHASE7_HEALTH_MONITOR_FOUNDATION.md)):
+read-only sanitized probes (`node_probe` mock default + opt-in public-TCP) → `metric_writer` (append `node_metrics`) +
+`alerting` (idempotent WARN/CRITICAL/DOWN from `settings` thresholds) → feeds `node_resilience` (DOWN→down/dropped;
+CRITICAL/WARN→degraded, dry-run candidate but not live-ready). `health_monitor.monitor_once` is single-pass, dry-run by
+default; **no daemon/systemd/secrets/network**. 163 tests PASS.
+
+**Next: Phase 8 (web portal) or a gated monitor scheduler.** **Before de1 goes live:** rebuild the node (clears
 `leaked_key_rebuild_pending`) + a real-device FAST1/FAST2/Secure test (`#TASK_for_Charles` in
-PHASE4_PRELIVE_DE1_TUNING.md), then separately-gated tasks (bot live latches + real opener, `sub.unseen.click` sidecar,
-live provisioning). Live promotion stays Charles-gated.
+PHASE4_PRELIVE_DE1_TUNING.md), then separately-gated tasks (periodic monitor + read-only SSH metrics, bot live latches
++ real opener, `sub.unseen.click` sidecar, live provisioning). Live promotion stays Charles-gated.
 
 **OS path decided (2026-06-15):** in-place `do-release-upgrade` was considered, but since `de1` is **empty** the
 safer, same-outcome choice is a **clean provider reinstall to Ubuntu 22.04** (Charles). A read-only pre-upgrade gate
@@ -384,6 +389,25 @@ The verified Hiddify Manager **API v2** contract — endpoints, fields, units, a
 
 Chronological record of notable changes to the UNSEEN PROXY project.
 
+## 2026-06-16 — Phase 7: health monitor foundation (read-only, dry-run) — PASS
+
+- **Read-only, dry-run only** (stdlib): no daemon, no systemd, no node modified, no Hiddify mutation, no secrets
+  fetched, no Telegram send; de1 stays `status=test`. See [PHASE7_HEALTH_MONITOR_FOUNDATION.md](PHASE7_HEALTH_MONITOR_FOUNDATION.md).
+  **No schema change** (existing `node_metrics`/`node_alerts`/`settings` suffice).
+- **`node_probe`** — sanitized `ProbeResult` + `MockProber` (default; no network) + opt-in `PublicTcpProber`
+  (read-only public TCP 22/80/443; no payload, no admin path). **`probe_sanitizer`** — raw errors → reason codes
+  (`probe_timeout`/`probe_error_sanitized`), never host/URL/IP.
+- **`alerting`** — thresholds from `settings` (warn≈75/critical≈90); idempotent WARN/CRITICAL/DOWN reconcile (one open
+  alert per node+metric; level-change clears+raises; resolved clears). **`metric_writer`** — append-only `node_metrics`.
+  **`health_monitor.monitor_once`** — single pass; dry-run default writes nothing; `--write-metrics` writes only to the
+  explicit `--db`. No daemon/scheduler.
+- **Resilience integration:** `node_resilience.node_health` refined — reachability **DOWN → down** (dropped); resource
+  **CRITICAL/WARN → degraded** (dry-run candidate, not live-ready). Degraded policy documented + tested. de1 still
+  blocks live (`node_status_test` + `leaked_key_rebuild_pending`).
+- New CLIs: `bin/node_health_probe_dry_run.py`, `bin/node_health_monitor_once.py`, `bin/node_alerts_preview.py`.
+  **Tests: 163 PASS** (144 + 19 new, incl. no-network guard + sanitization). Updated DATABASE/NODES/SECURITY/
+  DEPLOYMENT/CURRENT_STATUS; new health-monitor doc.
+
 ## 2026-06-16 — Phase 7: entitlement + node-resilience foundation (dry-run) — PASS
 
 - **DB-driven, dry-run only** (stdlib): no node marked live, no live Hiddify, no de1 metrics fetched, no Telegram send;
@@ -448,25 +472,6 @@ Chronological record of notable changes to the UNSEEN PROXY project.
 - **New modules:** `telegram_adapter` (dry-run boundary; token redacted; live sends hard-refused via
   `config.PHASE5_LIVE_SEND_DISABLED`), `telegram_messages` (Burmese-primary catalogue; English product terms kept),
   `telegram_commands` (defensive `parse_update`), `bot_flows` (DB-driven plan/status/admin content), `telegram_router`
-  (routes `/start`,`/help`,`/plans`,`/account`,`/link`,`/admin`,fallback), `bot_context` (env-driven admin ids).
-- **Identity:** `/start` resolves via AccountService (telegram platform); the Telegram id is a `platform_accounts`
-  key, never the customer identity; `/start` idempotent. **Plans render from DB rows** (DE default, SG premium-only
-  PRO/MAX, FAST label rule) — not hardcoded.
-- **Admin:** ids from `ADMIN_TELEGRAM_IDS` (fallback `TELEGRAM_ADMIN_IDS`), parsed safely, never logged; `/admin` =
-  DB-only sanitized counts for admins, Burmese denial otherwise. **NotificationService** integration is queue-only
-  (`payload_ref`, no body/secret).
-- `.env.example`: added `ADMIN_TELEGRAM_IDS` placeholder (kept `TELEGRAM_ADMIN_IDS` alias); no real token/id committed.
-- New CLIs: `bin/telegram_bot_smoke.py`, `bin/render_telegram_messages.py` (temp DB). **Tests: 89 PASS** (70 + 19 new,
-  incl. no-network-call guard + token-redaction). Updated BOT_FLOWS/SECURITY/DEPLOYMENT/CURRENT_STATUS; new PHASE5 doc.
-
-## 2026-06-16 — Phase 4C: dry-run provisioning orchestration — PASS
-
-- **Dry-run orchestration only** (stdlib). No live Hiddify call, no Hiddify user, no real customer/subscription, no
-  message sent, no service started; de1 stays `status=test`; live hard-disabled. See
-  [PHASE4C_DRY_RUN_PROVISIONING.md](PHASE4C_DRY_RUN_PROVISIONING.md).
-- **Additive migration** `0003_phase4c.sql`: `subscriptions.provision_status`, `payment_orders.approved_at`, new
-  `provisioning_attempts` (FK-enforced) + indexes. Idempotent re-run verified.
-- **Flow wired:** AccountService → `payment_approval_service` (idempotent dry-run approval) → `subscription_service`
 
 
 ---

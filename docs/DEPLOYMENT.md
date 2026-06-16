@@ -149,3 +149,12 @@ read-only: it never contacts a node, fetches metrics, or marks anything live. Dr
 Node health is derived from `node_alerts`; populating those from real read-only probes (a health monitor) is a future,
 sanitized task. Live candidate selection (status=live + healthy + no `node_live_blockers`) stays gated behind the de1
 rebuild + the global `phase4c_live_disabled` switch.
+
+## Phase 7 — health monitor (single-pass, not scheduled, 2026-06-16)
+
+The monitor ([PHASE7_HEALTH_MONITOR_FOUNDATION.md](PHASE7_HEALTH_MONITOR_FOUNDATION.md)) is invoked **once** by a CLI;
+there is **no daemon, no systemd timer/service**. Dry-run tools (temp DB; mock probes):
+`bin/node_health_probe_dry_run.py` (`--real-public-tcp-only` opts into read-only public TCP), `bin/node_health_monitor_once.py`
+(`--write-metrics` writes only to the explicit `--db`), `bin/node_alerts_preview.py`. A **gated** periodic scheduler
+(cron/timer) running `monitor_once --write-metrics` against the live DB — plus a read-only SSH metrics collector once a
+node is live — is a future, separately-authorized task. No node is modified; no secrets are fetched.

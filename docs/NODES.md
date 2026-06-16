@@ -96,3 +96,13 @@ healthy|degraded|down). For **live**, only a `live` + not-down node with no data
 remaining nodes keep serving (graceful degradation). **de1** stays `status=test` and is blocked from live with
 `node_status_test` + `leaked_key_rebuild_pending` — the leaked-key blocker is now a **data-driven** `node_live_blockers`
 row (delete it after the rebuild), not hardcoded.
+
+## Phase 7 — health monitor foundation (read-only, dry-run, 2026-06-16)
+
+`backend/health_monitor.py` ([PHASE7_HEALTH_MONITOR_FOUNDATION.md](PHASE7_HEALTH_MONITOR_FOUNDATION.md)) runs a
+**single pass** (no daemon/systemd) that probes each node via an injected `Prober` (mock by default; opt-in read-only
+public TCP 22/80/443 — no payload, no admin path) and, only with `--write-metrics`, appends `node_metrics` and
+reconciles `node_alerts`. **Degraded policy:** a node with a resource WARN/CRITICAL alert is `degraded` — it stays a
+**dry-run candidate** but is **not live-ready**; a node with a reachability DOWN alert is dropped from all candidates
+(other nodes keep serving). de1 stays `status=test` and is blocked from live (`node_status_test` +
+`leaked_key_rebuild_pending`). No node is ever modified; no secret is fetched or printed.

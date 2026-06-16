@@ -169,3 +169,18 @@ summary, audit row, or customer-facing message (test-asserted, including the de1
 `node_live_blockers.detail` is a sanitized note. Customer availability copy (Burmese) names only public product facts
 (DE/US/SG, protocol display labels) — never internal inventory. Health is derived from `node_alerts` rows; no real
 node is contacted in this phase.
+
+## Phase 7 health-monitor secret-safety (read-only probes — verified by tests)
+
+The Phase 7 monitor ([PHASE7_HEALTH_MONITOR_FOUNDATION.md](PHASE7_HEALTH_MONITOR_FOUNDATION.md)) is read-only and
+sanitized by construction:
+
+- **Probes are public-only and payload-free.** The opt-in `PublicTcpProber` does read-only TCP connects to 22/80/443
+  and an optional HTTP HEAD to the **public root** — it never touches the secret admin path, never sends a proxy
+  payload, and never uses a third-party tester. UDP/Hysteria2 stays `unknown`.
+- **Raw errors are never stored.** `probe_sanitizer` maps any exception to a reason code
+  (`probe_timeout`/`probe_error_sanitized`); a host/URL/IP in the message is discarded (test-asserted).
+- **Metrics/alerts carry no secrets.** Only numbers + sanitized check names + levels — no admin link, API key, UUID,
+  subscription/proxy link, or QR. Customer availability copy has no IP/host/secret.
+- **No daemon / no systemd / no node modification / no Hiddify or Telegram call.** Writes happen only when a CLI is run
+  with `--write-metrics` against an explicit local/test DB.

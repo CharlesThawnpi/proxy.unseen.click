@@ -143,3 +143,18 @@ The fields below are summarized; **Appendix A of the plan is the authoritative d
   `node_resilience` (status × health from open `node_alerts` → per-node readiness + reason vocabulary; node-protocol
   availability), `availability` (entitlement × resilience → per-region/protocol availability, graceful degradation).
   Health is derived from `node_alerts` (no real-metrics ingestion in this phase).
+
+## Phase 7 health monitor (IMPLEMENTED — uses existing node_metrics/node_alerts; no schema change)
+
+> Built in Phase 7 (see [PHASE7_HEALTH_MONITOR_FOUNDATION.md](PHASE7_HEALTH_MONITOR_FOUNDATION.md)); read-only,
+> dry-run. **No migration** — the existing tables suffice.
+
+- **`node_metrics`** is written **append-only** (one sanitized sample per monitor pass) by `backend/metric_writer.py`
+  — only `cpu_pct`/`ram_pct`/`disk_pct`/`bandwidth_gb`/`users_count`; never a raw error/URL/secret.
+- **`node_alerts`** is an open/cleared **lifecycle** managed idempotently by `backend/alerting.py`: one OPEN alert per
+  `(node_code, metric)`; raising the same level is a no-op; a level change clears the old and raises the new; a
+  resolved condition sets `cleared_at`. Rows store `level` (WARN|CRITICAL|DOWN), sanitized `metric` (cpu/ram/disk/
+  tcp_443/tcp_80/ssh_22/panel), and `value` (a percent or 0) — no secret/URL/host.
+- **Thresholds** come from `settings` (`node_alert_warn_pct`≈75 / `node_alert_critical_pct`≈90), admin-editable.
+- `backend/node_resilience.node_health` reads OPEN alerts: DOWN→down (dropped), CRITICAL/WARN→degraded (dry-run
+  candidate, not live-ready).

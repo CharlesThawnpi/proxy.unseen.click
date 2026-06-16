@@ -24,4 +24,6 @@ __all__ = [
     "delivery_payloads", "subscription_delivery",
     # Phase 7 entitlement + node-resilience foundation (DB-driven; dry-run):
     "entitlements", "node_resilience", "availability",
+    # Phase 7 health monitor foundation (read-only probes; dry-run; no daemon/secrets):
+    "probe_sanitizer", "node_probe", "alerting", "metric_writer", "health_monitor",
 ]

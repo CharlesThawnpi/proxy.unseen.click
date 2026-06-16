@@ -112,14 +112,19 @@ normalizer + NotificationService/Telegram render integration. Additive migration
 no raw-link column). 122 tests PASS. **No raw links persisted/logged; no network/send.**
 
 **Phase 7 entitlement + node-resilience foundation complete (2026-06-16)** ([PHASE7_ENTITLEMENT_NODE_RESILIENCE.md](PHASE7_ENTITLEMENT_NODE_RESILIENCE.md)):
-DB-driven entitlement resolver + node status/health readiness (graceful degradation; data-driven `node_live_blockers`)
-+ availability resolver + provisioning-plan integration + honest Burmese availability copy. Additive migration `0005`
-(`proxy_node_protocols`, `node_live_blockers`). 144 tests PASS. **No node live; no metrics fetch; no send.**
+DB-driven entitlement resolver + node status/health readiness + availability resolver + provisioning-plan integration.
+Additive migration `0005`.
 
-**Next: Phase 7 health monitor (gated) or Phase 8 (web portal).** **Before de1 goes live:** rebuild the node (clears
+**Phase 7 health monitor foundation complete (2026-06-16)** ([PHASE7_HEALTH_MONITOR_FOUNDATION.md](PHASE7_HEALTH_MONITOR_FOUNDATION.md)):
+read-only sanitized probes (`node_probe` mock default + opt-in public-TCP) → `metric_writer` (append `node_metrics`) +
+`alerting` (idempotent WARN/CRITICAL/DOWN from `settings` thresholds) → feeds `node_resilience` (DOWN→down/dropped;
+CRITICAL/WARN→degraded, dry-run candidate but not live-ready). `health_monitor.monitor_once` is single-pass, dry-run by
+default; **no daemon/systemd/secrets/network**. 163 tests PASS.
+
+**Next: Phase 8 (web portal) or a gated monitor scheduler.** **Before de1 goes live:** rebuild the node (clears
 `leaked_key_rebuild_pending`) + a real-device FAST1/FAST2/Secure test (`#TASK_for_Charles` in
-PHASE4_PRELIVE_DE1_TUNING.md), then separately-gated tasks (bot live latches + real opener, `sub.unseen.click` sidecar,
-live provisioning). Live promotion stays Charles-gated.
+PHASE4_PRELIVE_DE1_TUNING.md), then separately-gated tasks (periodic monitor + read-only SSH metrics, bot live latches
++ real opener, `sub.unseen.click` sidecar, live provisioning). Live promotion stays Charles-gated.
 
 **OS path decided (2026-06-15):** in-place `do-release-upgrade` was considered, but since `de1` is **empty** the
 safer, same-outcome choice is a **clean provider reinstall to Ubuntu 22.04** (Charles). A read-only pre-upgrade gate
