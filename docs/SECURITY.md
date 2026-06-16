@@ -28,6 +28,13 @@ The non-negotiable security and secret-safety rules for UNSEEN PROXY. These are 
 - **Timezone clarity is a safety rule.** Business/customer dates use Myanmar Time (MMT, UTC+06:30, `Asia/Yangon`);
   technical UTC fields, if introduced later, must be explicitly labeled so they cannot be mistaken for subscription,
   payment, invoice, bot, portal, or admin business dates.
+- **de1 node-domain/cert change (2026-06-16) preserved rule 1.** Setting `node-de.unseen.click` + its cert and
+  verifying it emitted **only** HTTP status codes, domain names, byte sizes, and service states. The admin link/proxy
+  path/admin UUID/API key, user UUIDs, Reality/WireGuard/private keys, subscription URLs, proxy links, and QR payloads
+  stayed on the node — never printed or committed. Verification used a **disposable** user (`disposable-test-realdevice`,
+  1 GB/1 day) only; `current.json` was backed up on-node before the change. de1 remains `status=test`. **Real-device
+  import must use a disposable user's subscription under `node-de.unseen.click` with valid TLS — never the admin/terminal
+  QR, never a raw-IP/sslip.io link.**
 
 ## Portal HTTP boundary (Phase 8C — local-only, verified by tests)
 

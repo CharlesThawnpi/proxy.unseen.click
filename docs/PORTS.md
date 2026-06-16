@@ -35,6 +35,11 @@ faketls-fronted (`8388` loopback only); MariaDB/Redis loopback only; many high-r
 Hiddify-managed. All four required ACCEPTs (22/80/443 tcp + 443 udp) present; SSH verified reachable. Real-device
 reachability for QUIC/Reality is a #TASK_for_Charles. See [PHASE9_DE1_REBUILD_FRESH_HIDDIFY.md](PHASE9_DE1_REBUILD_FRESH_HIDDIFY.md).
 
+> **Re-confirmed 2026-06-16** when the node domain `node-de.unseen.click` + cert were set: the four ACCEPTs are
+> unchanged and **no firewall/port change was made**. `80/tcp` must stay open — Hiddify/acme.sh uses it for the ACME
+> HTTP-01 challenge when issuing/renewing the domain cert. `443/tcp` serves the panel/subscription + TLS proxies for
+> the node domain; `443/udp` serves Hysteria2/QUIC.
+
 ## Phase 2 preflight — current live port map (Master, 2026-06-15)
 
 Observed via `ss -tulpn` (read-only). See `PHASE2_MASTER_DE_HIDDIFY_PREFLIGHT.md`.

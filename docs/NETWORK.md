@@ -48,6 +48,11 @@ once Hiddify is installed. Detail: [PHASE2_DE1_PREFLIGHT.md](PHASE2_DE1_PREFLIGH
   443/udp** (panel/sub + Hysteria2/QUIC) + SSH:22; Shadowsocks faketls-fronted (8388 loopback). `ufw` is now
   **inactive** on the fresh install — Hiddify manages its own iptables (ACCEPT for 22/80/443 tcp + 443 udp); SSH safe.
   See [PHASE9_DE1_REBUILD_FRESH_HIDDIFY.md](PHASE9_DE1_REBUILD_FRESH_HIDDIFY.md).
+- **Node-domain/TLS update (2026-06-16):** `de1`'s Hiddify domain is now `node-de.unseen.click` (`direct` mode) with a
+  valid Let's Encrypt cert (SAN `DNS:node-de.unseen.click`); `https://node-de.unseen.click` (DNS → `5.249.160.59`)
+  verifies with **no `-k`** and serves the panel/subscription, so the customer→node TLS path uses the real domain, not
+  raw-IP/sslip.io. Bare `/` returns 502 by design (Hiddify camouflage). No network/port change — `80/tcp` stays open
+  for ACME renewal. See [HIDDIFY_NODE_INSTALL_RUNBOOK.md](HIDDIFY_NODE_INSTALL_RUNBOOK.md) §5A.
 
 ## Phase 2 preflight — current network state (2026-06-15, read-only) — MASTER
 

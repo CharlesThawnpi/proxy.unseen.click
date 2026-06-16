@@ -78,6 +78,8 @@ Do these in order. Each is a gate — if one fails, STOP and report PARTIAL/HOLD
 | 10 | **Firewall** behavior changed once Hiddify took over iptables (ufw vs Hiddify-managed rules). | **Verify firewall after install:** SSH:22 stays open; 80/443 tcp + 443 udp permitted; don't run a competing ruleset that fights Hiddify. |
 | 11 | **Real-device protocol connect** (Hysteria2/QUIC, Reality) can't be fully verified server-side. | A **real-device test is still required** before live (`realdevice_protocol_test_pending`); document it as a #TASK_for_Charles. |
 | 12 | SSH **password auth** came back enabled after the reinstall (cloud-init `50-cloud-init.conf`, first-match-wins). | Re-harden after install: neutralize cloud-init's `PasswordAuthentication yes` **in place** (a `99-` drop-in does NOT win — OpenSSH is first-match) + `ssh_pwauth: false`; verify key login + password refusal. |
+| 13 | `--no-gui` install auto-configured **only the raw IP + sslip.io** domains; `node-<region>.unseen.click` was **never** a configured domain and the served TLS cert was **IP-only** (`SAN = IP Address:<ip>`). Real-device Hiddify-App import then failed (admin/user QR → HTTP 500 / "connection reset"); bare-root `/` returned **502 — which is Hiddify camouflage, not a fault** (every Hiddify domain 502s on `/`; content lives only at `/<proxy_path>/…`). | **Always set the real node domain + a domain cert before real-device testing** (see §5A). Add it via `hiddifypanel add-domain -d node-<region>.unseen.click -m direct`, then `apply_configs.sh`. Never judge health by the bare-root status — test the `/<proxy_path>/api/v2/…` path. |
+| 14 | `apply_configs.sh` needs a **PTY** (it runs a `cli-progress`/`urwid` progress UI **and** a final whiptail "success" dialog). Run detached with no TTY → it dies with `PermissionError` in asyncio `add_reader`; the panel's own background-apply hook is also broken on v12.3.3 (`TypeError: cmd_in_back() missing 1 required positional argument: 'cmd'`), so a **panel-UI-initiated** apply silently does nothing. | **Apply from the CLI through a PTY, detached:** `setsid script -qfc "TERM=xterm DO_NOT_INSTALL=true bash apply_configs.sh" <log> </dev/null &`. The final whiptail dialog keeps the process alive after the work is done — dismiss with `pkill -f whiptail`. Confirm the cert + `current.json` domains + services afterward. |
 
 ## 4. Future node checklist (copy per node)
 
@@ -115,6 +117,34 @@ Do these in order. Each is a gate — if one fails, STOP and report PARTIAL/HOLD
 
 These are **examples**. Every node must be a **`proxy_nodes` DB row** (region, public hostname, secret handle, status,
 capacity), never hardcoded in source. Adding a node = insert a row + secret handle + follow this runbook; no code change.
+
+## 5A. Set the node domain + valid TLS (post-install) — REQUIRED before real-device import
+
+The `--no-gui` installer defaults the panel/proxy domain to the **server IP** (+ an `sslip.io` auto-domain) and obtains
+only an **IP-scoped cert**. Subscriptions, admin/terminal QR, and per-user links then carry **raw-IP** hosts with an
+**IP-only cert**, so a real device fails to import (cert host mismatch → HTTP 500 / "connection reset"). Before any
+real-device protocol test you **must** set the node's real domain and get a domain cert. Verified working on de1
+(2026-06-16):
+
+1. **Pre-checks (from the Master):** `getent hosts node-<region>.unseen.click` → node IP; the cert step needs **80/tcp
+   reachable** for the ACME HTTP-01 challenge.
+2. **Back up first (on the node):** copy `/opt/hiddify-manager/current.json` to `/root/disk-rollback/` (`0600`).
+3. **Add the domain (supported CLI, not a hand-edit):**
+   `cd /opt/hiddify-manager/hiddify-panel && .venv*/bin/hiddifypanel add-domain -d node-<region>.unseen.click -m direct`
+   (writes the panel DB; `current.json` is only the *applied* snapshot and updates on apply).
+4. **Apply through a PTY, detached** (see §3 #14):
+   `cd /opt/hiddify-manager && setsid script -qfc "TERM=xterm DO_NOT_INSTALL=true bash apply_configs.sh" /root/hiddify-<node>-apply.log </dev/null &`
+   acme.sh issues + installs a **Let's Encrypt** cert to `/opt/hiddify-manager/ssl/node-<region>.unseen.click.crt[.key]`.
+   When the work is done a whiptail "success" dialog lingers — `pkill -f whiptail` to release it.
+5. **Verify (sanitized):**
+   - cert SAN = `DNS:node-<region>.unseen.click` (`openssl s_client … | openssl x509 -noout -ext subjectAltName -dates`);
+   - public TLS verifies with **no `-k`** (`curl` `ssl_verify_result=0`); bare `/` 502 is expected camouflage;
+   - API on the real path: `GET https://node-<region>.unseen.click/<proxy_path>/api/v2/admin/me/` → 200 (key in header);
+   - a disposable user's `all-configs` now **references `node-<region>.unseen.click`**;
+   - all `hiddify-*` services active; `current.json` lists the new domain (`mode=direct`).
+6. **Real-device import uses a disposable USER subscription under the node domain — never the admin/terminal QR, never a
+   raw-IP link.** The install's raw-IP + sslip.io domains remain (there is no supported `remove-domain` CLI; prune via
+   the panel **Settings → Domains** only if a single-domain output is wanted, then regenerate the admin link).
 
 ## 6. Secret safety (applies to every step)
 

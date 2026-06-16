@@ -152,7 +152,10 @@ All clear-conditions met: de1 rebuilt fresh ✓, Hiddify freshly reinstalled ✓
 1. **Real-device FAST1/FAST2/Secure connect PASS** (seeded as `realdevice_protocol_test_pending`).
 2. **`phase4c_live_disabled`** — Phase 4C live provisioning is hard-disabled in code (separate gated flip).
 3. **de1 `status=test`** — promotion to `live` is a separate Charles-gated decision.
-4. **Panel domain** is currently the auto/IP value; set `node-de.unseen.click` + its cert before the live sidecar.
+4. ~~**Panel domain** is currently the auto/IP value; set `node-de.unseen.click` + its cert before the live sidecar.~~
+   **RESOLVED 2026-06-16** — `node-de.unseen.click` added (`hiddifypanel add-domain -m direct` + `apply_configs.sh`),
+   valid Let's Encrypt cert issued/installed, API + subscription verified-live over the public node-de path with valid
+   TLS. See the addendum below and [HIDDIFY_NODE_INSTALL_RUNBOOK.md](HIDDIFY_NODE_INSTALL_RUNBOOK.md) §5A.
 5. **RAM** balloon-dynamic (~3.8 GiB under load) — lock full 4 GB for production.
 6. **marshmallow pin durability** — re-apply after any Hiddify update that reinstalls marshmallow 4.x.
 
@@ -182,6 +185,26 @@ link lives solely in `/root/hiddify-de1-admin.link` (`0600`). Repo changes are d
 ## PASS/PARTIAL/FAIL
 
 **PASS** (with documented bounded marshmallow fix and a real-device protocol connect test deferred to Charles).
+
+## Addendum (2026-06-16) — node domain `node-de.unseen.click` + TLS set for real-device import
+
+Charles's real-device Hiddify-App import was failing (admin/terminal QR → HTTP 500; user QR → "connection reset").
+
+- **Root cause:** the `--no-gui` install configured **only** `5.249.160.59` + `5.249.160.59.sslip.io` as Hiddify
+  domains; `node-de.unseen.click` was **never** added and the served cert was **IP-only** (`SAN = IP Address:5.249.160.59`).
+  All links/QRs used raw-IP hosts with an IP-only cert → import failed. The bare-root **502 is Hiddify camouflage**
+  (sslip.io 502s on `/` too), not a fault — the panel was healthy internally throughout.
+- **Fix (supported, sanitized):** backed up `current.json` on-node → `hiddifypanel add-domain -d node-de.unseen.click
+  -m direct` → `apply_configs.sh` (run through a PTY via `script`, detached; final whiptail dialog dismissed). acme.sh
+  issued + installed a **Let's Encrypt ECC** cert (SAN `DNS:node-de.unseen.click`). Only the standard apply-managed
+  service reloads occurred; all 10 `hiddify-*` services active afterward.
+- **Verified-live over the public node-de path (valid TLS, no `-k`, `ssl_verify=0`):** `GET /admin/me/` 200, `GET
+  /admin/user/` 200; disposable-user lifecycle PASS (create 200 → all-configs 200 ~16.4 KB → delete 200 → re-GET 404);
+  **subscription output references `node-de.unseen.click`** (raw-IP/sslip refs remain — install artifacts). Firewall
+  unchanged (22/80/443 tcp + 443 udp ACCEPT; ufw inactive).
+- **Left for Charles:** one clearly-marked disposable user `disposable-test-realdevice` (enabled, 1 GB / 1 day) — pull
+  its **node-de** subscription from the panel and run the real-device FAST1/FAST2/Secure connect test. **Do not scan
+  the admin/terminal QR; do not use raw-IP links.** de1 stays **`status=test`**. No secrets printed or committed.
 
 ## Exact next recommended task
 

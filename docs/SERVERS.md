@@ -40,7 +40,10 @@ E5-2680 v4, ~13 GiB RAM free, 4 GiB swap, 86 GB disk free). A co-location attemp
 **default/entry region** now lives here. Seed: `node_code=de1`, `region_code=de`, `public_ip=5.249.160.59`,
 `vcpu_count=4`, `ram_mb=4096`, `disk_gb=25`, `bandwidth_budget_gb=30000`, `status=test`. To be provisioned by
 Hiddify's **supported host installer on Ubuntu 22.04** (not Docker, not on the Master) — see
-[PHASE2_3_DE_NODE_PLAN.md](PHASE2_3_DE_NODE_PLAN.md). Node domain `node-de.unseen.click`.
+[PHASE2_3_DE_NODE_PLAN.md](PHASE2_3_DE_NODE_PLAN.md). Node domain `node-de.unseen.click` — **now set as a Hiddify
+`direct` domain with a valid Let's Encrypt cert (2026-06-16); API + subscription verified-live over the public node-de
+path with valid TLS** (the install had defaulted to raw-IP/sslip.io, which broke real-device import). de1 stays
+`status=test`. See [HIDDIFY_NODE_INSTALL_RUNBOOK.md](HIDDIFY_NODE_INSTALL_RUNBOOK.md) §5A + PHASE9 addendum.
 
 > **These values were provider/purchase ESTIMATES; preflight has now DETECTED actuals (2026-06-15).** Per
 > [DECISIONS.md](DECISIONS.md) ADR-002 the detected values are authoritative. Full report:

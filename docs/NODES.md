@@ -54,7 +54,10 @@ co-location exception is **retired** ([DECISIONS.md](DECISIONS.md) ADR-001); the
 above applies normally (fresh VPS, host install, least-privilege API key, managed from Master).
 
 - **Node:** `de1` — `5.249.160.59`, 4 vCPU / 4 GB / 25 GB SSD / 30 TB, **Ubuntu 22.04 LTS**, domain
-  `node-de.unseen.click`. Starts **`status=test`**, never auto-promoted to `live`; proxy traffic only.
+  `node-de.unseen.click` **(set as a Hiddify `direct` domain with a valid Let's Encrypt cert, 2026-06-16 — API +
+  subscription verified-live over the public node-de path; before this the install used only raw-IP/sslip.io defaults,
+  which broke real-device import. See [HIDDIFY_NODE_INSTALL_RUNBOOK.md](HIDDIFY_NODE_INSTALL_RUNBOOK.md) §5A)**.
+  Starts **`status=test`**, never auto-promoted to `live`; proxy traffic only.
   **Specs are provider/purchase ESTIMATES (unverified)** — per [DECISIONS.md](DECISIONS.md) ADR-002 the Master detects
   and records the node's **actual** facts (read-only) at preflight and those override the estimates; bandwidth stays
   `estimate` until provider-confirmed.

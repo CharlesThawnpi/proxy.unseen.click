@@ -5,6 +5,33 @@
 
 Chronological record of notable changes to the UNSEEN PROXY project.
 
+## 2026-06-16 — de1: set node domain `node-de.unseen.click` + valid TLS for real-device import — PASS
+
+- **Root cause (real-device Hiddify-App import failing):** the `--no-gui` fresh install auto-configured **only** the
+  raw-IP domain (`5.249.160.59`) + the sslip.io auto-domain (`5.249.160.59.sslip.io`); `node-de.unseen.click` was
+  **never a configured Hiddify domain**, and the served TLS cert was **IP-only** (`SAN = IP Address:5.249.160.59`). So
+  every admin/terminal QR and user subscription used raw-IP links with an IP-only cert → real-device import failed
+  (HTTP 500 / "connection reset"); the bare-root 502 was Hiddify camouflage (the sslip.io domain returns 502 on `/`
+  too), not a fault.
+- **Fix (supported method):** added the domain via the panel CLI `hiddifypanel add-domain -d node-de.unseen.click -m
+  direct`, then re-applied with `apply_configs.sh`. A valid **Let's Encrypt ECC cert** was issued for
+  `node-de.unseen.click` (SAN `DNS:node-de.unseen.click`, ~90-day) and installed; haproxy/nginx now route the new
+  vhost. `current.json` backed up on-node first (`/root/disk-rollback/`). de1 stays **`status=test`**.
+- **Apply lesson (added to the runbook):** `apply_configs.sh` invokes a `cli-progress`/`urwid` UI **and** a final
+  whiptail "success" dialog — both need a **PTY**. Run it detached **through `script -qfc … <log>`** (PTY) under
+  `setsid`; without a PTY it dies with `PermissionError` in asyncio `add_reader`, and the final whiptail dialog will
+  block the process until dismissed (`pkill -f whiptail`). The panel's own background-apply hook is broken on this
+  build (`TypeError: cmd_in_back() missing 1 required positional argument: 'cmd'`), so apply **from the CLI**, not the
+  panel UI.
+- **Verified-live via the public `node-de.unseen.click` path with valid TLS (no `-k`, `ssl_verify=0`):** `GET
+  /admin/me/` → 200, `GET /admin/user/` → 200; disposable-user lifecycle PASS (create 200 → all-configs 200 ~16.4 KB →
+  delete 200 → re-GET 404); **subscription output now references `node-de.unseen.click`**. All 10 hiddify-* services
+  active; firewall unchanged (22/80/443 tcp + 443 udp already ACCEPT; ufw inactive).
+- **Left one clearly-marked disposable user `disposable-test-realdevice`** (enabled, 1 GB / 1 day) so Charles can pull
+  its **node-de** subscription from the panel and run the real-device FAST1/FAST2/Secure connect test. Resolves Phase 9
+  remaining blocker #4 (panel/node domain). Sanitized status codes / domain names / byte sizes only — no admin link,
+  proxy path, UUID, keys, subscription URL, proxy link, or QR printed or committed. SOURCE_OF_TRUTH regenerated.
+
 ## 2026-06-16 — Reusable Hiddify node install runbook — docs only
 
 - Added [HIDDIFY_NODE_INSTALL_RUNBOOK.md](HIDDIFY_NODE_INSTALL_RUNBOOK.md): the baseline, secret-safe install method for

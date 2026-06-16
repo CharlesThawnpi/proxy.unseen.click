@@ -15,6 +15,13 @@
 > **`marshmallow==3.26.1`** in the Hiddify venv (the installer's own commented workaround) and restart `hiddify-panel`;
 > re-apply after any Hiddify update that reinstalls marshmallow 4.x. See
 > [PHASE9_DE1_REBUILD_FRESH_HIDDIFY.md](PHASE9_DE1_REBUILD_FRESH_HIDDIFY.md).
+> ### 🌐 Domain/host: node-de.unseen.click verified-live (2026-06-16)
+> The admin base + user subscription endpoints are now confirmed over the **real node domain with valid TLS** (not just
+> the install's raw-IP/sslip.io defaults): `GET https://node-de.unseen.click/<proxy_path>/api/v2/admin/me/` → 200 and
+> `/admin/user/` → 200 with `ssl_verify_result=0` (no `-k`); a disposable user's `/admin/all-configs/?uuid=…` (~16.4 KB)
+> **references `node-de.unseen.click`**. The node domain + its Let's Encrypt cert are set via `hiddifypanel add-domain -m
+> direct` + `apply_configs.sh` — see [HIDDIFY_NODE_INSTALL_RUNBOOK.md](HIDDIFY_NODE_INSTALL_RUNBOOK.md) §5A. The bare
+> domain root `/` returns **502 by design** (Hiddify camouflage); always probe the `/<proxy_path>/api/v2/…` path.
 
 > ## ✅ VERIFIED-LIVE on de1 — Hiddify **v12.3.3**, API **"Hiddify API v2.2.0"** (2026-06-16)
 > Source: the panel's own OpenAPI spec (generated in-process via `hiddifypanel`/apiflask — 22 paths) **and** confirmed
