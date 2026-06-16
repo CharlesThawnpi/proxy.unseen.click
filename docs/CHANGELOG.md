@@ -5,6 +5,42 @@
 
 Chronological record of notable changes to the UNSEEN PROXY project.
 
+## 2026-06-16 — de1: diagnose FAST1/Hysteria2 timeout — server-side EXONERATED; likely mobile-network UDP (Decision C, HOLD)
+
+- **Symptom:** mobile/Windows **import PASS**, but **FAST1/Hysteria2 times out on connect** for Charles. This is a
+  **protocol-level connectivity** failure, **not** an import/profile-shape failure. (Labels unchanged: FAST1=Hysteria2,
+  FAST2=Shadowsocks, Secure=VLESS-Reality.)
+- **Profile re-scan (sanitized; counts/booleans/port only):** still clean — 1 disposable user; **7 outbounds**
+  (hysteria2×1 + shadowsocks×1 + vless-Reality×1 + Select/Auto groups + 2 direct); raw-IP=0, sslip=0, dnstt=0,
+  tunnel-per-resolver=0, private-key=0, vmess/tuic/naive/wireguard=0. **Hysteria2 outbound:** server=node-de, **port
+  14430**, salamander **obfs present (+password)**, auth password present, TLS enabled (insecure=true, sni=node-de, alpn).
+- **Server-side EXONERATED (causes A + B ruled out):**
+  - **Listener/firewall (A):** hiddify-core listens on **udp/14430** (and 14427/14428 — one Hy2 inbound **per configured
+    domain**: raw-IP/sslip/node-de); **explicit iptables ACCEPT for 14430/14428/14427 udp**; INPUT policy ACCEPT.
+  - **Profile↔server match (B):** the client targets node-de's inbound `hysteria_in_14430` — **port match ✓, salamander
+    obfs-password match ✓, user auth-password present ✓, TLS sni=node-de ✓** (verified by an on-node boolean comparison;
+    **no secret values printed**).
+  - **Health/logs:** hiddify-singbox active (no restart in the test window); **0 logged hysteria/quic/auth/obfs/handshake
+    errors** in the last 2h; resources fine (load ~0.15, ~2.9 GiB free, disk 17%). `UdpRcvbufErrors≈380/180240` (~0.2%) =
+    negligible background, not a connection-killer.
+- **External reachability (Master, no payloads):** DNS node-de → 5.249.160.59 ✓; TCP control **443/16753 OPEN** ✓; UDP
+  **14430/14428/14427 open|filtered** (not refused) from a clean datacenter network ✓. (Honest limitation: UDP
+  *delivery* can't be definitively proven without a Hysteria2 handshake payload, which was intentionally **not** sent.)
+- **Control (FAST2/Secure, not tuned):** SS **16753 tcp+udp** listening; Reality **443** listening; xray/haproxy active;
+  **0 reality handshake errors** → only the **UDP/Hysteria2** path is in question; TCP-based protocols are up.
+- **Likely cause = C (mobile-network UDP/Hysteria2 instability).** Server is correct + reachable from a clean network;
+  the failure is a **timeout** (not refusal, not auth/obfs error) on a **QUIC/UDP** protocol on a high port (14430) while
+  TCP-based import/SS/Reality work — the classic signature of **mobile-carrier UDP/QUIC throttling/blocking** (common on
+  Myanmar mobile data). **D (client app) secondary** — rule out via a Wi-Fi-vs-mobile-data retest.
+- **Tuning decision = HOLD (no node change).** Supported Hiddify Hy2 knobs are already sensibly set
+  (`hysteria_enable=true`, `hysteria_obfs_enable=true` → salamander already on = best DPI evasion, `hysteria_port`,
+  `hysteria_up/down_mbps`=150/300). **No supported port-hop toggle exists** (per-domain inbounds, not a hop range). No
+  safe/supported server change would fix a carrier-side UDP block → nothing applied.
+- **No node change made.** de1 stays **`status=test`**; **`realdevice_protocol_test_pending` remains** (Hysteria2 not
+  PASS; FAST2/Secure still need separate tests). **Secret-safety:** only counts/booleans/ports/HTTP-status emitted;
+  server↔client comparison done on-node and reported as booleans (no obfs/auth/keys/UUIDs printed); temp scanners
+  removed; logs redacted. Docs + SOURCE_OF_TRUTH regenerated.
+
 ## 2026-06-16 — de1: mobile import PASS after app reinstall; Hiddify selector/label control findings — Decision C (no safe node-side rename/hide)
 
 - **Mobile import now PASS.** Charles deleted + reinstalled the Hiddify App on mobile → **import works** (Windows

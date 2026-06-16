@@ -198,6 +198,22 @@ The mobile-import re-verification + Hiddify label/selector investigation
 - **No node/setting/template change** was made (Decision C); de1 stays `status=test`.
 - Repo changes are **docs + SOURCE_OF_TRUTH only**; pre-commit secret scan run before commit.
 
+## de1 FAST1/Hysteria2 timeout diagnosis secret-safety (2026-06-16)
+
+The Hysteria2 timeout diagnosis ([PHASE9_DE1_REBUILD_FRESH_HIDDIFY.md](PHASE9_DE1_REBUILD_FRESH_HIDDIFY.md) addendum) was
+**secret-safe**, including the **server↔client comparison** (the highest-risk step, since it touches both the server
+inbound config and the generated client profile — both secret-bearing):
+
+- The comparison ran **on the node** and emitted **only booleans** (`port_match`, `obfs_password_match`,
+  `client_auth_in_server_users`, `tls sni match`) and non-secret **port numbers** — it **never printed** the Hysteria2
+  auth password, the salamander **obfs password**, the URI/QR, any UUID, or any TLS key. The generated profile was
+  rendered **in-memory**; the temp comparison scripts were removed after use.
+- Log scans were **redacted** (UUIDs, client IPs, long base64 blobs stripped). External UDP checks sent **no Hysteria2
+  payload/credentials** (empty-datagram `nc -u -z` only) and the limitation was documented honestly.
+- **No node/setting/template change** was made (Decision C/HOLD); de1 stays `status=test`;
+  `realdevice_protocol_test_pending` remains.
+- Repo changes are **docs + SOURCE_OF_TRUTH only**; pre-commit secret scan run before commit.
+
 ## Phase 4C secret-safety (dry-run provisioning — verified by tests)
 
 The Phase 4C orchestration ([PHASE4C_DRY_RUN_PROVISIONING.md](PHASE4C_DRY_RUN_PROVISIONING.md)) keeps rules 1–2 by

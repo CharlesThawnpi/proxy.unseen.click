@@ -1,6 +1,6 @@
 # UNSEEN PROXY — SOURCE OF TRUTH (consolidated, auto-generated)
 
-> **Generated:** 2026-06-16T17:20:53Z — by `scripts/build_source_of_truth.sh`.
+> **Generated:** 2026-06-16T17:53:58Z — by `scripts/build_source_of_truth.sh`.
 > **This is the live project state for external readers (e.g. the Custom GPT).** It is DERIVED from the
 > canonical docs below and regenerated each task. Upload THIS file to the GPT (not IMPLEMENTATION_PLAN.md,
 > which is the static v1.9 plan). Re-download after updates.
@@ -240,6 +240,19 @@ de1's output at all** — they are **Hiddify App client-side UI groups** (the no
 is Clash-template-only). **Decision = C: keep the clean profile unchanged; UNSEEN labels (FAST1=Hysteria2,
 FAST2=Shadowsocks, Secure=VLESS-Reality) are presented by bot/portal/delivery** (a backend-generated custom profile is the
 path if ever required). **No node change made; de1 stays `status=test`; `realdevice_protocol_test_pending` remains.**
+
+**de1 FAST1/Hysteria2 timeout diagnosis (2026-06-16) — server EXONERATED; likely mobile-network UDP (Decision C, HOLD)**
+([PHASE9_DE1_REBUILD_FRESH_HIDDIFY.md](PHASE9_DE1_REBUILD_FRESH_HIDDIFY.md) addendum): Charles's **FAST1/Hysteria2 times
+out on connect** (a protocol-level failure, not import). Server side is **fully correct and exonerated**: hiddify-core
+listens on **udp/14430** (one Hy2 inbound per domain: 14427/14428/14430), **explicit firewall ACCEPT** for those udp
+ports, and an on-node boolean comparison confirms the client targets node-de's `hysteria_in_14430` with **matching port +
+salamander obfs-password + user auth + sni** (no secrets printed); singbox active with **0 hysteria/quic/auth/obfs/
+handshake errors**. From the Master (clean network): DNS ✓, TCP 443/16753 OPEN, UDP 14430 **open|filtered** (not refused).
+Control FAST2(SS 16753 tcp+udp)/Secure(Reality 443) listeners healthy → **only the UDP/Hysteria2 path is affected**.
+**Likely cause = C (mobile-carrier UDP/QUIC throttling on the high port)** — a *timeout* on QUIC/UDP while TCP works is the
+classic signature; salamander obfs is already enabled (best DPI evasion) and **no supported port-hop toggle exists**, so
+**no safe server change applies → HOLD, no node change.** **`realdevice_protocol_test_pending` remains** (Hysteria2 not
+PASS; FAST2/Secure still need separate tests). Hysteria2 is UDP-based: fast but **network-dependent**.
 
 **Next: Charles records the real-device FAST1/FAST2/Secure connect PASS** (clears `realdevice_protocol_test_pending`;
 `#TASK_for_Charles` in PHASE9_DE1_REBUILD_FRESH_HIDDIFY.md). Then separately-gated tasks remain (public portal
@@ -570,6 +583,14 @@ MMT timestamps explicitly.
 > `branding_title`/`branding_site`/`branding_freetext` (panel branding). UNSEEN customer labels (FAST1/FAST2/Secure) are
 > therefore an **UNSEEN delivery-layer concern** (bot/portal, or a backend-generated profile), **not** a Hiddify API
 > option. "lowest"/"balance" seen in-app are **client-side** Hiddify-App groups, never emitted by the node.
+> ### 🛰️ Per-domain protocol inbounds (2026-06-16)
+> Hiddify generates **one inbound per protocol per configured domain**. With node-de + raw-IP + sslip configured, the
+> node runs **three Hysteria2 inbounds** (`hysteria_in_14427/14428/14430` = raw-IP/sslip/node-de) on distinct UDP ports;
+> the **customer profile (node-de) uses udp/14430**. The raw-IP/sslip inbounds belong to the `sub_link_only` domains
+> (excluded from customer subs). An on-node boolean compare confirmed the generated client outbound's **port + salamander
+> obfs-password + user auth + sni match** the node-de inbound — i.e. the generated profile is consistent with the server
+> config. (Implication for the orchestrator: protocol port numbers are **per-node/per-domain and dynamic** — always read
+> them from the generated profile, never hardcode.)
 > ### 🌐 Domain/host: node-de.unseen.click verified-live (2026-06-16)
 > The admin base + user subscription endpoints are now confirmed over the **real node domain with valid TLS** (not just
 > the install's raw-IP/sslip.io defaults): `GET https://node-de.unseen.click/<proxy_path>/api/v2/admin/me/` → 200 and
@@ -588,14 +609,6 @@ MMT timestamps explicitly.
 >   sslip.io). Only the node-domain entries have a matching cert; raw-IP/sslip entries won't connect. There is **no
 >   supported CLI** to remove a domain or set a primary sub domain (`hiddifypanel` exposes `add-domain` only) — prune via
 >   the panel **Settings → Domains** if a single-domain output is wanted.
-> - A client error like *"connection refused 127.0.0.1:<port>"* on **add profile** is the **Hiddify App's own local
->   core/clash-api port** (the sing-box template's clash-api is the standard `127.0.0.1:9090`; the node emits no such
->   remote target) — an **app-side** condition, not a node/API fault. Always run the §5B sanitized output inspection
->   before attributing an import failure to the node.
-> - **Client-parser compatibility (verified 2026-06-16):** a `[SingboxParser] unmarshal error:
->   outbounds[N].tunnel-per-resolver: json: unknown field` means the generated sing-box config carries a field the app's
->   bundled core doesn't know, and the app rejects the **entire** profile. `tunnel-per-resolver` comes **only** from the
->   **DNSTT** outbound (`hutils/proxy/shared.py` + `singbox.py:add_dnstt`). Disable that transport with the supported CLI
 
 
 ---
@@ -608,6 +621,42 @@ MMT timestamps explicitly.
 > **Status:** Phase 1 skeleton — running log of changes by date
 
 Chronological record of notable changes to the UNSEEN PROXY project.
+
+## 2026-06-16 — de1: diagnose FAST1/Hysteria2 timeout — server-side EXONERATED; likely mobile-network UDP (Decision C, HOLD)
+
+- **Symptom:** mobile/Windows **import PASS**, but **FAST1/Hysteria2 times out on connect** for Charles. This is a
+  **protocol-level connectivity** failure, **not** an import/profile-shape failure. (Labels unchanged: FAST1=Hysteria2,
+  FAST2=Shadowsocks, Secure=VLESS-Reality.)
+- **Profile re-scan (sanitized; counts/booleans/port only):** still clean — 1 disposable user; **7 outbounds**
+  (hysteria2×1 + shadowsocks×1 + vless-Reality×1 + Select/Auto groups + 2 direct); raw-IP=0, sslip=0, dnstt=0,
+  tunnel-per-resolver=0, private-key=0, vmess/tuic/naive/wireguard=0. **Hysteria2 outbound:** server=node-de, **port
+  14430**, salamander **obfs present (+password)**, auth password present, TLS enabled (insecure=true, sni=node-de, alpn).
+- **Server-side EXONERATED (causes A + B ruled out):**
+  - **Listener/firewall (A):** hiddify-core listens on **udp/14430** (and 14427/14428 — one Hy2 inbound **per configured
+    domain**: raw-IP/sslip/node-de); **explicit iptables ACCEPT for 14430/14428/14427 udp**; INPUT policy ACCEPT.
+  - **Profile↔server match (B):** the client targets node-de's inbound `hysteria_in_14430` — **port match ✓, salamander
+    obfs-password match ✓, user auth-password present ✓, TLS sni=node-de ✓** (verified by an on-node boolean comparison;
+    **no secret values printed**).
+  - **Health/logs:** hiddify-singbox active (no restart in the test window); **0 logged hysteria/quic/auth/obfs/handshake
+    errors** in the last 2h; resources fine (load ~0.15, ~2.9 GiB free, disk 17%). `UdpRcvbufErrors≈380/180240` (~0.2%) =
+    negligible background, not a connection-killer.
+- **External reachability (Master, no payloads):** DNS node-de → 5.249.160.59 ✓; TCP control **443/16753 OPEN** ✓; UDP
+  **14430/14428/14427 open|filtered** (not refused) from a clean datacenter network ✓. (Honest limitation: UDP
+  *delivery* can't be definitively proven without a Hysteria2 handshake payload, which was intentionally **not** sent.)
+- **Control (FAST2/Secure, not tuned):** SS **16753 tcp+udp** listening; Reality **443** listening; xray/haproxy active;
+  **0 reality handshake errors** → only the **UDP/Hysteria2** path is in question; TCP-based protocols are up.
+- **Likely cause = C (mobile-network UDP/Hysteria2 instability).** Server is correct + reachable from a clean network;
+  the failure is a **timeout** (not refusal, not auth/obfs error) on a **QUIC/UDP** protocol on a high port (14430) while
+  TCP-based import/SS/Reality work — the classic signature of **mobile-carrier UDP/QUIC throttling/blocking** (common on
+  Myanmar mobile data). **D (client app) secondary** — rule out via a Wi-Fi-vs-mobile-data retest.
+- **Tuning decision = HOLD (no node change).** Supported Hiddify Hy2 knobs are already sensibly set
+  (`hysteria_enable=true`, `hysteria_obfs_enable=true` → salamander already on = best DPI evasion, `hysteria_port`,
+  `hysteria_up/down_mbps`=150/300). **No supported port-hop toggle exists** (per-domain inbounds, not a hop range). No
+  safe/supported server change would fix a carrier-side UDP block → nothing applied.
+- **No node change made.** de1 stays **`status=test`**; **`realdevice_protocol_test_pending` remains** (Hysteria2 not
+  PASS; FAST2/Secure still need separate tests). **Secret-safety:** only counts/booleans/ports/HTTP-status emitted;
+  server↔client comparison done on-node and reported as booleans (no obfs/auth/keys/UUIDs printed); temp scanners
+  removed; logs redacted. Docs + SOURCE_OF_TRUTH regenerated.
 
 ## 2026-06-16 — de1: mobile import PASS after app reinstall; Hiddify selector/label control findings — Decision C (no safe node-side rename/hide)
 
@@ -656,42 +705,6 @@ Chronological record of notable changes to the UNSEEN PROXY project.
   `disposable-test-realdevice` user (the only customer-type user; 2 non-customer install users `default`/`Test` also
   present — not real customers). **7 outbounds (3.7 KB):** hysteria2×1 (FAST1) + shadowsocks×1 (FAST2) + vless-Reality×1
   (Secure) + **2 client selector groups** (1 `selector` + 1 `urltest`) + 2 `direct`. `vless_nonreality=0`, raw-IP=0,
-  sslip=0, `dnstt=0`, `tunnel-per-resolver=0`, private-key fields=0; all 3 product outbounds → **node-de** (Hy2
-  udp/14430, SS 16753, Reality tcp/443). The 3 `loopback_refs` are standard sing-box client-local refs (clash-api
-  `127.0.0.1:9090` + local DNS), **not** product endpoints and **not** the App's `64127` core port.
-- **Selector groups explained:** the **"lowest"/"balance"/auto** entries Charles sees are sing-box **client selector/
-  urltest GROUP outbounds** generated by Hiddify's template — **not extra proxy protocols**. They are **not** UNSEEN's
-  final labels; UNSEEN naming (FAST1=Hysteria2, FAST2=Shadowsocks, Secure=VLESS-Reality) is handled by backend/portal/
-  delivery later. They are template-generated (no supported `set-setting` removes/renames them); **not changed** here
-  (changing selector behavior is not clearly safe and out of scope).
-- **Node health (sanitized):** all `hiddify-*`/mariadb/redis **active** (`hiddify-ss-faketls` intentionally inactive —
-  plain SS). **Panel API re-verified live over node-de:** `admin/me/`, `admin/user/`, `admin/server_status/` → **200**;
-  `me/` with no key → **403** (route+auth OK). **marshmallow pinned 3.26.1** (API pin intact). `openapi.json` → 500 is a
-  **cosmetic** apiflask schema-doc artifact of the marshmallow downgrade — the functional CRUD API the orchestrator uses
-  is 200. A **controlled restart cluster ~19:19** (Charles, pts/1 in `/opt/hiddify-manager/common`, ran `systemctl
-  unmask --now systemd-resolved` + `restart sshd/ssh`) cycled nginx/haproxy/panel/xray; the panel control-process
-  exit-code + auto-restart is **reload churn, not an ongoing crash** — all recovered to active. haproxy code-143 ALERTs =
-  normal seamless-reload worker churn. Resources healthy (load ~0, ~2.9 GiB mem free, disk 17%). Minor: `UdpSndbufErrors=742`
-  (historical), RX dropped 13240 (0.23%, 0 errors), conntrack 76 / 2.1M.
-- **External reachability from Master (no proxy payloads):** DNS `node-de.unseen.click → 5.249.160.59` ✓; TLS @443
-  **verify=0** (Let's Encrypt, CN/SAN=node-de, valid to Sep 14) ✓; TCP **443/16753/80/22 OPEN** ✓; UDP **14430/443
-  open|filtered** (not refused) ✓.
-- **Per-protocol server readiness — all READY:** **FAST1/Hysteria2** udp/14430 listener + **explicit iptables ACCEPT
-  14430/udp** (+ port-hop 14428/14765/14767/36675/36677), no handshake/timeout errors, UDP `rmem/wmem_max`=64 MB
-  (already tuned). **FAST2/Shadowsocks** tcp+udp/16753 (plain SS, faketls inactive), reachable, logs clean — **no
-  explicit firewall rule for 16753** (works via default INPUT=ACCEPT; **Phase 10 hardening MUST add an explicit allow**
-  before tightening INPUT to DROP). **Secure/VLESS-Reality** 443→internal `realityin_tcp_19411`, reality inbound present
-  with **decoy SNI i.pinimg.com** + dest + serverNames, valid TLS, no handshake failures (the xray "non-443 ports"
-  warning is a benign haproxy-fronting artifact).
-- **Decision = HOLD (no node-side tuning).** Buffers already tuned, no server errors, all protocols reachable — **no
-  evidence supports a server change.** Symptoms (SS upload drop, Facebook, Windows core fail) point **client/app/mobile-
-  network** side. **Windows "failed to start background core" = client-side** (TUN/Wintun driver, Administrator/privilege,
-  or app-version) — server logs show the node healthy and reachable, with no failed connection attempts implicating it.
-  **iOS SS upload drop** = mobile-carrier UDP/upload shaping and/or client (background refresh, Low Power Mode, VPN
-  permission, app version); not a final proof. **Facebook** is field evidence, not formal proof alone. **Windows Proxy
-  mode** is **not** accepted as full-device VPN proof.
-- **No node change made.** de1 stays **`status=test`**; **`realdevice_protocol_test_pending` NOT cleared** (awaits
-  Charles's per-protocol real-device connect PASS). **Secret-safety:** only counts/booleans/HTTP-status/ports emitted;
 
 
 ---

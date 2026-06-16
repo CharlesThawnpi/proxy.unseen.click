@@ -32,6 +32,14 @@
 > `branding_title`/`branding_site`/`branding_freetext` (panel branding). UNSEEN customer labels (FAST1/FAST2/Secure) are
 > therefore an **UNSEEN delivery-layer concern** (bot/portal, or a backend-generated profile), **not** a Hiddify API
 > option. "lowest"/"balance" seen in-app are **client-side** Hiddify-App groups, never emitted by the node.
+> ### 🛰️ Per-domain protocol inbounds (2026-06-16)
+> Hiddify generates **one inbound per protocol per configured domain**. With node-de + raw-IP + sslip configured, the
+> node runs **three Hysteria2 inbounds** (`hysteria_in_14427/14428/14430` = raw-IP/sslip/node-de) on distinct UDP ports;
+> the **customer profile (node-de) uses udp/14430**. The raw-IP/sslip inbounds belong to the `sub_link_only` domains
+> (excluded from customer subs). An on-node boolean compare confirmed the generated client outbound's **port + salamander
+> obfs-password + user auth + sni match** the node-de inbound — i.e. the generated profile is consistent with the server
+> config. (Implication for the orchestrator: protocol port numbers are **per-node/per-domain and dynamic** — always read
+> them from the generated profile, never hardcode.)
 > ### 🌐 Domain/host: node-de.unseen.click verified-live (2026-06-16)
 > The admin base + user subscription endpoints are now confirmed over the **real node domain with valid TLS** (not just
 > the install's raw-IP/sslip.io defaults): `GET https://node-de.unseen.click/<proxy_path>/api/v2/admin/me/` → 200 and

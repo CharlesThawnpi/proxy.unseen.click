@@ -272,6 +272,35 @@ selector groups server-side.
   the **UNSEEN backend generate/sanitize the customer sing-box profile itself** (the delivery/link layer already mediates
   output) rather than patching Hiddify.
 
+## 5F. FAST1/Hysteria2 "timeout on connect" — server-side checklist + attribution (REQUIRED before tuning)
+
+Hysteria2 is **QUIC/UDP**; a *timeout* (not a refusal, not an auth/obfs error) while TCP-based protocols (SS/Reality)
+work is almost always a **client network (mobile-carrier UDP/QUIC) restriction**, not a node fault. Verified on de1
+(2026-06-16). Prove the server is correct **before** changing anything. Emit only counts/booleans/ports.
+
+1. **Scan the client Hysteria2 outbound (sanitized):** confirm `server`=node domain, the `server_port`, `obfs.type`
+   (`salamander`) + `obfs` password **present**, `password` present, `tls.enabled` + `server_name`=node domain. Never
+   print the passwords/URI/QR.
+2. **Map server inbounds:** Hiddify creates **one hysteria2 inbound per configured domain** (e.g. `hysteria_in_<port>`
+   for raw-IP / sslip / node-de). The customer profile uses the **node-domain** inbound's port. Confirm hiddify-core
+   **listens** on that udp port (`ss -ulnp`) and that **iptables has an explicit ACCEPT** for it (don't rely on the
+   default INPUT=ACCEPT — Phase 10 will tighten it).
+3. **Boolean compare server-inbound ↔ client-outbound (no secrets):** load
+   `/opt/hiddify-manager/singbox/configs/05_inbounds_*hysteria*.json`, pick the inbound whose `listen_port` == the
+   client's `server_port`, and assert **port match**, **salamander obfs-password match**, **client auth-password ∈ the
+   inbound's users**, **tls sni match** — print only the booleans. A mismatch here (rare) = a real server/profile bug.
+4. **Logs:** `journalctl -u hiddify-singbox` for `hysteria|quic|obfs|auth|handshake|timeout` (redacted). **Auth/obfs
+   rejections are logged**; their absence means the server is not rejecting the client (so a client-side timeout = packets
+   not arriving / not answered on the client's path).
+5. **External reachability (from the Master, no payload):** DNS, then `nc -u -z <ip> <port>` → `succeeded`/rc=0 =
+   open|filtered (not refused). **Honest limit:** UDP *delivery* can't be proven generically without a Hysteria2 handshake
+   payload — do **not** send one. Server-listener + clean-network not-refused is sufficient to exonerate the node.
+6. **Supported Hy2 knobs (Hiddify):** `hysteria_enable`, `hysteria_obfs_enable` (salamander — keep ON for DPI evasion),
+   `hysteria_port`, `hysteria_up_mbps`/`hysteria_down_mbps`. **No supported port-hopping toggle exists.** If steps 1–5 are
+   clean, **HOLD — do not tune the server**; the fix is network-side (retest on Wi-Fi vs mobile data) and to steer
+   restrictive-network users to **FAST2/Shadowsocks (TCP)** or **Secure/VLESS-Reality (TCP/443)**. Document Hysteria2 as
+   premium/fast but **network-dependent**.
+
 ## 6. Secret safety (applies to every step)
 
 - **Never print or commit:** Hiddify admin links, admin/proxy paths, admin UUID / API key, private keys,

@@ -78,6 +78,13 @@ once Hiddify is installed. Detail: [PHASE2_DE1_PREFLIGHT.md](PHASE2_DE1_PREFLIGH
   profile; the prior iOS import failure was **app/cache/install-state**, not a node/network fault. The in-app
   "lowest"/"balance" entries are **client-side Hiddify-App groups** — not de1 outbounds and not in the data path (the
   node emits only the 3 product protocols + the "Select"/"Auto" sing-box groups). No data-plane change.
+- **FAST1/Hysteria2 timeout (2026-06-16) = likely mobile-carrier UDP, not a node/network fault.** Hysteria2 is QUIC/UDP
+  on **udp/14430**; the node listens + firewall-ACCEPTs it, the client profile matches the server inbound (port/obfs/
+  auth/sni), and from the Master (clean datacenter network) the port is **open|filtered** (not refused). A *timeout* on
+  UDP while TCP (SS 16753 / Reality 443) works is the classic signature of **mobile-carrier UDP/QUIC throttling**
+  (common on Myanmar mobile data). UDP *delivery* can't be proven generically without a Hysteria2 payload (not sent).
+  Recommendation: retest Hysteria2 on **Wi-Fi vs mobile data**, and steer restrictive-network users to the **TCP-based**
+  FAST2/Secure. No data-plane change. See [PHASE9_DE1_REBUILD_FRESH_HIDDIFY.md](PHASE9_DE1_REBUILD_FRESH_HIDDIFY.md).
 
 ## Phase 2 preflight — current network state (2026-06-15, read-only) — MASTER
 

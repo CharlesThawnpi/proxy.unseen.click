@@ -71,6 +71,15 @@ above are Hiddify-assigned and may differ per node/version — read them from th
 > **14430/443 open|filtered** (not refused); TLS @443 **verify=0** (valid LE cert, CN/SAN node-de). The `8388` loopback
 > `ss-server` is the **inactive faketls backend** (unused) — do not open it.
 
+> **Hysteria2 = one inbound per configured domain (2026-06-16 FAST1 timeout diagnosis).** hiddify-core runs **three**
+> hysteria2 inbounds — `hysteria_in_14427` / `_14428` / `_14430` (raw-IP / sslip / **node-de**) — all listening (udp) and
+> all explicitly firewall-ACCEPTed. The **customer profile (node-de) uses udp/14430**; the 14427/14428 inbounds belong to
+> the `sub_link_only` raw-IP/sslip domains (not in customer subs). All three share the same salamander obfs; an on-node
+> boolean compare confirmed the client's port + obfs-password + auth + sni **match** the 14430 inbound. **Hiddify exposes
+> no Hysteria2 port-hopping toggle** (these are per-domain inbounds, not a hop range). FAST1/Hysteria2 timeouts with a
+> correct+reachable server are therefore **mobile-network UDP/QUIC restrictions**, not a port/firewall fault — see
+> [PHASE9_DE1_REBUILD_FRESH_HIDDIFY.md](PHASE9_DE1_REBUILD_FRESH_HIDDIFY.md) addendum.
+
 ## Phase 2 preflight — current live port map (Master, 2026-06-15)
 
 Observed via `ss -tulpn` (read-only). See `PHASE2_MASTER_DE_HIDDIFY_PREFLIGHT.md`.

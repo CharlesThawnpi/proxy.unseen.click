@@ -144,6 +144,18 @@ node **server-side READY and externally reachable for all three protocols**, but
   are a bot/portal/delivery concern** (or a future backend-generated profile). No node change; de1 stays `status=test`;
   `realdevice_protocol_test_pending` remains.
 
+### FAST1/Hysteria2 timeout diagnosis (2026-06-16) — server EXONERATED; likely mobile UDP (Decision C, HOLD)
+
+- **Symptom:** FAST1/Hysteria2 **times out on connect** (protocol-level, not import). FAST2/Secure still untested.
+- **Server EXONERATED:** hiddify-core runs one Hy2 inbound per domain (`hysteria_in_14427/14428/14430`), all listening
+  (udp) + explicitly firewall-ACCEPTed; the customer profile uses **node-de udp/14430**, and an on-node boolean compare
+  confirms **port + salamander obfs-password + user auth + sni all match** that inbound (no secrets printed). singbox
+  active, **0 hysteria/quic/auth/obfs/handshake errors**. From the Master (clean net): DNS ✓, UDP 14430 open|filtered.
+- **Control:** SS 16753 (tcp+udp) + Reality 443 listeners healthy → only the UDP/Hysteria2 path is affected.
+- **Likely cause = C (mobile-carrier UDP/QUIC throttling).** Salamander obfs already on; **no supported Hy2 port-hop
+  toggle** → **no safe server change → HOLD, no node change.** Steer restrictive-network users to FAST2/Secure (TCP).
+  de1 stays `status=test`; `realdevice_protocol_test_pending` remains.
+
 ## Phase 4C — de1 in dry-run provisioning (2026-06-16)
 
 The dry-run provisioning orchestration ([PHASE4C_DRY_RUN_PROVISIONING.md](PHASE4C_DRY_RUN_PROVISIONING.md)) may select

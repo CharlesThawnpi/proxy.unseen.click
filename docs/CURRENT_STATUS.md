@@ -209,6 +209,19 @@ is Clash-template-only). **Decision = C: keep the clean profile unchanged; UNSEE
 FAST2=Shadowsocks, Secure=VLESS-Reality) are presented by bot/portal/delivery** (a backend-generated custom profile is the
 path if ever required). **No node change made; de1 stays `status=test`; `realdevice_protocol_test_pending` remains.**
 
+**de1 FAST1/Hysteria2 timeout diagnosis (2026-06-16) — server EXONERATED; likely mobile-network UDP (Decision C, HOLD)**
+([PHASE9_DE1_REBUILD_FRESH_HIDDIFY.md](PHASE9_DE1_REBUILD_FRESH_HIDDIFY.md) addendum): Charles's **FAST1/Hysteria2 times
+out on connect** (a protocol-level failure, not import). Server side is **fully correct and exonerated**: hiddify-core
+listens on **udp/14430** (one Hy2 inbound per domain: 14427/14428/14430), **explicit firewall ACCEPT** for those udp
+ports, and an on-node boolean comparison confirms the client targets node-de's `hysteria_in_14430` with **matching port +
+salamander obfs-password + user auth + sni** (no secrets printed); singbox active with **0 hysteria/quic/auth/obfs/
+handshake errors**. From the Master (clean network): DNS ✓, TCP 443/16753 OPEN, UDP 14430 **open|filtered** (not refused).
+Control FAST2(SS 16753 tcp+udp)/Secure(Reality 443) listeners healthy → **only the UDP/Hysteria2 path is affected**.
+**Likely cause = C (mobile-carrier UDP/QUIC throttling on the high port)** — a *timeout* on QUIC/UDP while TCP works is the
+classic signature; salamander obfs is already enabled (best DPI evasion) and **no supported port-hop toggle exists**, so
+**no safe server change applies → HOLD, no node change.** **`realdevice_protocol_test_pending` remains** (Hysteria2 not
+PASS; FAST2/Secure still need separate tests). Hysteria2 is UDP-based: fast but **network-dependent**.
+
 **Next: Charles records the real-device FAST1/FAST2/Secure connect PASS** (clears `realdevice_protocol_test_pending`;
 `#TASK_for_Charles` in PHASE9_DE1_REBUILD_FRESH_HIDDIFY.md). Then separately-gated tasks remain (public portal
 deployment: nginx/TLS + systemd + public-bind approval for the portal HTTP adapter & `sub.unseen.click` sidecar;

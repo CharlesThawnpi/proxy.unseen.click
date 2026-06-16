@@ -403,6 +403,61 @@ This addendum answers whether the Hiddify-generated client profile can be made t
   mobile data). UNSEEN's customer-facing FAST1/FAST2/Secure naming will come from the bot/portal, not the raw profile.
 - This per-protocol connectivity PASS is what clears `realdevice_protocol_test_pending`.
 
+## Addendum (2026-06-16) — FAST1/Hysteria2 timeout diagnosis — server EXONERATED; likely mobile-network UDP (Decision C, HOLD)
+
+Mobile/Windows **import PASS**, but Charles reports **FAST1/Hysteria2 times out on connect**. This is a **protocol-level
+connectivity** failure, **not** an import/profile-shape failure. Labels unchanged (FAST1=Hysteria2, FAST2=Shadowsocks,
+Secure=VLESS-Reality). All inspection sanitized (counts/booleans/ports/HTTP-status only; on-node comparisons reported as
+booleans — no obfs/auth/keys/UUIDs printed; temp scanners shredded).
+
+**Profile scan (Hysteria2 detail):** 1 disposable user; 7 outbounds (clean — raw-IP/sslip/dnstt/tpr/private-key/vmess/
+tuic/naive/wireguard all 0). The Hysteria2 outbound = **server node-de, port 14430**, salamander **obfs (+password)**,
+**auth password** present, **TLS** enabled (insecure=true, sni=node-de, alpn present).
+
+**Server-side EXONERATED — causes A (listener/firewall) and B (profile mismatch) ruled out:**
+
+- Hiddify created **one Hy2 inbound per configured domain** — `hysteria_in_14427` / `_14428` / `_14430` (raw-IP / sslip /
+  node-de). hiddify-core **listens on all three udp ports**; **explicit iptables ACCEPT** exists for `14430/14428/14427 udp`
+  (INPUT policy ACCEPT). The customer profile (node-de) targets **14430**.
+- On-node boolean comparison of the **14430** inbound vs the client outbound: **port match ✓, salamander obfs-password
+  match ✓, user auth-password present ✓, TLS sni=node-de ✓**. No mismatch.
+- hiddify-singbox active (no restart in the test window); **0 logged hysteria/quic/auth/obfs/handshake errors** (2h);
+  resources healthy (load ~0.15, ~2.9 GiB free, disk 17%). `UdpRcvbufErrors ≈ 380/180240` (~0.2%) = negligible
+  background, not a connection-killer.
+
+**External reachability (from the Master, no payloads):** DNS node-de → 5.249.160.59 ✓; TCP control **443/16753 OPEN**;
+UDP **14430/14428/14427 open|filtered** (not refused) from a clean datacenter network. **Honest limitation:** UDP
+*delivery* cannot be definitively proven with generic tools without a Hysteria2 handshake payload, which was intentionally
+**not** sent (no credentials/payload disclosure).
+
+**Control (FAST2/Secure — recorded, NOT tuned):** SS **16753 tcp+udp** listening; Reality **443** listening; xray/haproxy
+active; **0 reality handshake errors**. So TCP-based protocols are up — **only the UDP/Hysteria2 path is in question.**
+
+**Likely cause = C — mobile-network UDP/Hysteria2 instability.** The server is correct and reachable from a clean
+network; the failure is a **timeout** (not a refusal, not an auth/obfs rejection) on a **QUIC/UDP** protocol on a high
+port (14430) **while TCP-based import/SS/Reality work** — the classic signature of **mobile-carrier UDP/QUIC throttling
+or blocking** (common on Myanmar mobile data). **D (client app) is a secondary possibility** to rule out via a network
+swap (Wi-Fi vs mobile data).
+
+**Supported Hiddify Hy2 settings (researched, NOT applied):** `hysteria_enable=true`, `hysteria_obfs_enable=true`
+(**salamander already on** — best available DPI evasion), `hysteria_port` (→14430), `hysteria_up/down_mbps` (150/300).
+**No supported Hysteria2 port-hopping toggle exists** (the three inbounds are per-domain, not a hop range; `mieru_udp_ports`
+is Mieru-only). Therefore **no safe/supported server change would fix a carrier-side UDP block.**
+
+**Decision = C → HOLD. No node change made** (no setting, no template edit, no restart, no disposable-user recreate).
+de1 stays **`status=test`**; **`realdevice_protocol_test_pending` remains** (Hysteria2 not PASS; FAST2/Secure still need
+their own tests).
+
+### #TASK_for_Charles (this addendum)
+
+1. **Retest Hysteria2/FAST1 on a different network:** try it on **Wi-Fi** and on **mobile data** separately. If it works
+   on Wi-Fi but times out on mobile data → confirmed **mobile-carrier UDP** restriction (expected for Hysteria2/QUIC).
+2. **Test FAST2/Shadowsocks (TCP 16753) and Secure/VLESS-Reality (TCP 443) next** — these are TCP-based and far more
+   likely to connect on restrictive/UDP-throttling networks. Report per-protocol PASS/FAIL (no links/secrets).
+3. Optionally confirm the Hiddify App has VPN permission + latest version (rules out client-side D).
+4. **Do not paste configs/links.** Hysteria2 being premium/fast but **network-dependent** is expected behavior, not a
+   node fault. `realdevice_protocol_test_pending` clears only on confirmed per-protocol connectivity.
+
 ## Exact next recommended task
 
 **Charles records the real-device FAST1/FAST2/Secure connect PASS** (clears `realdevice_protocol_test_pending`). After
