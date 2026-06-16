@@ -5,6 +5,27 @@
 
 Chronological record of notable changes to the UNSEEN PROXY project.
 
+## 2026-06-16 — Phase 8C: portal HTTP deployment boundary (gated, local-only) — PASS
+
+- Added a local-only portal HTTP deployment boundary: `backend/portal_http.py` (`HttpRequest`/`HttpResponse`
+  abstraction + `PortalHttpApp` router wrapping `render_route` behind a strict route allowlist),
+  `backend/portal_middleware.py` (hardened security headers + cookie→session-context middleware),
+  `backend/portal_cookies.py` (HttpOnly+Secure+SameSite+Path+Max-Age `Set-Cookie` builder/parser),
+  `backend/portal_csrf.py` (signed, constant-time, expiring CSRF foundation for future POST routes),
+  `backend/rate_limit.py` (in-memory fail-closed fixed-window limiter; branded-token default policy),
+  `backend/access_log.py` (access-log sanitizer redacting `/s/<token>`, cookies, auth headers, query tokens,
+  UUIDs, proxy links, bot/Hiddify secrets; masks client IP), and `backend/sidecar_boundary.py` (dry-run
+  `sub.unseen.click` sidecar: verifies branded token hash-backed, returns safe placeholder, no live Hiddify fetch).
+- Added local-only CLIs: `bin/portal_http_smoke.py`, `bin/sidecar_boundary_smoke.py`, and
+  `bin/portal_local_preview_server.py` (binds loopback only, refuses `0.0.0.0`, starts nothing without
+  `--serve-local`, no systemd/nginx/TLS).
+- CSRF token expiry is stamped via `backend.timezone` MMT helpers; no new DB timestamp writes were added.
+- **No persistent server, no public endpoint, no nginx/TLS, no systemd, no public bind, no real cookie/session
+  service, no live subscription resolution, no Hiddify/Telegram network.** de1 stays `status=test`.
+- Tests: new `tests/test_portal_http.py` (26) — full suite **224 PASS**. Smokes print `SMOKE_OK` and are
+  asserted secret-free.
+- See [PHASE8C_PORTAL_HTTP_DEPLOYMENT_BOUNDARY.md](PHASE8C_PORTAL_HTTP_DEPLOYMENT_BOUNDARY.md).
+
 ## 2026-06-16 — Phase 8B: portal auth/session and MMT timestamp foundation — PASS
 
 - Converted current app-created dry-run business timestamp writes to `backend.timezone` MMT helpers: subscription

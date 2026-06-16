@@ -29,6 +29,28 @@ The non-negotiable security and secret-safety rules for UNSEEN PROXY. These are 
   technical UTC fields, if introduced later, must be explicitly labeled so they cannot be mistaken for subscription,
   payment, invoice, bot, portal, or admin business dates.
 
+## Portal HTTP boundary (Phase 8C — local-only, verified by tests)
+
+The local-only portal HTTP adapter enforces these rules in code (no public endpoint yet):
+
+- **Sanitized access logs by construction** (`backend/access_log.py`): a log line carries
+  `METHOD sanitized-path status masked-ip` only. `/s/<token>` → `/s/<redacted>`, query strings are dropped,
+  and `Cookie`/`Set-Cookie`/`Authorization`/`X-Api-Key`/`X-Csrf-Token`/`Hiddify-API-Key` headers are dropped.
+  UUIDs, proxy/subscription URIs, bot-token shapes, `/api/v2/` admin paths, and long opaque tokens are redacted.
+- **Hardened session cookies** (`backend/portal_cookies.py`): HttpOnly + Secure + SameSite + Path=/ + Max-Age.
+  The raw session id lives only in the cookie value; it is never logged or written to page source. Lookups are
+  hash-backed (`portal_sessions`/`portal_access`).
+- **CSRF foundation** (`backend/portal_csrf.py`): signed, constant-time-verified, expiring tokens for future
+  POST routes; raw tokens are never logged or persisted. GET-only render routes are exempt by design.
+- **Fail-closed rate limiting** (`backend/rate_limit.py`): repeated branded-token attempts are blocked; keys are
+  token *fingerprints*, never raw tokens or paths.
+- **Hardened response headers** (`backend/portal_middleware.py`): `nosniff`, `X-Frame-Options=DENY`,
+  `Referrer-Policy=no-referrer`, restrictive CSP, `no-store` for private pages.
+- **Dry-run sidecar** (`backend/sidecar_boundary.py`): verifies branded tokens hash-backed and returns safe
+  placeholders; never fetches/persists live Hiddify subscription output.
+- **No public deployment, no nginx/TLS, no systemd, no public bind** — the preview server is loopback-only and
+  refuses `0.0.0.0`. See [PHASE8C_PORTAL_HTTP_DEPLOYMENT_BOUNDARY.md](PHASE8C_PORTAL_HTTP_DEPLOYMENT_BOUNDARY.md).
+
 ## Phase 4B secret-safety (service boundaries — verified by tests)
 
 The Phase 4B backend slice ([PHASE4B_ACCOUNT_NOTIFICATION_BACKUP.md](PHASE4B_ACCOUNT_NOTIFICATION_BACKUP.md)) keeps

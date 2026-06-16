@@ -1,6 +1,6 @@
 # UNSEEN PROXY — SOURCE OF TRUTH (consolidated, auto-generated)
 
-> **Generated:** 2026-06-16T07:51:46Z — by `scripts/build_source_of_truth.sh`.
+> **Generated:** 2026-06-16T08:27:26Z — by `scripts/build_source_of_truth.sh`.
 > **This is the live project state for external readers (e.g. the Custom GPT).** It is DERIVED from the
 > canonical docs below and regenerated each task. Upload THIS file to the GPT (not IMPLEMENTATION_PLAN.md,
 > which is the static v1.9 plan). Re-download after updates.
@@ -49,7 +49,7 @@ Where the UNSEEN PROXY build stands across the §34 deployment phases.
 | 5 | Telegram bot implementation (Burmese-primary) | **Foundation + transport DONE (dry-run, gated).** Foundation: adapter + Burmese catalogue + router + AccountService identity + env-driven admin. Transport: Bot API boundary (token redacted; injectable opener), offset-tracked polling runner, NotificationService sender consuming `outbound_messages` (queued→sent/requeue/dead), fail-closed double gate. **No polling daemon/webhook/API/send; no systemd.** See PHASE5_TELEGRAM_BOT_FOUNDATION.md + PHASE5_TELEGRAM_TRANSPORT_FOUNDATION.md. Live bring-up = next, Charles-gated. |
 | 6 | Hiddify subscription delivery integration | **Foundation DONE (dry-run): delivery payload model (safe refs only) + branded link rule (`sub.unseen.click/s/<token>`, hash stored) + deep-link/copy-link priority + QR planned + mocked Hiddify-output normalizer + NotificationService/Telegram render integration. No raw links persisted/logged; no network.** See PHASE6_SUBSCRIPTION_DELIVERY_FOUNDATION.md. Sidecar + live = next, gated. |
 | 7 | Plan-based region/protocol entitlement + node resilience | **Foundation DONE (dry-run, DB-driven): `entitlements` (plan→region/protocol, FAST rule, safe errors) + `node_resilience` (status×health readiness, reason vocabulary, graceful degradation, data-driven `node_live_blockers`) + `availability` (region/protocol availability) + provisioning-plan integration + Burmese availability copy. Additive migration `0005`. No node live; no metrics fetch.** See PHASE7_ENTITLEMENT_NODE_RESILIENCE.md. Health monitor = next. |
-| 8 | Web app / customer portal | **Foundation + 8A preview + 8B auth/session foundation DONE (render-only, dry-run): compact responsive portal UI, sanitized preview export, hash-only portal access tokens/sessions, branded `/s/<opaque-token>` resolver boundary, route guards for private pages. No server, no public endpoint, no real cookie service, no live delivery, no Hiddify/Telegram network.** See PHASE8_WEB_PORTAL_FOUNDATION.md + PHASE8A_PORTAL_PREVIEW_REFINEMENT.md + PHASE8B_PORTAL_AUTH_SESSION_FOUNDATION.md + PORTAL.md. |
+| 8 | Web app / customer portal | **Foundation + 8A preview + 8B auth/session + 8C HTTP boundary DONE (render-only + local-only HTTP adapter, dry-run): compact responsive portal UI, sanitized preview export, hash-only portal access tokens/sessions, branded `/s/<opaque-token>` resolver boundary, route guards for private pages, plus a local-only HTTP request/response adapter + cookie/CSRF/rate-limit/access-log helpers + dry-run subscription sidecar. No server, no public endpoint, no nginx/TLS/systemd, no real cookie service, no live delivery, no Hiddify/Telegram network.** See PHASE8_WEB_PORTAL_FOUNDATION.md + PHASE8A_PORTAL_PREVIEW_REFINEMENT.md + PHASE8B_PORTAL_AUTH_SESSION_FOUNDATION.md + PHASE8C_PORTAL_HTTP_DEPLOYMENT_BOUNDARY.md + PORTAL.md. |
 | 9 | Messenger and Viber bot integration | PENDING |
 | 10 | Monitoring, backup, security, production hardening | PENDING |
 | 11 | Internal beta testing | PENDING |
@@ -181,7 +181,21 @@ real cookie service/live delivery/Hiddify call/Telegram send.** Portal token/ses
 dry-run business timestamps route through MMT helpers. `bin/timezone_audit.py` provides a sanitized local timestamp
 check. 198 tests PASS.
 
-**Next: real portal deployment boundary design (HTTP adapter/cookies/rate limits/access logs), gated monitor scheduler, or Phase 9 channel work.** **Before de1 goes live:** rebuild the node (clears
+**Phase 8C portal HTTP deployment boundary complete (2026-06-16)** ([PHASE8C_PORTAL_HTTP_DEPLOYMENT_BOUNDARY.md](PHASE8C_PORTAL_HTTP_DEPLOYMENT_BOUNDARY.md)):
+local-only portal HTTP boundary — `portal_http` (`HttpRequest`/`HttpResponse` + `PortalHttpApp` router wrapping
+`render_route` behind a strict route allowlist), `portal_middleware` (hardened security headers + cookie→session
+middleware), `portal_cookies` (HttpOnly+Secure+SameSite+Path+Max-Age builder/parser), `portal_csrf` (signed,
+constant-time, expiring CSRF foundation), `rate_limit` (in-memory fail-closed fixed-window limiter), `access_log`
+(sanitizer redacting `/s/<token>`/cookies/auth headers/query tokens/UUIDs/proxy links/secrets; masks IP), and
+`sidecar_boundary` (dry-run `sub.unseen.click`: verifies token hash-backed, safe placeholder, no live Hiddify).
+Local-only CLIs: `bin/portal_http_smoke.py`, `bin/sidecar_boundary_smoke.py`, `bin/portal_local_preview_server.py`
+(loopback-only; refuses `0.0.0.0`; starts nothing without `--serve-local`; no systemd/nginx/TLS). **No persistent
+server/public endpoint/nginx/TLS/systemd/public bind/real cookie service/live subscription resolution/Hiddify/Telegram
+network.** CSRF expiry uses MMT helpers; no new DB timestamp writes. 224 tests PASS. de1 stays `status=test`.
+
+**Next: de1 rebuild + real-device FAST1/FAST2/Secure verification (clears `leaked_key_rebuild_pending`), then a
+separately-gated public-deployment task (nginx/TLS + systemd + public-bind approval for the portal HTTP adapter and
+`sub.unseen.click` sidecar), gated monitor scheduler, or Phase 9 channel work.** **Before de1 goes live:** rebuild the node (clears
 `leaked_key_rebuild_pending`) + a real-device FAST1/FAST2/Secure test (`#TASK_for_Charles` in
 PHASE4_PRELIVE_DE1_TUNING.md), then separately-gated tasks (periodic monitor + read-only SSH metrics, bot live latches
 + real opener, `sub.unseen.click` sidecar, live provisioning). Live promotion stays Charles-gated.
@@ -548,6 +562,27 @@ The verified Hiddify Manager **API v2** contract — endpoints, fields, units, a
 
 Chronological record of notable changes to the UNSEEN PROXY project.
 
+## 2026-06-16 — Phase 8C: portal HTTP deployment boundary (gated, local-only) — PASS
+
+- Added a local-only portal HTTP deployment boundary: `backend/portal_http.py` (`HttpRequest`/`HttpResponse`
+  abstraction + `PortalHttpApp` router wrapping `render_route` behind a strict route allowlist),
+  `backend/portal_middleware.py` (hardened security headers + cookie→session-context middleware),
+  `backend/portal_cookies.py` (HttpOnly+Secure+SameSite+Path+Max-Age `Set-Cookie` builder/parser),
+  `backend/portal_csrf.py` (signed, constant-time, expiring CSRF foundation for future POST routes),
+  `backend/rate_limit.py` (in-memory fail-closed fixed-window limiter; branded-token default policy),
+  `backend/access_log.py` (access-log sanitizer redacting `/s/<token>`, cookies, auth headers, query tokens,
+  UUIDs, proxy links, bot/Hiddify secrets; masks client IP), and `backend/sidecar_boundary.py` (dry-run
+  `sub.unseen.click` sidecar: verifies branded token hash-backed, returns safe placeholder, no live Hiddify fetch).
+- Added local-only CLIs: `bin/portal_http_smoke.py`, `bin/sidecar_boundary_smoke.py`, and
+  `bin/portal_local_preview_server.py` (binds loopback only, refuses `0.0.0.0`, starts nothing without
+  `--serve-local`, no systemd/nginx/TLS).
+- CSRF token expiry is stamped via `backend.timezone` MMT helpers; no new DB timestamp writes were added.
+- **No persistent server, no public endpoint, no nginx/TLS, no systemd, no public bind, no real cookie/session
+  service, no live subscription resolution, no Hiddify/Telegram network.** de1 stays `status=test`.
+- Tests: new `tests/test_portal_http.py` (26) — full suite **224 PASS**. Smokes print `SMOKE_OK` and are
+  asserted secret-free.
+- See [PHASE8C_PORTAL_HTTP_DEPLOYMENT_BOUNDARY.md](PHASE8C_PORTAL_HTTP_DEPLOYMENT_BOUNDARY.md).
+
 ## 2026-06-16 — Phase 8B: portal auth/session and MMT timestamp foundation — PASS
 
 - Converted current app-created dry-run business timestamp writes to `backend.timezone` MMT helpers: subscription
@@ -610,27 +645,6 @@ Chronological record of notable changes to the UNSEEN PROXY project.
 
 - **Render-only, dry-run only** (stdlib): no web server, no systemd, no nginx/TLS, no public endpoint, no real auth,
   no Hiddify call, no Telegram send/poll, no live subscription resolution. See
-  [PHASE8_WEB_PORTAL_FOUNDATION.md](PHASE8_WEB_PORTAL_FOUNDATION.md) and [PORTAL.md](PORTAL.md).
-- **Portal boundary:** `backend/portal_app.py` + `portal_routes.py` return `PortalResponse` HTML for local render/smoke
-  only. Pages: home, plans, customer status, subscription detail, branded `/s/<opaque-token>` placeholder, help,
-  unavailable, expired, not-found.
-- **DB-driven customer views:** plans/regions/protocols read from DB rows and existing Phase 7 entitlement/availability
-  helpers; DE default, SG premium-only PRO/MAX, and Fast/Fast1/Fast2 display rules preserved. Dashboard uses
-  `public_customer_code`, not raw platform ids. Subscription pages show snapshot values and safe lifecycle/provision
-  statuses.
-- **Compact responsive UI:** GitHub-inspired neutral style (bordered panels, muted backgrounds, compact tables, status
-  badges) with local embedded CSS only; no GitHub branding/assets copied; no CDN/fonts/images/scripts.
-- **Security:** dynamic HTML escaped; no raw subscription/proxy link, QR payload, node IP/hostname, admin path, UUID,
-  platform id, or raw opaque token rendered. Branded link shown only as `https://sub.unseen.click/s/<opaque-token>`.
-- New CLIs: `bin/portal_render_dry_run.py`, `bin/portal_smoke.py` (fresh temp DB/sample data by default).
-  **Tests: 174 PASS** (163 + 11 new).
-
-## 2026-06-16 — Phase 7: health monitor foundation (read-only, dry-run) — PASS
-
-- **Read-only, dry-run only** (stdlib): no daemon, no systemd, no node modified, no Hiddify mutation, no secrets
-  fetched, no Telegram send; de1 stays `status=test`. See [PHASE7_HEALTH_MONITOR_FOUNDATION.md](PHASE7_HEALTH_MONITOR_FOUNDATION.md).
-  **No schema change** (existing `node_metrics`/`node_alerts`/`settings` suffice).
-- **`node_probe`** — sanitized `ProbeResult` + `MockProber` (default; no network) + opt-in `PublicTcpProber`
 
 
 ---

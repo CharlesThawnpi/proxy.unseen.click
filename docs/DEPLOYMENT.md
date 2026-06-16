@@ -65,6 +65,22 @@ The DB+`.env` backup before migrating is mandatory (see [BACKUPS.md](BACKUPS.md)
   capturing the `.env`(s) **together** with the DB (so encrypted tokens stay decryptable). No timer/unit was created
   in Phase 4B; do not enable an automated backup until that gated task.
 
+## Portal HTTP boundary (Phase 8C — local-only, no public deployment)
+
+The portal HTTP adapter (`backend/portal_http.py` + `portal_middleware`/`portal_cookies`/`portal_csrf`/
+`rate_limit`/`access_log`/`sidecar_boundary`) is a **deployment boundary only**. As of Phase 8C it is
+**not deployed**: there is no running web server, no nginx, no TLS, no systemd unit, and no public bind.
+
+- **No persistent service.** Nothing starts on import or during request dispatch; the adapter is exercised
+  entirely in-memory by tests and smokes.
+- **Loopback-only preview tool.** `python3 bin/portal_local_preview_server.py --serve-local` binds **only**
+  `127.0.0.1` (default), refuses `0.0.0.0` (exit 2), starts nothing without `--serve-local`, uses a fresh
+  temp DB, and creates no systemd/nginx/TLS. It is an operator dev convenience, never an enabled service.
+- **Public deployment is a separate, gated task.** Enabling nginx/TLS + systemd + a public bind for the
+  portal and the `sub.unseen.click` sidecar must not precede the de1 rebuild (live provisioning stays
+  blocked until then). Decide the shared rate-limit store and the CSRF signing-key source from secret
+  config before any public bind. See [PHASE8C_PORTAL_HTTP_DEPLOYMENT_BOUNDARY.md](PHASE8C_PORTAL_HTTP_DEPLOYMENT_BOUNDARY.md).
+
 ## Nodes are NOT deployed from git
 
 - Node VPS run **stock Hiddify Manager**; only the Master pulls project code.
