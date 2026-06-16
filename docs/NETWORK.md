@@ -60,6 +60,12 @@ once Hiddify is installed. Detail: [PHASE2_DE1_PREFLIGHT.md](PHASE2_DE1_PREFLIGH
   its generated sing-box outbound carried a `tunnel-per-resolver` field the installed Hiddify App couldn't parse. DNSTT
   is a niche last-resort transport, **not** part of FAST1/FAST2/Secure, so the data-plane offering is unchanged; no
   port/firewall change.
+- **UNSEEN-only data-plane prune (2026-06-16):** de1's customer profile is now exactly **FAST1 Hysteria2 (node-de
+  udp:14430)**, **FAST2 Shadowsocks (node-de :16753)**, **Secure VLESS-Reality (node-de tcp:443, decoy SNI
+  `i.pinimg.com`)**. Raw-IP + sslip domains are excluded from customer subscriptions (`sub_link_only=1`); all non-product
+  protocols/transports disabled. Customer→node path therefore uses **node-de only**. INPUT policy is ACCEPT so the
+  non-443 product ports are reachable; **no firewall change made** (default-DROP tightening remains a future hardening
+  task).
 
 ## Phase 2 preflight — current network state (2026-06-15, read-only) — MASTER
 

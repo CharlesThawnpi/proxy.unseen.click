@@ -49,6 +49,12 @@ The non-negotiable security and secret-safety rules for UNSEEN PROXY. These are 
   is a no-customer **test** node, so per standing guidance this is **not** a new leaked-key rebuild blocker. **Lesson
   (enforced in runbook §5B):** emit only counts/booleans — never value dumps — and sanitize **query-param** UUIDs
   (`&user=<uuid>`), not just path UUIDs. Config/secret-bearing renders go to root-only temp files and are `shred -u`'d.
+- **Disposable profile pasted → rotated (2026-06-16).** Charles pasted disposable test-profile/config text (with client
+  secret material) into chat for troubleshooting. That `disposable-test-realdevice` user was treated as **burned** and
+  **rotated** (delete + recreate one fresh user). This is **not** a real-customer leak and **not** a de1 rebuild blocker:
+  de1 is **test-only**, no real customers exist, the user was rotated, and **no committed file** ever held the material.
+  All output inspection during the UNSEEN prune used **counts-only** sanitized scanners on root-only temp renders that
+  were `shred -u`'d — no links/UUIDs/keys/raw configs printed or committed.
 
 ## Portal HTTP boundary (Phase 8C — local-only, verified by tests)
 

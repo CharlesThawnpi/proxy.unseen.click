@@ -5,6 +5,35 @@
 
 Chronological record of notable changes to the UNSEEN PROXY project.
 
+## 2026-06-16 — de1: prune Hiddify output to a clean UNSEEN-only profile (FAST1/FAST2/Secure, node-de only) — PASS
+
+- **Why:** Charles's imported profile was Hiddify's broad default — **100 outbounds** (vmess×42, vless-noise×36,
+  naive/tuic/mieru/ssh/wireguard, spread across raw-IP + sslip + node-de) with **no clean FAST1/FAST2/Secure** (and
+  shadowsocks/Reality missing from the sing-box output). Charles also pasted disposable profile text → that test user
+  was **rotated** (delete+recreate). Not a real leak / not a rebuild blocker (test-only node, no customers, nothing
+  committed).
+- **Supported pruning (CLI `hiddifypanel set-setting`, grounded in `hutils/proxy/shared.py:get_proxies`):**
+  - **Enabled:** `hysteria_enable` (FAST1), `shadowsocks2022_enable` (FAST2 — plain SS; faketls doesn't render in
+    sing-box), `reality_enable` (Secure). Kept `tcp_enable`.
+  - **Disabled:** `vmess, tuic, naive, mieru, ssh_server, wireguard, trojan, grpc, xhttp, httpupgrade, h2, ws,
+    ssfaketls, shadowtls, kcp` — and crucially **`vless_enable=false`**, which (per `get_proxies`) keeps **only**
+    `reality` vless and drops every non-Reality VLESS transport → clean Secure isolation.
+  - DNSTT already disabled (prior task).
+- **Domain cleanup (supported visibility flag):** set **`sub_link_only=1`** on `5.249.160.59` and
+  `5.249.160.59.sslip.io` (per `user.py:362` `Domain.query.filter(sub_link_only != True)`) so they're **excluded from
+  customer subscriptions** while staying configured (admin link unaffected). node-de + the Reality decoy `i.pinimg.com`
+  stay visible.
+- **Result (app-context sing-box render, sanitized counts):** **100 → 9 outbounds** (3.7 KB). Exactly **hysteria2×1
+  (FAST1) + shadowsocks×1 (FAST2) + vless-Reality×1 (Secure)**; `vless_nonreality=0`, no vmess/tuic/naive/mieru/ssh/
+  wireguard, `tunnel-per-resolver=0`, `dnstt=0`, **no private-key fields**. All three resolve to **node-de** (FAST1
+  udp:14430, FAST2 :16753, Secure tcp:443 + decoy SNI `i.pinimg.com`); raw-IP/sslip absent from customer outbounds. Each
+  product port has a live node listener; INPUT policy ACCEPT so all reachable.
+- **Node:** 16 `set-setting` flags + 2-domain `sub_link_only` + 2 applies; `hiddify-ss-faketls` now inactive (intended);
+  other services active; node-de TLS valid; no cert/firewall/port change. **Rollback** documented (restore flags +
+  `sub_link_only=0`; `current.json` backups in `/root/disk-rollback/`). One fresh `disposable-test-realdevice` (1 GB/1 d,
+  enabled, import-ready) kept. de1 stays **`status=test`**. **Protocols NOT marked PASS** — awaits Charles's real-device
+  connect. SOURCE_OF_TRUTH regenerated; no secrets printed/committed.
+
 ## 2026-06-16 — de1: fix Hiddify App parser error (`tunnel-per-resolver`) by disabling DNSTT — PASS
 
 - **Symptom (Windows Hiddify App):** profile downloaded but the parser rejected it —

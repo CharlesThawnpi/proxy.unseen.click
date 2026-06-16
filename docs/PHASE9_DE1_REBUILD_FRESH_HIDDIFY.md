@@ -265,6 +265,41 @@ no-customer **test** node; per the project's standing guidance this is **not** r
 blocker. Lesson captured in the runbook: only ever emit counts/booleans, never value dumps, and sanitize query-param
 UUIDs too.
 
+## Addendum (2026-06-16) — pruned Hiddify output to a clean UNSEEN-only profile
+
+Charles imported successfully on Windows but the profile was Hiddify's broad default: **100 outbounds** (vmess×42,
+non-Reality vless×36, naive/tuic/mieru/ssh/wireguard) across **raw-IP + sslip + node-de**, with **no clean
+FAST1/FAST2/Secure** — and Shadowsocks + VLESS-Reality were *missing* from the sing-box output. He also pasted disposable
+profile text, so that test user was rotated.
+
+- **Disposable rotation:** deleted + recreated one `disposable-test-realdevice` (1 GB/1 d). Burned because Charles pasted
+  its profile text — **not** a real-customer leak and **not** a rebuild blocker (de1 is test-only, no customers, nothing
+  committed).
+- **Protocol pruning (supported `hiddifypanel set-setting`, grounded in `hutils/proxy/shared.py:get_proxies`):**
+  - Enabled: `hysteria_enable` (FAST1), `shadowsocks2022_enable` (FAST2 — plain SS; faketls isn't sing-box-native),
+    `reality_enable` (Secure); kept `tcp_enable`.
+  - Disabled: `vmess, tuic, naive, mieru, ssh_server, wireguard, trojan, grpc, xhttp, httpupgrade, h2, ws, ssfaketls,
+    shadowtls, kcp`, and **`vless_enable=false`** — which per `get_proxies` keeps **only** Reality vless (`'vless' not in
+    proto or 'reality' in l3`), cleanly isolating Secure from every non-Reality VLESS transport. DNSTT already off.
+- **Domain cleanup (supported visibility flag, non-destructive):** `sub_link_only=1` on `5.249.160.59` +
+  `5.249.160.59.sslip.io` (`user.py:362` selects `Domain.sub_link_only != True` for customer subs). They're excluded
+  from customer subscriptions but stay configured, so the admin link is unaffected. node-de + Reality decoy
+  `i.pinimg.com` remain. (No `remove-domain` CLI exists; deletion would also break the IP-based admin link — so the
+  visibility flag is preferred.)
+- **Result (app-context sing-box render; sanitized counts only; bodies shredded):** **100 → 9 outbounds (3.7 KB).**
+  Exactly **hysteria2 (FAST1) → node-de udp:14430**, **shadowsocks (FAST2) → node-de :16753**, **vless-Reality (Secure)
+  → node-de tcp:443 + decoy SNI i.pinimg.com**. `vless_nonreality=0`; no vmess/tuic/naive/mieru/ssh/wireguard;
+  `tunnel-per-resolver=0`; `dnstt=0`; **no private-key fields**; no raw-IP/sslip in customer outbounds. Each port has a
+  live node listener; INPUT policy ACCEPT → reachable.
+- **Services/ports:** `hiddify-ss-faketls` now **inactive** (intended — faketls SS replaced by plain SS); all other
+  hiddify-* + mariadb/redis active. node-de TLS valid. **No cert/firewall/port change made.**
+- **Rollback:** restore protocol flags to prior values (`vmess/tuic/naive/mieru/ssh_server/wireguard/grpc/xhttp/
+  httpupgrade/h2=true`, `vless_enable=true`, `reality_enable/shadowsocks2022_enable=false`, `ssfaketls`→prior) via
+  `set-setting`; `UPDATE domain SET sub_link_only=0 WHERE domain IN (raw-IP,sslip)`; `current.json` backups in
+  `/root/disk-rollback/`; then `apply_configs.sh`.
+- **Not a PASS for protocols** — output is import-clean, but FAST1/FAST2/Secure **connectivity** must be confirmed by
+  Charles on a real device. de1 stays **`status=test`**.
+
 ## Exact next recommended task
 
 **Charles records the real-device FAST1/FAST2/Secure connect PASS** (clears `realdevice_protocol_test_pending`). After

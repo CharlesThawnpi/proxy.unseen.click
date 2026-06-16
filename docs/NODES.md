@@ -62,8 +62,11 @@ above applies normally (fresh VPS, host install, least-privilege API key, manage
   failed app-side with `127.0.0.1:64127` (the Hiddify App's own local core port) — not a node fault; see runbook §5B +
   PHASE9 addendum. The Windows app then hit a parser error (`outbounds[N].tunnel-per-resolver: unknown field`) from the
   DNSTT outbound — FIXED by disabling DNSTT (`set-setting dnstt_enable=false` + apply; not FAST1/FAST2/Secure);
-  after-render confirms the field is gone, FAST1/Secure intact.** Starts **`status=test`**, never auto-promoted to
-  `live`; proxy traffic only.
+  after-render confirms the field is gone, FAST1/Secure intact. Then the broad Hiddify default profile (100 outbounds)
+  was PRUNED to a clean UNSEEN-only set (2026-06-16): exactly Hysteria2(FAST1)+Shadowsocks(FAST2)+VLESS-Reality(Secure)
+  on node-de only (FAST1 udp:14430, FAST2 :16753, Secure tcp:443+decoy SNI), raw-IP/sslip excluded via `sub_link_only`,
+  all noise protocols off — see runbook §5C. Protocols await Charles's real-device connect (not yet PASS).** Starts
+  **`status=test`**, never auto-promoted to `live`; proxy traffic only.
   **Specs are provider/purchase ESTIMATES (unverified)** — per [DECISIONS.md](DECISIONS.md) ADR-002 the Master detects
   and records the node's **actual** facts (read-only) at preflight and those override the estimates; bandwidth stays
   `estimate` until provider-confirmed.

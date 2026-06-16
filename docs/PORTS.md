@@ -45,6 +45,21 @@ reachability for QUIC/Reality is a #TASK_for_Charles. See [PHASE9_DE1_REBUILD_FR
 > listener — the node emits no `64127` (the sing-box client template's clash-api is the standard `127.0.0.1:9090`).
 > Don't add/open any node port for it; it's an app-side condition. See [HIDDIFY_NODE_INSTALL_RUNBOOK.md](HIDDIFY_NODE_INSTALL_RUNBOOK.md) §5B.
 
+### de1 UNSEEN-only product ports (after 2026-06-16 prune)
+
+After pruning de1 to the UNSEEN product set, the customer profile uses these node-de ports (no firewall change was made
+— INPUT policy is ACCEPT, so all are reachable; values are non-secret ports):
+
+| Product | Protocol | node-de port |
+|---|---|---|
+| FAST1 | Hysteria2 | **udp/14430** (QUIC) |
+| FAST2 | Shadowsocks | **16753** (tcp+udp) |
+| Secure | VLESS-Reality | **tcp/443** (decoy SNI `i.pinimg.com`) |
+
+`hiddify-ss-faketls` (loopback `:8388`) is now **inactive** (faketls SS replaced by plain Shadowsocks for sing-box
+compatibility) — expected, not a fault. `80/tcp` stays open for ACME renewal; `443/tcp`+`443/udp` remain. Port numbers
+above are Hiddify-assigned and may differ per node/version — read them from the generated profile, never hardcode.
+
 ## Phase 2 preflight — current live port map (Master, 2026-06-15)
 
 Observed via `ss -tulpn` (read-only). See `PHASE2_MASTER_DE_HIDDIFY_PREFLIGHT.md`.

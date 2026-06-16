@@ -45,6 +45,15 @@
 >   DNSTT proxy (`shared.py:154-155`). The full sing-box config is rendered by `hutils.proxy.singbox.configs_as_json(**
 >   get_common_data(uuid,'new'))` (the `/<proxy_path>/<uuid>/singbox/` endpoint) — but that route serves the HTML portal
 >   to unrecognized UAs, so verify via an on-node app-context render (counts only).
+> ### 🧹 Protocol/domain pruning levers (verified 2026-06-16) — for an UNSEEN-only profile
+> The customer profile composition is governed by `hutils/proxy/shared.py:get_proxies()` (each `*_enable` hconfig strips
+> matching Proxy rows) and `panel/user/user.py:362` (customer-sub domains = `Domain.sub_link_only != True`). Set protocol
+> flags with `hiddifypanel set-setting -k <key> -v <bool>` (supported CLI). To deliver only **Hysteria2 (FAST1) +
+> Shadowsocks (FAST2) + VLESS-Reality (Secure)**: enable `hysteria_enable`, `shadowsocks2022_enable`, `reality_enable`,
+> `tcp_enable`; disable `vmess/tuic/naive/mieru/ssh_server/wireguard/trojan/dnstt/grpc/xhttp/httpupgrade/h2/ws/kcp/
+> ssfaketls/shadowtls`; and set **`vless_enable=false`** (keeps **only** Reality vless). Exclude raw-IP/sslip from
+> customer subs by setting `sub_link_only=1` on those Domain rows (no `remove-domain` CLI exists). Full recipe:
+> [HIDDIFY_NODE_INSTALL_RUNBOOK.md](HIDDIFY_NODE_INSTALL_RUNBOOK.md) §5C.
 
 > ## ✅ VERIFIED-LIVE on de1 — Hiddify **v12.3.3**, API **"Hiddify API v2.2.0"** (2026-06-16)
 > Source: the panel's own OpenAPI spec (generated in-process via `hiddifypanel`/apiflask — 22 paths) **and** confirmed
