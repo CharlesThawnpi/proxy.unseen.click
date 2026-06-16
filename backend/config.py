@@ -52,3 +52,13 @@ LIVE_ENV_LATCH = "UNSEENPROXY_HIDDIFY_PROVISION_LIVE_ENABLED"
 
 def live_latch_enabled() -> bool:
     return os.environ.get(LIVE_ENV_LATCH) == "1"
+
+
+# ---- Phase 4C live-provisioning blockers ----------------------------------------------------
+# Phase 4C is dry-run ONLY: live Hiddify provisioning is hard-disabled in code regardless of
+# env/flags/node status. Flipping this to False is a future, separately-gated task.
+PHASE4C_LIVE_PROVISION_DISABLED = True
+
+# de1's leaked default-user/server keys mean it must be rebuilt before serving live traffic
+# (docs/PHASE4_PRELIVE_DE1_TUNING.md → REBUILD_REQUIRED_BEFORE_LIVE). Until cleared, live is blocked.
+LEAKED_KEY_REBUILD_PENDING = True

@@ -105,3 +105,11 @@ verified), services healthy, host key pinned. **Live is BLOCKED until rebuild:**
 have no safe surgical regen, so before de1 serves real customers it must be rebuilt (provider reinstall Ubuntu 22.04 →
 re-add Master key → preflight → fresh Hiddify host install under umask 022 → re-apply SSH hardening → fresh
 least-privilege service admin API key → disposable-user verify → only then Charles-gated `live`). de1 stays `status=test`.
+
+## Phase 4C — dry-run provisioning CLIs (2026-06-16)
+
+Backend dry-run orchestration is wired ([PHASE4C_DRY_RUN_PROVISIONING.md](PHASE4C_DRY_RUN_PROVISIONING.md)) and runnable
+on a temp DB: `bin/approve_payment_dry_run.py`, `bin/provision_subscription_dry_run.py`,
+`bin/provisioning_flow_smoke.py`. All are dry-run; **live Hiddify provisioning is hard-disabled** (refuses even with
+`UNSEENPROXY_HIDDIFY_PROVISION_LIVE_ENABLED=1 --live --confirm`). Enabling live is a future, separately-gated task
+**after** the de1 rebuild (clears the leaked-key blocker) and a real-device protocol PASS.

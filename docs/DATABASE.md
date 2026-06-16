@@ -93,3 +93,22 @@ The fields below are summarized; **Appendix A of the plan is the authoritative d
   (`idempotency_keys` begin/complete; dry-run payment/provision boundary).
 - **WAL-safe online backup:** `backend/backup.py` + `bin/backup_db.py` use `sqlite3.Connection.backup()` (never a raw
   WAL copy), verify `integrity_check` + `foreign_key_check`, and write a sanitized manifest. See [BACKUPS.md](BACKUPS.md).
+
+## Phase 4C additions (IMPLEMENTED — dry-run provisioning orchestration)
+
+> Built in Phase 4C (see [PHASE4C_DRY_RUN_PROVISIONING.md](PHASE4C_DRY_RUN_PROVISIONING.md)); **dry-run only** — no live
+> Hiddify, no real customers, no sends.
+
+- **Migration `0003_phase4c.sql` (additive only):**
+  - `subscriptions` += `provision_status` (`unprovisioned|dry_run_planned|provision_failed|provisioned`) — the
+    provisioning axis, kept **separate** from lifecycle `status` so a dry-run plan never looks like a live, active sub.
+  - `payment_orders` += `approved_at` (dry-run approval timestamp).
+  - new **`provisioning_attempts`** (FK→subscriptions, FK→proxy_nodes): `mode` (dry_run|live), `outcome`
+    (dry_run_planned|live_refused|failed), sanitized `reason` — append-only audit/compensation trail.
+  - Indexes `idx_provisioning_attempts_sub`, `idx_subscriptions_provision_status`. `ALTER ADD COLUMN` defaults are
+    constants (SQLite forbids `datetime('now')` there); time columns set by code. Idempotent re-run verified.
+- **Services over this schema** (stdlib): `subscription_service` (order-time snapshots, deterministic dates),
+  `access_profile_service` (placeholder token hash only — no raw token/URL/UUID), `payment_approval_service` +
+  `provisioning_service` (idempotent `payment_approval`/`provision_subscription` scopes; exactly-once),
+  `provisioning_plan` (entitlement resolution + sanitized Hiddify mutation intent + live blockers), `compensation`
+  (forward-only, non-destructive), `audit` (sanitized `audit_logs`). Reuses `idempotency_keys` + `outbound_messages`.

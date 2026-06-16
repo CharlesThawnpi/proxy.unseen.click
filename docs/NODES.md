@@ -78,3 +78,11 @@ firewall verified (no change needed), **SSH password login disabled (root key-on
 healthy, host key pinned in the Master `known_hosts`. **Leaked default-user/server keys → `REBUILD_REQUIRED_BEFORE_LIVE`**
 — first real/live provisioning is blocked until de1 is rebuilt (provider reinstall → re-key → preflight → fresh Hiddify
 install → re-apply hardening → fresh least-privilege API key → disposable-user verify). Dry-run work may continue.
+
+## Phase 4C — de1 in dry-run provisioning (2026-06-16)
+
+The dry-run provisioning orchestration ([PHASE4C_DRY_RUN_PROVISIONING.md](PHASE4C_DRY_RUN_PROVISIONING.md)) may select
+`de1` as a candidate node for **dry-run planning only** (`usable_for_dry_run=True`, `usable_for_live=False`). Live
+provisioning is **hard-refused**: blockers `node_not_live:test`, `leaked_key_rebuild_pending`, and
+`phase4c_live_disabled` are always present, so live refuses even with the env latch + `--live --confirm`. de1 stays
+`status=test`.

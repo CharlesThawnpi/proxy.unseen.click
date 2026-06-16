@@ -106,3 +106,12 @@ See [PHASE4_PRELIVE_DE1_TUNING.md](PHASE4_PRELIVE_DE1_TUNING.md).
   (`reset-owner-password` is admin-password-only; reinstall is destructive). The leaked secrets are treated as
   compromised; the node must be **rebuilt** before any live/real provisioning (regenerates all server/user secrets).
   Dry-run work may continue on the test node. **No secret value was printed or committed during this task.**
+
+## Phase 4C secret-safety (dry-run provisioning — verified by tests)
+
+The Phase 4C orchestration ([PHASE4C_DRY_RUN_PROVISIONING.md](PHASE4C_DRY_RUN_PROVISIONING.md)) keeps rules 1–2 by
+construction: the provisioning plan summary and the **sanitized Hiddify mutation intent** carry no API key, admin path,
+user UUID, subscription URL, proxy link, or QR payload (relative `/user/` path + GiB→GB number only). Access profiles
+store a **placeholder token hash** (no raw token/URL/UUID in dry-run). Delivery notifications store a `payload_ref`
+only. Audit details carry internal ids/quotas only. **Live provisioning is hard-disabled** and refuses even with the
+env latch + `--live --confirm` (the leaked-key rebuild blocker is one of the always-present refusal reasons).

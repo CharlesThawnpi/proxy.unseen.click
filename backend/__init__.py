@@ -10,4 +10,7 @@ __all__ = [
     # Phase 4B service boundaries (backend-foundation only; no live sends/mutations):
     "account_service", "account_linking", "notification_service",
     "idempotency", "payment_flow", "backup",
+    # Phase 4C dry-run provisioning orchestration (no live Hiddify, no sends):
+    "audit", "provisioning_plan", "subscription_service", "access_profile_service",
+    "payment_approval_service", "provisioning_service", "compensation",
 ]

@@ -42,3 +42,11 @@ A region with entitlements but **no live node** must **not** be advertised as av
 | Others | — | Add as demand/capacity justify |
 
 Enable regions incrementally, never all at once.
+
+## Phase 4C — entitlements resolved from DB in the provisioning plan (2026-06-16)
+
+The dry-run provisioning plan (`backend/provisioning_plan.py`, [PHASE4C_DRY_RUN_PROVISIONING.md](PHASE4C_DRY_RUN_PROVISIONING.md))
+resolves a plan's regions **from `plan_region_entitlements` rows** (never hardcoded): **DE = default/entry**, **SG =
+premium-only** (surfaced in `premium_regions`, present only for PRO/MAX), US as entitled. Candidate nodes are selected
+by region + status; **de1 (`status=test`) is usable for dry-run only**, never live. Tested: SG excluded from
+BASIC/CORE, included for PRO/MAX.

@@ -5,6 +5,25 @@
 
 Chronological record of notable changes to the UNSEEN PROXY project.
 
+## 2026-06-16 — Phase 4C: dry-run provisioning orchestration — PASS
+
+- **Dry-run orchestration only** (stdlib). No live Hiddify call, no Hiddify user, no real customer/subscription, no
+  message sent, no service started; de1 stays `status=test`; live hard-disabled. See
+  [PHASE4C_DRY_RUN_PROVISIONING.md](PHASE4C_DRY_RUN_PROVISIONING.md).
+- **Additive migration** `0003_phase4c.sql`: `subscriptions.provision_status`, `payment_orders.approved_at`, new
+  `provisioning_attempts` (FK-enforced) + indexes. Idempotent re-run verified.
+- **Flow wired:** AccountService → `payment_approval_service` (idempotent dry-run approval) → `subscription_service`
+  (order-time snapshots, deterministic dates) → `access_profile_service` (placeholder hash; no raw token/URL/UUID) →
+  `provisioning_plan` (entitlements from DB rows + candidate nodes + live blockers + sanitized Hiddify mutation intent,
+  GiB→GB) → `provisioning_service` (dry-run; **live hard-refused**) → NotificationService (delivery enqueue,
+  `payload_ref` only) → `audit` (sanitized) with a forward-only `compensation` model.
+- **Exactly-once** across `payment_approval`/`provision_subscription` scopes: duplicate flow creates no duplicate
+  subscription/notification/attempt. **Live refuses even with env latch + `--live --confirm`** (blockers:
+  `phase4c_live_disabled`, `leaked_key_rebuild_pending`, `node_not_live:test`).
+- New CLIs: `bin/approve_payment_dry_run.py`, `bin/provision_subscription_dry_run.py`,
+  `bin/provisioning_flow_smoke.py`. **Tests: 70 PASS** (48 + 22 new; incl. a no-network-call guard). Updated
+  DATABASE/CURRENT_STATUS + REGIONS/PROTOCOLS/NODES/SECURITY/DEPLOYMENT notes; new PHASE4C doc.
+
 ## 2026-06-16 — Phase 4: de1 pre-live tuning & security hardening (test-safe) — PARTIAL
 
 - **No customers/subscriptions/live provisioning; de1 stays `status=test`.** See

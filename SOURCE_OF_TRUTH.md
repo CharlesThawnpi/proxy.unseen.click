@@ -1,6 +1,6 @@
 # UNSEEN PROXY — SOURCE OF TRUTH (consolidated, auto-generated)
 
-> **Generated:** 2026-06-16T03:48:45Z — by `scripts/build_source_of_truth.sh`.
+> **Generated:** 2026-06-16T04:09:31Z — by `scripts/build_source_of_truth.sh`.
 > **This is the live project state for external readers (e.g. the Custom GPT).** It is DERIVED from the
 > canonical docs below and regenerated each task. Upload THIS file to the GPT (not IMPLEMENTATION_PLAN.md,
 > which is the static v1.9 plan). Re-download after updates.
@@ -43,7 +43,7 @@ Where the UNSEEN PROXY build stands across the §34 deployment phases.
 | 1 | Documentation, repo & architecture planning | DONE (pushed to origin/main, 25e5ddc) |
 | 2 | Hiddify test node setup | **RE-SCOPED to a separate DE VPS** (`de1`, `5.249.160.59`, Ubuntu 22.04, planned/test). Master-co-location preflight done then RETIRED. Forward plan: PHASE2_3_DE_NODE_PLAN.md |
 | 3 | Hiddify API & subscription compatibility audit | **DONE (PASS w/ follow-ups) — Hiddify v12.3.3 on de1; API v2 contract VERIFIED-LIVE; disposable test user create→sub→delete confirmed.** Phase 4 API layer UNBLOCKED. Node-tuning follow-ups: SS:8388/UDP reachability, RAM lock, SSH hardening, regenerate leaked default-user keys. See HIDDIFY_API_CONTRACT.md + PHASE3_DE1_HIDDIFY_LIVE_VERIFY.md |
-| 4 | Database & backend clone design | **Phase 4A + 4B DONE (dry-run/test-safe).** 4A: migrations + schema + seed + Hiddify client + provisioner CLI. 4B: AccountService + account-link codes + NotificationService (queue-first) + idempotency + dry-run payment/provision boundary + WAL-safe online backup; additive migration `0002`. **48 tests PASS** (17+31). No live mutations, no sends, no real customers. See PHASE4A_DB_BACKEND_FOUNDATION.md, PHASE4B_ACCOUNT_NOTIFICATION_BACKUP.md. |
+| 4 | Database & backend clone design | **Phase 4A + 4B + 4C DONE (dry-run/test-safe).** 4A: migrations + schema + seed + Hiddify client + provisioner CLI. 4B: AccountService + account-link codes + NotificationService (queue-first) + idempotency + WAL-safe online backup (`0002`). 4C: dry-run provisioning orchestration — payment-approval boundary → subscription snapshots → access-profile placeholder → provisioning plan (entitlements + live blockers + sanitized Hiddify intent) → delivery enqueue → audit + forward-only compensation; **live hard-refused**; additive migration `0003`. **70 tests PASS**. No live mutations/sends/real customers. See PHASE4A/4B/4C docs. |
 | 5 | Telegram bot implementation (Burmese-primary) | PENDING |
 | 6 | Hiddify subscription delivery integration | PENDING |
 | 7 | Plan-based region/protocol entitlement + node resilience | PENDING |
@@ -117,9 +117,16 @@ safe; 8388 loopback-only by design); **SSH password login disabled** (root key-o
 all Hiddify services healthy; host key pinned. **Leaked default-user/server keys → `REBUILD_REQUIRED_BEFORE_LIVE`**
 (no safe surgical regen in Hiddify; did not improvise). RAM balloon-risk = accepted. **de1 stays `status=test`.**
 
-**Next: Phase 5 (bot foundation) or Phase 4C (provisioning wiring)** — all dry-run; de1 as a test node is fine.
-**Before de1 goes live:** rebuild the node (clears the leaked-key blocker) + a real-device FAST1/FAST2/Secure test
-(see `#TASK_for_Charles` in PHASE4_PRELIVE_DE1_TUNING.md). Live promotion stays Charles-gated.
+**Phase 4C complete (2026-06-16)** ([PHASE4C_DRY_RUN_PROVISIONING.md](PHASE4C_DRY_RUN_PROVISIONING.md)): dry-run
+provisioning orchestration wired end-to-end (approve → subscription snapshot → access-profile placeholder → provisioning
+plan → delivery enqueue → audit), exactly-once, with a forward-only compensation model. **Live provisioning is
+hard-disabled** and refuses even with the env latch + `--live --confirm` (blockers: `phase4c_live_disabled`,
+`leaked_key_rebuild_pending`, `node_not_live:test`). Additive migration `0003`. 70 tests PASS. de1 stays `status=test`.
+
+**Next: Phase 5 (Burmese-primary Telegram bot foundation)** wired to the Phase 4 services (still dry-run; no live sends
+until channel adapters + policy land). **Before de1 goes live:** rebuild the node (clears `leaked_key_rebuild_pending`)
++ a real-device FAST1/FAST2/Secure test (`#TASK_for_Charles` in PHASE4_PRELIVE_DE1_TUNING.md), then a separately-gated
+task to enable the live provisioning path. Live promotion stays Charles-gated.
 
 **OS path decided (2026-06-15):** in-place `do-release-upgrade` was considered, but since `de1` is **empty** the
 safer, same-outcome choice is a **clean provider reinstall to Ubuntu 22.04** (Charles). A read-only pre-upgrade gate
@@ -354,6 +361,25 @@ The verified Hiddify Manager **API v2** contract — endpoints, fields, units, a
 
 Chronological record of notable changes to the UNSEEN PROXY project.
 
+## 2026-06-16 — Phase 4C: dry-run provisioning orchestration — PASS
+
+- **Dry-run orchestration only** (stdlib). No live Hiddify call, no Hiddify user, no real customer/subscription, no
+  message sent, no service started; de1 stays `status=test`; live hard-disabled. See
+  [PHASE4C_DRY_RUN_PROVISIONING.md](PHASE4C_DRY_RUN_PROVISIONING.md).
+- **Additive migration** `0003_phase4c.sql`: `subscriptions.provision_status`, `payment_orders.approved_at`, new
+  `provisioning_attempts` (FK-enforced) + indexes. Idempotent re-run verified.
+- **Flow wired:** AccountService → `payment_approval_service` (idempotent dry-run approval) → `subscription_service`
+  (order-time snapshots, deterministic dates) → `access_profile_service` (placeholder hash; no raw token/URL/UUID) →
+  `provisioning_plan` (entitlements from DB rows + candidate nodes + live blockers + sanitized Hiddify mutation intent,
+  GiB→GB) → `provisioning_service` (dry-run; **live hard-refused**) → NotificationService (delivery enqueue,
+  `payload_ref` only) → `audit` (sanitized) with a forward-only `compensation` model.
+- **Exactly-once** across `payment_approval`/`provision_subscription` scopes: duplicate flow creates no duplicate
+  subscription/notification/attempt. **Live refuses even with env latch + `--live --confirm`** (blockers:
+  `phase4c_live_disabled`, `leaked_key_rebuild_pending`, `node_not_live:test`).
+- New CLIs: `bin/approve_payment_dry_run.py`, `bin/provision_subscription_dry_run.py`,
+  `bin/provisioning_flow_smoke.py`. **Tests: 70 PASS** (48 + 22 new; incl. a no-network-call guard). Updated
+  DATABASE/CURRENT_STATUS + REGIONS/PROTOCOLS/NODES/SECURITY/DEPLOYMENT notes; new PHASE4C doc.
+
 ## 2026-06-16 — Phase 4: de1 pre-live tuning & security hardening (test-safe) — PARTIAL
 
 - **No customers/subscriptions/live provisioning; de1 stays `status=test`.** See
@@ -418,25 +444,6 @@ Chronological record of notable changes to the UNSEEN PROXY project.
 
 - New `scripts/build_source_of_truth.sh` assembles `SOURCE_OF_TRUTH.md` (repo root) from the canonical living docs
   (invariants + CURRENT_STATUS + DECISIONS/ADRs + verified Hiddify contract + recent CHANGELOG + server inventory).
-- **This is the file to upload to the Custom GPT** as its instruction/source-of-truth — NOT `IMPLEMENTATION_PLAN.md`
-  (that's the static v1.9 plan). Regenerate after each task (`bash scripts/build_source_of_truth.sh`), commit, then
-  re-download from GitHub and re-upload to the GPT. Secret-free (derived from already-committed docs).
-
-## 2026-06-16 — Phase 3-DE follow-up: API v2 contract VERIFIED-LIVE; disposable user OK — PASS (w/ follow-ups)
-
-- **API contract recovered & verified.** The earlier OpenAPI HTTP failures were **routing/decoy** (wrong proxy_path),
-  **not** the marshmallow-v4 bug — the spec builds fine in-process (22 paths). **No package change made.** Used the
-  authoritative proxy_path (`hiddifypanel admin-path`) to verify live.
-- **VERIFIED-LIVE (`HIDDIFY_API_CONTRACT.md`):** Hiddify v12.3.3, API "Hiddify API v2.2.0"; auth `Hiddify-API-Key:
-  <admin-UUID>` header; user CRUD `GET|POST /admin/user/`, `GET|PATCH|DELETE /admin/user/{uuid}/`; fields incl.
-  `usage_limit_GB`/`current_usage_GB` (**units = GB → orchestrator must convert GiB↔GB**), `package_days`, `start_date`,
-  `enable`, etc.; subscription via `/user/all-configs/`, `/user/me/`.
-- **Disposable test user:** created (`disposable-test`, 1 GB / 1 day) → GET 200 → all-configs 200 (~14.8 KB) → DELETE
-  200 → re-GET 404. Clean. Users back to 1.
-- **Reachability (from Master):** tcp 22/80/443 OPEN (443 TLS 200); **8388 (SS) filtered**, UDP needs device test;
-  ufw active (22 + 4 Hiddify proxy ACCEPT rules). SSH safe throughout.
-- **⚠ Secret-safety incident (disclosed, not committed):** a shell-quoting bug printed an API response to the terminal,
-  exposing the Hiddify **default** user's ed25519/WireGuard keys (no-customer test node; never entered git). Fixed
 
 
 ---

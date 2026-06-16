@@ -45,3 +45,10 @@ So TRIAL/BASIC/CORE show a clean **Fast + Secure**, while PLUS/PRO/MAX show **Fa
 - **Do not enable a protocol on the sidecar before its inbound is live and tested on the node.** Until then the sidecar fails closed and the profile does not appear even for entitled plans.
 
 > Node inbound test gate: Verified in Phase 3.
+
+## Phase 4C — protocol profiles in the provisioning plan (2026-06-16)
+
+The dry-run provisioning plan resolves a plan's profiles from `plan_protocol_entitlements` and applies the **FAST
+display rule** (one fast tier → "Fast"; both → "Fast1"/"Fast2"; Secure always "Secure"). Mapping (from seed):
+**FAST1 = Hysteria2**, **FAST2 = Shadowsocks**, **Secure = VLESS-Reality**. The sanitized Hiddify mutation intent is
+planned but **never sent** in Phase 4C. See [PHASE4C_DRY_RUN_PROVISIONING.md](PHASE4C_DRY_RUN_PROVISIONING.md).
