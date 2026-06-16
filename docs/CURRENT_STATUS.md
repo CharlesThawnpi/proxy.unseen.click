@@ -13,7 +13,7 @@ Where the UNSEEN PROXY build stands across the §34 deployment phases.
 | 1 | Documentation, repo & architecture planning | DONE (pushed to origin/main, 25e5ddc) |
 | 2 | Hiddify test node setup | **RE-SCOPED to a separate DE VPS** (`de1`, `5.249.160.59`, Ubuntu 22.04, planned/test). Master-co-location preflight done then RETIRED. Forward plan: PHASE2_3_DE_NODE_PLAN.md |
 | 3 | Hiddify API & subscription compatibility audit | **DONE (PASS w/ follow-ups) — Hiddify v12.3.3 on de1; API v2 contract VERIFIED-LIVE; disposable test user create→sub→delete confirmed.** Phase 4 API layer UNBLOCKED. Node-tuning follow-ups: SS:8388/UDP reachability, RAM lock, SSH hardening, regenerate leaked default-user keys. See HIDDIFY_API_CONTRACT.md + PHASE3_DE1_HIDDIFY_LIVE_VERIFY.md |
-| 4 | Database & backend clone design | **Phase 4A DONE (dry-run/test-safe): migrations + schema + seed + Hiddify client + provisioner CLI + 17 tests PASS.** No live mutations. See PHASE4A_DB_BACKEND_FOUNDATION.md. Next: Phase 4B (services/idempotency/queue/backup). |
+| 4 | Database & backend clone design | **Phase 4A + 4B DONE (dry-run/test-safe).** 4A: migrations + schema + seed + Hiddify client + provisioner CLI. 4B: AccountService + account-link codes + NotificationService (queue-first) + idempotency + dry-run payment/provision boundary + WAL-safe online backup; additive migration `0002`. **48 tests PASS** (17+31). No live mutations, no sends, no real customers. See PHASE4A_DB_BACKEND_FOUNDATION.md, PHASE4B_ACCOUNT_NOTIFICATION_BACKUP.md. |
 | 5 | Telegram bot implementation (Burmese-primary) | PENDING |
 | 6 | Hiddify subscription delivery integration | PENDING |
 | 7 | Plan-based region/protocol entitlement + node resilience | PENDING |
@@ -73,9 +73,15 @@ calls, no real customers, no services started.
 **GPT tooling:** `SOURCE_OF_TRUTH.md` is the file to upload to the Custom GPT (auto-generated). **Brain API** =
 design-only ([BRAIN_API_DESIGN.md](BRAIN_API_DESIGN.md)); build is a separate gated task.
 
-**Next: Phase 4B** — AccountService/NotificationService boundaries, idempotency on payment-approval/provision, the
-outbound-notification queue, and a WAL-safe online-backup script (still dry-run for Hiddify). **de1 pre-live tuning**
-(SS:8388/UDP ports, RAM lock, SSH hardening, regenerate leaked default-user keys) remains before any live provisioning.
+**Phase 4B complete (2026-06-16):** AccountService (platform identity → one canonical customer, idempotent, gap-safe
+code), account-link short codes (hash-only, one-time, 24h, reason-opaque; merge is dry-run/no-mutation),
+NotificationService (queue-first; retry/dead-letter; placeholder policy; **no sender**), idempotency helpers +
+dry-run payment/provision boundary, and a WAL-safe `sqlite3.Connection.backup()` script (`bin/backup_db.py`).
+Additive migration `0002_phase4b.sql`. **48 tests PASS.** No platform sends, no real customers, no live Hiddify
+mutations, no services started; de1 stays `status=test`. See PHASE4B_ACCOUNT_NOTIFICATION_BACKUP.md.
+
+**Next: Phase 5 (bot foundation) or Phase 4C (provisioning wiring).** **de1 pre-live tuning** (SS:8388/UDP ports, RAM
+lock, SSH hardening, regenerate leaked default-user keys) remains required before any live Hiddify provisioning.
 
 **OS path decided (2026-06-15):** in-place `do-release-upgrade` was considered, but since `de1` is **empty** the
 safer, same-outcome choice is a **clean provider reinstall to Ubuntu 22.04** (Charles). A read-only pre-upgrade gate

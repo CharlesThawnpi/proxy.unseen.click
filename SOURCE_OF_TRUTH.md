@@ -1,6 +1,6 @@
 # UNSEEN PROXY — SOURCE OF TRUTH (consolidated, auto-generated)
 
-> **Generated:** 2026-06-16T03:09:39Z — by `scripts/build_source_of_truth.sh`.
+> **Generated:** 2026-06-16T03:34:41Z — by `scripts/build_source_of_truth.sh`.
 > **This is the live project state for external readers (e.g. the Custom GPT).** It is DERIVED from the
 > canonical docs below and regenerated each task. Upload THIS file to the GPT (not IMPLEMENTATION_PLAN.md,
 > which is the static v1.9 plan). Re-download after updates.
@@ -43,7 +43,7 @@ Where the UNSEEN PROXY build stands across the §34 deployment phases.
 | 1 | Documentation, repo & architecture planning | DONE (pushed to origin/main, 25e5ddc) |
 | 2 | Hiddify test node setup | **RE-SCOPED to a separate DE VPS** (`de1`, `5.249.160.59`, Ubuntu 22.04, planned/test). Master-co-location preflight done then RETIRED. Forward plan: PHASE2_3_DE_NODE_PLAN.md |
 | 3 | Hiddify API & subscription compatibility audit | **DONE (PASS w/ follow-ups) — Hiddify v12.3.3 on de1; API v2 contract VERIFIED-LIVE; disposable test user create→sub→delete confirmed.** Phase 4 API layer UNBLOCKED. Node-tuning follow-ups: SS:8388/UDP reachability, RAM lock, SSH hardening, regenerate leaked default-user keys. See HIDDIFY_API_CONTRACT.md + PHASE3_DE1_HIDDIFY_LIVE_VERIFY.md |
-| 4 | Database & backend clone design | **Phase 4A DONE (dry-run/test-safe): migrations + schema + seed + Hiddify client + provisioner CLI + 17 tests PASS.** No live mutations. See PHASE4A_DB_BACKEND_FOUNDATION.md. Next: Phase 4B (services/idempotency/queue/backup). |
+| 4 | Database & backend clone design | **Phase 4A + 4B DONE (dry-run/test-safe).** 4A: migrations + schema + seed + Hiddify client + provisioner CLI. 4B: AccountService + account-link codes + NotificationService (queue-first) + idempotency + dry-run payment/provision boundary + WAL-safe online backup; additive migration `0002`. **48 tests PASS** (17+31). No live mutations, no sends, no real customers. See PHASE4A_DB_BACKEND_FOUNDATION.md, PHASE4B_ACCOUNT_NOTIFICATION_BACKUP.md. |
 | 5 | Telegram bot implementation (Burmese-primary) | PENDING |
 | 6 | Hiddify subscription delivery integration | PENDING |
 | 7 | Plan-based region/protocol entitlement + node resilience | PENDING |
@@ -103,9 +103,15 @@ calls, no real customers, no services started.
 **GPT tooling:** `SOURCE_OF_TRUTH.md` is the file to upload to the Custom GPT (auto-generated). **Brain API** =
 design-only ([BRAIN_API_DESIGN.md](BRAIN_API_DESIGN.md)); build is a separate gated task.
 
-**Next: Phase 4B** — AccountService/NotificationService boundaries, idempotency on payment-approval/provision, the
-outbound-notification queue, and a WAL-safe online-backup script (still dry-run for Hiddify). **de1 pre-live tuning**
-(SS:8388/UDP ports, RAM lock, SSH hardening, regenerate leaked default-user keys) remains before any live provisioning.
+**Phase 4B complete (2026-06-16):** AccountService (platform identity → one canonical customer, idempotent, gap-safe
+code), account-link short codes (hash-only, one-time, 24h, reason-opaque; merge is dry-run/no-mutation),
+NotificationService (queue-first; retry/dead-letter; placeholder policy; **no sender**), idempotency helpers +
+dry-run payment/provision boundary, and a WAL-safe `sqlite3.Connection.backup()` script (`bin/backup_db.py`).
+Additive migration `0002_phase4b.sql`. **48 tests PASS.** No platform sends, no real customers, no live Hiddify
+mutations, no services started; de1 stays `status=test`. See PHASE4B_ACCOUNT_NOTIFICATION_BACKUP.md.
+
+**Next: Phase 5 (bot foundation) or Phase 4C (provisioning wiring).** **de1 pre-live tuning** (SS:8388/UDP ports, RAM
+lock, SSH hardening, regenerate leaked default-user keys) remains required before any live Hiddify provisioning.
 
 **OS path decided (2026-06-15):** in-place `do-release-upgrade` was considered, but since `de1` is **empty** the
 safer, same-outcome choice is a **clean provider reinstall to Ubuntu 22.04** (Charles). A read-only pre-upgrade gate
@@ -340,6 +346,28 @@ The verified Hiddify Manager **API v2** contract — endpoints, fields, units, a
 
 Chronological record of notable changes to the UNSEEN PROXY project.
 
+## 2026-06-16 — Phase 4B: account/notification/idempotency + WAL-safe backup foundations — PASS
+
+- **Backend-foundation / dry-run only** (stdlib). No platform sends, no real customers, no live Hiddify mutations, no
+  services started; de1 stays `status=test`. See [PHASE4B_ACCOUNT_NOTIFICATION_BACKUP.md](PHASE4B_ACCOUNT_NOTIFICATION_BACKUP.md).
+- **Additive migration** `0002_phase4b.sql`: `idempotency_keys` += `status`/`updated_at`; `outbound_messages` +=
+  `payload_ref`/`last_error`/`next_attempt_at`/`max_attempts`; two indexes. No drops/rewrites; integrity + FK verified.
+- **AccountService** (`backend/account_service.py`): `resolve_customer` maps a platform identity to ONE canonical
+  customer (idempotent create + gap-safe `public_customer_code`); raw platform id is never the identity; validates the
+  five platforms; `preferred_language` default `my`; transactional.
+- **Account-link codes** (`backend/account_linking.py`): one-time 8-char codes, 24h expiry, **hash-only** storage,
+  **reason-opaque** validation; consume = link / already-linked no-op / **merge_required_dry_run (no mutation)**.
+- **NotificationService** (`backend/notification_service.py`): queue-first `enqueue` (default `queued`),
+  retry/dead-letter helpers, placeholder per-platform `classify_policy`. **No sender; no raw body stored** (payload_ref).
+- **Idempotency** (`backend/idempotency.py`): `begin`/`complete` with `started`/`already_completed`/`in_progress`
+  states, stable replay; scopes payment_approval/provision_subscription/referral_grant/account_link_merge.
+  `backend/payment_flow.py` is a **dry-run** boundary proving exactly-once (no subscription/access rows, no Hiddify).
+- **WAL-safe backup** (`backend/backup.py`, `bin/backup_db.py`): `sqlite3.Connection.backup()` only (never raw-copies
+  WAL); verifies integrity + FK on the snapshot; sanitized manifest (paths only, env contents never read). No timer yet.
+- New CLIs: `bin/backup_db.py`, `bin/queue_notifications.py` (audit/dry-run), `bin/account_service_smoke.py` (temp DB).
+- **Tests: 48 PASS** (17 Phase 4A + 31 new). Updated DATABASE/ACCOUNT_LINKING/BACKUPS/BOT_FLOWS/SECURITY/DEPLOYMENT/
+  CURRENT_STATUS/BRAIN_API_DESIGN; new PHASE4B doc.
+
 ## 2026-06-16 — Phase 4A: DB foundation + Hiddify client/provisioner (dry-run) — PASS
 
 - **Stdlib-only** backend foundation (sqlite3/urllib/unittest — no pip on the control plane). No live mutations, no
@@ -401,28 +429,6 @@ Chronological record of notable changes to the UNSEEN PROXY project.
   black-box-discoverable (probes hit Hiddify's decoy site); OpenAPI route errors (likely marshmallow-v4 bug). Capture
   via browser Swagger or fix the spec route. New `PHASE3_DE1_HIDDIFY_LIVE_VERIFY.md`; updated HIDDIFY_API_CONTRACT/
   CURRENT_STATUS/NODES/SERVERS/PORTS/NETWORK/SECURITY/DEPLOYMENT/ROLLBACK. Node stays `status=test`.
-
-## 2026-06-15 — Phase 3-DE: pre-install gate HOLD — RAM still ~1.8 GiB (Hiddify NOT installed)
-
-- Ran the Phase 3-DE pre-install gate on de1. **All gates PASS except RAM.** OS 22.04.5 ✓, disk 23 GB/17 free ✓,
-  network static + egress 5.249.160.59 ✓, **DNS `node-de.unseen.click` → 5.249.160.59 resolves (Master + node) ✓**,
-  ufw active + 22/tcp allowed ✓, 80/443 free ✓, clean ✓.
-- **RAM re-detect: still ~1.8 GiB** (`MemTotal 1908140 kB`) despite "disable ballooning" — node **not power-cycled**
-  (uptime ~1h31m); the change needs a full **VM stop→start**, not a soft reboot. Per the gate, **STOPPED — Hiddify
-  not installed, no node changes.**
-- New `PHASE3_DE1_HIDDIFY_LIVE_VERIFY.md` (HOLD result + operator power-cycle step + pending contract fields);
-  updated PHASE2_DE1_PREFLIGHT/CURRENT_STATUS. Docs only.
-
-## 2026-06-15 — Phase 2-DE: extend de1 root volume (+ reboot/DNS resolved)
-
-- **Authorized node change on `de1`:** safety gate PASS (SSH root key; OS 22.04.5; `/` = ext4 on
-  `/dev/mapper/ubuntu--vg-ubuntu--lv`; LV path `/dev/ubuntu-vg/ubuntu-lv`; VG free 11.5 GB). Ran `lvextend -l
-  +100%FREE` then online `resize2fs`. **Root `/` 12 GB → 23 GB (5.6 GB → 17 GB free)**; VG now fully allocated. No
-  reboot, no firewall/SSH/Hiddify changes.
-- **Network persistence CONFIRMED across reboot** (de1 came back; host key unchanged; static netplan `ens18` +
-  default route up automatically).
-- **DNS resolved:** `node-de.unseen.click → 5.249.160.59` A record added (Charles).
-- **Still open:** RAM detected **1.8 GiB** vs 4 GB purchased — pending provider clarification. Updated
 
 
 ---

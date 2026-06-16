@@ -1,8 +1,24 @@
 # ACCOUNT LINKING — One profile across all platforms
 
 > **Source of truth:** [IMPLEMENTATION_PLAN.md](../IMPLEMENTATION_PLAN.md) §9.3
-> **Status:** Phase 1 skeleton — decided from plan
-> **Verified in Phase 5** (implementation lands with the Telegram bot)
+> **Status:** **Phase 4B — backend boundary IMPLEMENTED (no bot UI yet).** Identity resolution + link-code
+> issue/validate/consume exist and are tested; the bot surfaces and the full profile merge land in Phase 5.
+> **Verified in Phase 5** (UI lands with the Telegram bot).
+
+## Phase 4B backend boundary (implemented, no UI)
+
+The server-side foundation now exists ([PHASE4B_ACCOUNT_NOTIFICATION_BACKUP.md](PHASE4B_ACCOUNT_NOTIFICATION_BACKUP.md)):
+
+- **`backend/account_service.py`** — `resolve_customer(platform_name, platform_user_id, profile=None)` maps a
+  platform identity to ONE canonical `customers.id` (idempotent create + gap-safe `public_customer_code`). The raw
+  platform id is **never** the identity. Validates `{telegram, messenger, viber, whatsapp, web}`.
+- **`backend/account_linking.py`** — `issue_link_code` (8 chars, one-time, 24h, **hash-only** storage),
+  `validate_link_code` (**reason-opaque**: unknown/expired/used are indistinguishable), `consume_link_code`
+  (attach-new / already-linked idempotent no-op / **`merge_required_dry_run`**).
+- **Merge is a DRY-RUN placeholder this slice:** when a code's customer differs from one that already owns the target
+  platform account, nothing is mutated (no re-point, no delete, no `merged_into`) and the code is not consumed. The
+  gated/audited/reversible merge (older `customer_id` canonical; re-point financial rows; `customer_merges` lineage)
+  lands in Phase 5. The raw code is never logged.
 
 How a customer on any front-end (Telegram, Messenger, Viber, later WhatsApp) ends up on **one** profile — one `customer_id`, one set of subscriptions, one usage/expiry view — without any email or password.
 

@@ -75,3 +75,21 @@ The fields below are summarized; **Appendix A of the plan is the authoritative d
 
 - **Migrations logbook (§30A.1).** `schema_migrations` records every ordered structural change. Before applying a migration the runner checks whether the version is recorded and **skips it if so**, so re-running the migration step is safe and never duplicates or errors. Migrations are ordered, forward-only, and reversible-by-design (each ships `up` and, where feasible, `down`); a pre-apply DB backup is taken automatically.
 - **Idempotency (§30A.2).** Payment approval and Hiddify provisioning are made idempotent via `idempotency_keys`. Each carries a stable key; if already `completed` the prior result is returned, if `in_progress` the duplicate is refused. This ensures one subscription / one referral reward even on double-taps, webhook re-delivery, or retries.
+
+## Phase 4B additions (IMPLEMENTED — service boundaries + resilience primitives)
+
+> Built in Phase 4B (see [PHASE4B_ACCOUNT_NOTIFICATION_BACKUP.md](PHASE4B_ACCOUNT_NOTIFICATION_BACKUP.md)); **backend-foundation / dry-run only** — no sends, no live mutations.
+
+- **Migration `0002_phase4b.sql` (additive only):**
+  - `idempotency_keys` += `status` (`in_progress`→`completed`) + `updated_at` — the §30A.2 state machine.
+  - `outbound_messages` += `payload_ref` (reference/handle, **never the raw body**), `last_error` (sanitized ref),
+    `next_attempt_at` (backoff hint), `max_attempts` (dead-letter threshold, default 5).
+  - Indexes `idx_outbound_status`, `idx_idempotency_scope_status`.
+  - `ALTER ADD COLUMN` defaults are constants (SQLite forbids `datetime('now')` there); time columns set by code.
+- **Service modules over this schema** (stdlib): `backend/account_service.py` (`platform_accounts`→`customers`,
+  gap-safe `public_customer_code`, idempotent), `backend/account_linking.py` (`account_link_tokens`: hash-only,
+  one-time, 24h, reason-opaque; merge is dry-run/no-mutation this slice), `backend/notification_service.py`
+  (`outbound_messages` queue-first + retry/dead-letter, no sender), `backend/idempotency.py` + `backend/payment_flow.py`
+  (`idempotency_keys` begin/complete; dry-run payment/provision boundary).
+- **WAL-safe online backup:** `backend/backup.py` + `bin/backup_db.py` use `sqlite3.Connection.backup()` (never a raw
+  WAL copy), verify `integrity_check` + `foreign_key_check`, and write a sanitized manifest. See [BACKUPS.md](BACKUPS.md).

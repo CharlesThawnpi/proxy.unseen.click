@@ -47,6 +47,15 @@ The DB+`.env` backup before migrating is mandatory (see [BACKUPS.md](BACKUPS.md)
 - `.env` and the SQLite DB already live on the Master; git never carries them.
 - On a **fresh clone**, the operator must place `.env` (copied from `.env.example` and filled in with real values) **before services start**.
 
+## Database backups (Phase 4B — script ready, no timer yet)
+
+- WAL-safe online backup exists: `python3 bin/backup_db.py --db <db> --out-dir <dir> [--dry-run]` — uses
+  `sqlite3.Connection.backup()`, verifies `integrity_check` + `foreign_key_check`, writes a sanitized manifest
+  (paths only). See [BACKUPS.md](BACKUPS.md).
+- **Production hardening is deferred to Phase 10:** root-only (mode 700) backup dir, retention, a systemd timer, and
+  capturing the `.env`(s) **together** with the DB (so encrypted tokens stay decryptable). No timer/unit was created
+  in Phase 4B; do not enable an automated backup until that gated task.
+
 ## Nodes are NOT deployed from git
 
 - Node VPS run **stock Hiddify Manager**; only the Master pulls project code.

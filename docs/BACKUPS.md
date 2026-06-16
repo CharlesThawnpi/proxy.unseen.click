@@ -1,7 +1,8 @@
 # BACKUPS
 
 > **Source of truth:** [IMPLEMENTATION_PLAN.md](../IMPLEMENTATION_PLAN.md) §30.3
-> **Status:** Phase 1 skeleton — decided from plan
+> **Status:** **Phase 4B — backup script IMPLEMENTED (no production timer yet).** WAL-safe online backup + verify +
+> sanitized manifest exist and are tested; the systemd timer/retention land in Phase 10.
 
 How UNSEEN PROXY backs up its data safely: WAL-correct DB snapshots taken together with the secrets needed to decrypt them.
 
@@ -35,6 +36,23 @@ How UNSEEN PROXY backs up its data safely: WAL-correct DB snapshots taken togeth
 - `PRAGMA integrity_check` on every snapshot.
 - After **any restore**, run a no-send token-decrypt smoke test to confirm `.env` and DB still match.
 
-## Backup script
+## Backup script (Phase 4B — implemented)
 
-> Verified in Phase 4/10
+`backend/backup.py` + `bin/backup_db.py` implement the WAL-safe online backup:
+
+```
+python3 bin/backup_db.py --db <db> --out-dir <dir> [--dry-run] [--include-env-path <path>]
+```
+
+- **`sqlite3.Connection.backup()` only** — a consistent point-in-time snapshot; the `.sqlite3`/`-wal`/`-shm` files
+  are **never** raw-copied.
+- Every snapshot is verified: `PRAGMA integrity_check` must be `ok` **and** `PRAGMA foreign_key_check` must be empty
+  (the CLI exits non-zero otherwise).
+- `--dry-run` plans the target paths and writes nothing.
+- `--include-env-path` records the `.env` **path only** as manifest metadata. This slice **never reads or prints**
+  `.env` contents (`env_contents_backed_up: false`); capturing the env value alongside the DB (so encrypted tokens stay
+  decryptable) is a later, explicitly-authorized production step.
+- A sanitized JSON manifest is written next to the snapshot — **paths and check results only, never secret values**.
+
+**Production (Phase 10, not built yet):** root-only backup dir (mode **700**), retention window, a systemd timer, and
+capturing the `.env`(s) together with the DB. No timer/unit was created in Phase 4B.

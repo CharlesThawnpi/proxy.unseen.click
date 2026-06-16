@@ -5,6 +5,28 @@
 
 Chronological record of notable changes to the UNSEEN PROXY project.
 
+## 2026-06-16 — Phase 4B: account/notification/idempotency + WAL-safe backup foundations — PASS
+
+- **Backend-foundation / dry-run only** (stdlib). No platform sends, no real customers, no live Hiddify mutations, no
+  services started; de1 stays `status=test`. See [PHASE4B_ACCOUNT_NOTIFICATION_BACKUP.md](PHASE4B_ACCOUNT_NOTIFICATION_BACKUP.md).
+- **Additive migration** `0002_phase4b.sql`: `idempotency_keys` += `status`/`updated_at`; `outbound_messages` +=
+  `payload_ref`/`last_error`/`next_attempt_at`/`max_attempts`; two indexes. No drops/rewrites; integrity + FK verified.
+- **AccountService** (`backend/account_service.py`): `resolve_customer` maps a platform identity to ONE canonical
+  customer (idempotent create + gap-safe `public_customer_code`); raw platform id is never the identity; validates the
+  five platforms; `preferred_language` default `my`; transactional.
+- **Account-link codes** (`backend/account_linking.py`): one-time 8-char codes, 24h expiry, **hash-only** storage,
+  **reason-opaque** validation; consume = link / already-linked no-op / **merge_required_dry_run (no mutation)**.
+- **NotificationService** (`backend/notification_service.py`): queue-first `enqueue` (default `queued`),
+  retry/dead-letter helpers, placeholder per-platform `classify_policy`. **No sender; no raw body stored** (payload_ref).
+- **Idempotency** (`backend/idempotency.py`): `begin`/`complete` with `started`/`already_completed`/`in_progress`
+  states, stable replay; scopes payment_approval/provision_subscription/referral_grant/account_link_merge.
+  `backend/payment_flow.py` is a **dry-run** boundary proving exactly-once (no subscription/access rows, no Hiddify).
+- **WAL-safe backup** (`backend/backup.py`, `bin/backup_db.py`): `sqlite3.Connection.backup()` only (never raw-copies
+  WAL); verifies integrity + FK on the snapshot; sanitized manifest (paths only, env contents never read). No timer yet.
+- New CLIs: `bin/backup_db.py`, `bin/queue_notifications.py` (audit/dry-run), `bin/account_service_smoke.py` (temp DB).
+- **Tests: 48 PASS** (17 Phase 4A + 31 new). Updated DATABASE/ACCOUNT_LINKING/BACKUPS/BOT_FLOWS/SECURITY/DEPLOYMENT/
+  CURRENT_STATUS/BRAIN_API_DESIGN; new PHASE4B doc.
+
 ## 2026-06-16 — Phase 4A: DB foundation + Hiddify client/provisioner (dry-run) — PASS
 
 - **Stdlib-only** backend foundation (sqlite3/urllib/unittest — no pip on the control plane). No live mutations, no

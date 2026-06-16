@@ -1,6 +1,8 @@
 # BRAIN API — design (read-only project-state endpoint for the Custom GPT)
 
 > **Status: DESIGN ONLY (ADR decision 2026-06-16). NOT built/deployed.** Build is a separate gated task.
+> **Phase 4B confirms this unchanged** — Phase 4B added backend service boundaries only; **no** Brain API service,
+> endpoint, TLS, or auth was built. The GPT still uses the downloadable `SOURCE_OF_TRUTH.md`.
 > Purpose: let Charles's Custom GPT fetch **current, sanitized project state** (as a GPT *Action*) before drafting
 > task prompts — the live equivalent of downloading `SOURCE_OF_TRUTH.md`.
 

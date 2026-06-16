@@ -13,8 +13,13 @@ How every front-end platform resolves to one customer, how outbound messages are
 
 ## Service boundaries
 
-- **AccountService** — `resolve_customer(platform_name, platform_user_id, profile fields) → customer_id`. Idempotent; creates the customer on first contact and back-fills the platform mapping. Every handler resolves identity through this, **never** by raw platform id.
-- **NotificationService** — `notify_customer(customer_id, message/asset, …)`. Resolves the customer's *active* platform account(s) and sends through the right channel. It is the **single enforcement point** for messaging policy: it classifies each outbound message by purpose (transactional reply / proactive reminder / promotional) and, per the destination channel's policy, **sends now**, **holds in the `outbound_messages` queue** until a valid window opens, **sends via an approved template**, or **suppresses** it if no compliant path exists. Business code never decides this.
+> **Phase 4B status:** the backend boundaries are **implemented (no bot UI, no sender)** —
+> [PHASE4B_ACCOUNT_NOTIFICATION_BACKUP.md](PHASE4B_ACCOUNT_NOTIFICATION_BACKUP.md). AccountService resolves identity;
+> NotificationService is **queue-first only** (enqueue + retry/dead-letter + a placeholder policy classifier). No
+> message is sent and no platform API is called yet — the channel adapters and final compliance logic land per channel.
+
+- **AccountService** (`backend/account_service.py`) — `resolve_customer(platform_name, platform_user_id, profile=None) → customer_id`. Idempotent; creates the customer on first contact and back-fills the platform mapping. Every handler resolves identity through this, **never** by raw platform id. Cross-platform linking via `backend/account_linking.py` (hash-only one-time 24h codes; merge is dry-run this slice).
+- **NotificationService** (`backend/notification_service.py`) — the **single enforcement point** for messaging policy: it classifies each outbound message by purpose (transactional reply / proactive reminder / promotional) and, per the destination channel's policy, **sends now**, **holds in the `outbound_messages` queue** until a valid window opens, **sends via an approved template**, or **suppresses** it if no compliant path exists. Business code never decides this. *Implemented now:* `enqueue_notification` (queue-first, stores a `payload_ref` not the raw body), `mark_sent`/`mark_failed_or_retry`/`mark_dead` (retry → dead-letter at `max_attempts`), and a placeholder `classify_policy(channel, purpose, within_session)`. *Not yet:* the actual `notify_customer` sender + per-channel adapters + final compliance contracts.
 
 ## Channel adapter pattern
 

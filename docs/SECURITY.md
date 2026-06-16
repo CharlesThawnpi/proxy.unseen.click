@@ -26,6 +26,23 @@ The non-negotiable security and secret-safety rules for UNSEEN PROXY. These are 
 - **Least-privilege node API keys** (rule 8); admin paths/ports stay non-public.
 - **Never fabricate a PASS** (rule 10) — fail closed and report honestly when blocked.
 
+## Phase 4B secret-safety (service boundaries — verified by tests)
+
+The Phase 4B backend slice ([PHASE4B_ACCOUNT_NOTIFICATION_BACKUP.md](PHASE4B_ACCOUNT_NOTIFICATION_BACKUP.md)) keeps
+rules 1–2 by construction:
+
+- **Account-link codes are stored hash-only.** `issue_link_code` returns the raw code once and stores **only its
+  SHA-256 hash** (`account_link_tokens.code_hash`); the raw code is never persisted or logged. Validation is
+  **reason-opaque** (unknown/expired/used are indistinguishable) — no information leak to a guesser.
+- **The notification queue stores references, not bodies.** `outbound_messages.payload_ref` is a handle/template id;
+  `last_error` is a sanitized reference. No raw message body, token, URL, or QR payload is stored.
+- **Identity is internal.** The raw platform id is never the customer identity (only a `platform_accounts` lookup key);
+  the public-facing id is the gap-safe `public_customer_code`.
+- **Backups expose no values.** The online-backup manifest records **paths and check results only**; `.env` contents
+  are never read or printed in this slice (`env_contents_backed_up: false`).
+- **No new secret-named source files** — none of the Phase 4B modules match the `*secret*`/`*token*`/`*credential*`
+  `.gitignore` globs; the pre-commit secret scan passes.
+
 ## Secret rotation (§30A.5)
 
 A no-downtime rotation runbook exists for the two long-lived secret classes — `ACCESS_TOKEN_ENCRYPTION_SECRET` (re-encrypt token payloads old→new, bumping `token_storage_version`, both secrets held during transition) and node API keys (issue new least-privilege key, verify read-only probe, revoke old). Rotation is gated/latched (env latch + `--live --confirm`), backed up before and verified after. See [SECRET_ROTATION.md](SECRET_ROTATION.md).
