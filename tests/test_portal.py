@@ -7,7 +7,7 @@ import unittest
 from pathlib import Path
 
 from _helper import fresh_db
-from backend import account_service, portal_app, portal_static, portal_viewmodels
+from backend import account_service, portal_app, portal_auth, portal_static, portal_viewmodels
 
 REPO_ROOT = Path(__file__).resolve().parent.parent
 
@@ -38,7 +38,11 @@ class TestPortalRendering(unittest.TestCase):
         self.conn.close()
 
     def render(self, path):
-        return portal_app.render(self.conn, path, customer_id=self.sample["customer_id"])
+        return portal_app.render(
+            self.conn,
+            path,
+            session_context=portal_auth.synthetic_context(self.sample["customer_id"]),
+        )
 
     def assertSafe(self, html):
         for needle in FORBIDDEN_PAGE_NEEDLES:
@@ -91,6 +95,14 @@ class TestPortalRendering(unittest.TestCase):
         self.assertNotIn("portal-sample", res.body)
         self.assertNotIn("platform_user_id", res.body)
         self.assertSafe(res.body)
+
+    def test_private_pages_require_session_context(self):
+        dashboard = portal_app.render(self.conn, "/customer/status")
+        subscription = portal_app.render(self.conn, f"/subscriptions/{self.sample['subscription_id']}")
+        self.assertEqual(dashboard.status_code, 401)
+        self.assertEqual(subscription.status_code, 401)
+        self.assertIn("Session required", dashboard.body)
+        self.assertSafe(dashboard.body)
 
     def test_subscription_status_snapshot_and_safe_statuses(self):
         res = self.render(f"/subscriptions/{self.sample['subscription_id']}")

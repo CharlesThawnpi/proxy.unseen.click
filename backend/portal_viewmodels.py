@@ -151,6 +151,7 @@ def _subscription_summary(sub: sqlite3.Row) -> dict:
     status = sub["provision_status"] if sub["provision_status"] in ("dry_run_planned", "provision_failed") else sub["status"]
     return {
         "id": int(sub["id"]),
+        "customer_id": int(sub["customer_id"]),
         "code": f"SUB-{int(sub['id']):06d}",
         "plan_code": sub["plan_code"],
         "plan_name": sub["display_name_en"] or sub["plan_code"],

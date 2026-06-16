@@ -17,6 +17,8 @@
 # by these globs — add explicit negations for code dirs, or tighten the globs, when
 # service code lands. See docs/VERSION_CONTROL.md.)
 !scripts/pre-commit-secret-scan.sh
+!backend/portal_tokens.py
+!bin/portal_token_dry_run.py
 
 # database and runtime state
 *.sqlite3

@@ -182,3 +182,10 @@ For visual review only:
 This writes static HTML under git-ignored `tmp/portal-preview/` and prints page names + file paths only. The exporter
 uses a fresh temp DB/sample data by default, refuses output outside repo `tmp/`, starts no server, and performs no
 network calls. Generated preview files are not deployment artifacts and must not be committed.
+
+### Phase 8B portal auth/session foundation
+
+Phase 8B adds hash-only token/session DB tables and helpers, but **still deploys nothing**. `bin/portal_auth_smoke.py`
+and `bin/portal_token_dry_run.py` use temp DB/sample data by default and print only sanitized summaries. A real portal
+deployment still needs a future HTTP adapter, cookie-setting middleware, rate limits, access logging policy, and `/s/`
+live-resolution sidecar review before any public exposure.

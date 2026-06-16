@@ -114,6 +114,13 @@ review pages under git-ignored `tmp/portal-preview/`; CSS was tightened for dens
 layouts; Burmese-primary copy and degraded/unavailable status readability were improved. The render-only/no-server
 boundary remains unchanged.
 
+## Phase 8B Auth / Session Foundation
+
+See [PHASE8B_PORTAL_AUTH_SESSION_FOUNDATION.md](PHASE8B_PORTAL_AUTH_SESSION_FOUNDATION.md). Portal access/session
+primitives now exist with hash-only DB storage, constant-time verification, expiry/revocation, a branded `/s/` resolver
+boundary, and route guards for private pages. The portal is still render-only: no server, no public endpoint, no real
+cookie service, and no live subscription resolution.
+
 ## Secret-Safety Result
 
 Portal tests assert rendered HTML does not contain raw proxy schemes, Hiddify admin paths, the de1 public IP/hostname,

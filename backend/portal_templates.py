@@ -193,6 +193,24 @@ def render_branded_placeholder() -> str:
     return layout("Subscription landing", body, "status")
 
 
+def render_branded_resolved(data: dict) -> str:
+    body = page_head(
+        "Subscription ready",
+        "Token ကို စစ်ပြီးပါပြီ။ Session helper ကို dry-run အနေဖြင့် ပြင်ဆင်ထားသည်။",
+        badge("Verified", "ok"),
+    )
+    body += f"""<section class="panel stack-sm">
+  <h2>Safe access</h2>
+  <ul class="compact-list">
+    <li class="row"><span>Customer</span><strong>{h(data["public_customer_code"])}</strong></li>
+    <li class="row"><span>Subscription</span><strong>{h(data["subscription_code"])}</strong></li>
+    <li class="row"><span>Session</span>{badge("Dry-run session prepared", "info")}</li>
+  </ul>
+  <p class="section-note">No raw token or session id is rendered. Cookie setting is future work.</p>
+</section>"""
+    return layout("Subscription ready", body, "status")
+
+
 def render_help() -> str:
     body = page_head("Help", "Support အတွက် customer-safe information သာ ပြထားသည်။")
     body += """<section class="grid two">
@@ -200,6 +218,18 @@ def render_help() -> str:
   <article class="panel"><h2>Connection issue</h2><p class="muted">Region availability ကို ကြည့်နိုင်သည်။ Node hostname/IP မပြပါ။</p></article>
 </section>"""
     return layout("Help", body, "help")
+
+
+def render_auth_required() -> str:
+    body = page_head(
+        "Session required",
+        "Dashboard နှင့် subscription details ကြည့်ရန် valid portal session လိုအပ်သည်။",
+        badge("Auth required", "warn"),
+    )
+    body += """<section class="panel">
+  <p class="muted">Public pages ဖြစ်သော Home, Plans, Help ကိုတော့ session မလိုဘဲ ကြည့်နိုင်သည်။</p>
+</section>"""
+    return layout("Session required", body, "")
 
 
 def render_state_page(kind: str) -> str:

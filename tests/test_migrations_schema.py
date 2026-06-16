@@ -31,7 +31,8 @@ class TestMigrations(unittest.TestCase):
                   "plan_region_entitlements", "plan_protocol_entitlements",
                   "subscriptions", "access_profiles", "payment_orders",
                   "idempotency_keys", "outbound_messages", "referral_credits",
-                  "node_metrics", "node_alerts", "audit_logs", "settings"):
+                  "node_metrics", "node_alerts", "audit_logs", "settings",
+                  "portal_access_tokens", "portal_sessions"):
             self.assertIn(t, names, f"missing table {t}")
         conn.close()
 

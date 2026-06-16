@@ -5,6 +5,22 @@
 
 Chronological record of notable changes to the UNSEEN PROXY project.
 
+## 2026-06-16 — Phase 8B: portal auth/session foundation (render-only, dry-run) — PASS
+
+- **Hash-only portal auth/session primitives:** additive migration `0006_phase8b.sql` creates `portal_access_tokens`
+  and `portal_sessions`; both store only hashes/handles, FK refs, status, expiry, and revocation timestamps. No raw
+  portal token or raw session id column exists.
+- **Modules:** `portal_tokens` (secure randomness, SHA-256 handles, redaction, constant-time compare),
+  `portal_access` (issue/verify/revoke), `portal_sessions` (create/verify/revoke + future cookie attributes),
+  `branded_link_resolver` (`/s/<opaque-token>` boundary). Audit rows are sanitized.
+- **Route guards:** `/customer/status` and `/subscriptions/<id>` now require a `PortalSessionContext`; public pages stay
+  public. `/s/<token>` resolves synthetic hash-backed tokens and creates a dry-run session row; unknown/expired/revoked
+  tokens render safe not-found/expired pages without leaking the token.
+- **CLIs:** `bin/portal_auth_smoke.py`, `bin/portal_token_dry_run.py` use temp DBs by default and print only redacted
+  token labels/fingerprints and status summaries.
+- **No live surface:** no web server, no nginx/TLS, no public endpoint, no real cookie setting, no production DB auth,
+  no Hiddify call, no Telegram send/poll. **Full suite: 191 PASS.**
+
 ## 2026-06-16 — Phase 8A: portal local preview refinement — PASS
 
 - **Render-only, dry-run only**: no web server, no systemd, no nginx/TLS, no public endpoint, no auth, no Hiddify

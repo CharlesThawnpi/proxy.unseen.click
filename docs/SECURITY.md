@@ -204,3 +204,7 @@ keeps the customer web surface dry-run and secret-safe:
 - **Phase 8A preview export stays local and ignored.** `bin/portal_preview_export.py` writes only under the repo's
   git-ignored `tmp/` directory, refuses outside paths, and scans rendered HTML for forbidden raw Hiddify/proxy URL
   shapes and UUID-shaped values before writing. Generated previews were additionally scanned and are not staged.
+- **Phase 8B auth/session primitives are hash-only.** `portal_access_tokens` and `portal_sessions` store only hashes;
+  raw portal tokens and raw session ids exist only in memory for immediate dry-run handoff. Verification uses
+  constant-time comparison. Private portal pages require a `PortalSessionContext`; invalid/expired/revoked `/s/` tokens
+  render safe pages without echoing the token. Audit rows carry sanitized ids/reasons only.

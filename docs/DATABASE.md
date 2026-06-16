@@ -158,3 +158,20 @@ The fields below are summarized; **Appendix A of the plan is the authoritative d
 - **Thresholds** come from `settings` (`node_alert_warn_pct`≈75 / `node_alert_critical_pct`≈90), admin-editable.
 - `backend/node_resilience.node_health` reads OPEN alerts: DOWN→down (dropped), CRITICAL/WARN→degraded (dry-run
   candidate, not live-ready).
+
+## Phase 8B additions (IMPLEMENTED — portal auth/session foundation, dry-run)
+
+> Built in Phase 8B (see [PHASE8B_PORTAL_AUTH_SESSION_FOUNDATION.md](PHASE8B_PORTAL_AUTH_SESSION_FOUNDATION.md));
+> render-only, no public endpoint, no real login.
+
+- **Migration `0006_phase8b.sql` (additive):**
+  - **`portal_access_tokens`** (FK→customers/subscriptions/access_profiles): stores `token_hash` only, plus
+    `purpose`, `status`, `created_at`, `expires_at`, `revoked_at`, and `last_verified_at`.
+  - **`portal_sessions`** (FK→customers and optional source token): stores `session_hash` only, plus `status`,
+    `created_at`, `expires_at`, `revoked_at`, and `last_verified_at`.
+  - Indexes cover customer lookups and status/expiry checks. Raw portal tokens and raw session ids are deliberately
+    absent from the schema.
+- **Services:** `portal_tokens` (secure random generation, hashing, redaction, constant-time compare),
+  `portal_access` (issue/verify/revoke token), `portal_sessions` (create/verify/revoke session + cookie attribute
+  helper), `branded_link_resolver` (`/s/<opaque-token>` boundary). Audit rows are sanitized and contain no raw token,
+  raw session id, cookie, link, UUID, or private data.

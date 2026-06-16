@@ -11,7 +11,7 @@ from pathlib import Path
 
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
-from backend import db as dbmod, migrate, portal_app, portal_viewmodels, seed  # noqa: E402
+from backend import db as dbmod, migrate, portal_app, portal_auth, portal_viewmodels, seed  # noqa: E402
 
 REPO_ROOT = Path(__file__).resolve().parent.parent
 SAFE_OUT_ROOT = (REPO_ROOT / "tmp").resolve()
@@ -66,6 +66,7 @@ def main(argv=None) -> int:
     conn = dbmod.connect(db_path)
     seed.seed(conn)
     sample = portal_viewmodels.sample_data(conn)
+    context = portal_auth.synthetic_context(sample["customer_id"])
     portal_viewmodels.add_preview_degraded_state(conn)
 
     pages = [
@@ -81,7 +82,7 @@ def main(argv=None) -> int:
         ("not-found", "/not-found"),
     ]
     for name, path in pages:
-        response = portal_app.render(conn, path, customer_id=sample["customer_id"])
+        response = portal_app.render(conn, path, session_context=context)
         _assert_sanitized(response.body)
         target = out_dir / f"{name}.html"
         target.write_text(response.body, encoding="utf-8")

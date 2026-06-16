@@ -1,6 +1,6 @@
 # UNSEEN PROXY — SOURCE OF TRUTH (consolidated, auto-generated)
 
-> **Generated:** 2026-06-16T06:52:04Z — by `scripts/build_source_of_truth.sh`.
+> **Generated:** 2026-06-16T07:18:21Z — by `scripts/build_source_of_truth.sh`.
 > **This is the live project state for external readers (e.g. the Custom GPT).** It is DERIVED from the
 > canonical docs below and regenerated each task. Upload THIS file to the GPT (not IMPLEMENTATION_PLAN.md,
 > which is the static v1.9 plan). Re-download after updates.
@@ -47,7 +47,7 @@ Where the UNSEEN PROXY build stands across the §34 deployment phases.
 | 5 | Telegram bot implementation (Burmese-primary) | **Foundation + transport DONE (dry-run, gated).** Foundation: adapter + Burmese catalogue + router + AccountService identity + env-driven admin. Transport: Bot API boundary (token redacted; injectable opener), offset-tracked polling runner, NotificationService sender consuming `outbound_messages` (queued→sent/requeue/dead), fail-closed double gate. **No polling daemon/webhook/API/send; no systemd.** See PHASE5_TELEGRAM_BOT_FOUNDATION.md + PHASE5_TELEGRAM_TRANSPORT_FOUNDATION.md. Live bring-up = next, Charles-gated. |
 | 6 | Hiddify subscription delivery integration | **Foundation DONE (dry-run): delivery payload model (safe refs only) + branded link rule (`sub.unseen.click/s/<token>`, hash stored) + deep-link/copy-link priority + QR planned + mocked Hiddify-output normalizer + NotificationService/Telegram render integration. No raw links persisted/logged; no network.** See PHASE6_SUBSCRIPTION_DELIVERY_FOUNDATION.md. Sidecar + live = next, gated. |
 | 7 | Plan-based region/protocol entitlement + node resilience | **Foundation DONE (dry-run, DB-driven): `entitlements` (plan→region/protocol, FAST rule, safe errors) + `node_resilience` (status×health readiness, reason vocabulary, graceful degradation, data-driven `node_live_blockers`) + `availability` (region/protocol availability) + provisioning-plan integration + Burmese availability copy. Additive migration `0005`. No node live; no metrics fetch.** See PHASE7_ENTITLEMENT_NODE_RESILIENCE.md. Health monitor = next. |
-| 8 | Web app / customer portal | **Foundation + 8A preview refinement DONE (render-only, dry-run): stdlib portal boundary + compact responsive GitHub-inspired neutral UI + DB-driven plans/customer status/subscription detail + branded `/s/<opaque-token>` placeholder + Phase 7 availability rendering + sanitized local preview export under `tmp/portal-preview/`. No server, no public endpoint, no real auth, no live delivery, no Hiddify/Telegram network.** See PHASE8_WEB_PORTAL_FOUNDATION.md + PHASE8A_PORTAL_PREVIEW_REFINEMENT.md + PORTAL.md. |
+| 8 | Web app / customer portal | **Foundation + 8A preview + 8B auth/session foundation DONE (render-only, dry-run): compact responsive portal UI, sanitized preview export, hash-only portal access tokens/sessions, branded `/s/<opaque-token>` resolver boundary, route guards for private pages. No server, no public endpoint, no real cookie service, no live delivery, no Hiddify/Telegram network.** See PHASE8_WEB_PORTAL_FOUNDATION.md + PHASE8A_PORTAL_PREVIEW_REFINEMENT.md + PHASE8B_PORTAL_AUTH_SESSION_FOUNDATION.md + PORTAL.md. |
 | 9 | Messenger and Viber bot integration | PENDING |
 | 10 | Monitoring, backup, security, production hardening | PENDING |
 | 11 | Internal beta testing | PENDING |
@@ -164,7 +164,14 @@ local preview exporter + UI/copy refinement. Generated sanitized review files un
 rows, quick subscription status strip, degraded/unavailable preview state, and stricter safe-output path handling.
 **No server/public endpoint/auth/live delivery/Hiddify call/Telegram send.** 179 tests PASS.
 
-**Next: Charles visual review of `tmp/portal-preview/*.html`, then gated monitor scheduler, real portal deployment/auth design, or Phase 9 channel work.** **Before de1 goes live:** rebuild the node (clears
+**Phase 8B portal auth/session foundation complete (2026-06-16)** ([PHASE8B_PORTAL_AUTH_SESSION_FOUNDATION.md](PHASE8B_PORTAL_AUTH_SESSION_FOUNDATION.md)):
+additive migration `0006` adds hash-only `portal_access_tokens` and `portal_sessions`; `portal_tokens`,
+`portal_access`, `portal_sessions`, and `branded_link_resolver` provide secure random tokens, hash-only storage,
+constant-time verification, expiry/revocation, sanitized audit, dry-run session context, and `/s/<opaque-token>`
+resolver behavior. Private pages require `PortalSessionContext`; public pages stay public. **No server/public endpoint/
+real cookie service/live delivery/Hiddify call/Telegram send.** 191 tests PASS.
+
+**Next: real portal deployment boundary design (HTTP adapter/cookies/rate limits/access logs), gated monitor scheduler, or Phase 9 channel work.** **Before de1 goes live:** rebuild the node (clears
 `leaked_key_rebuild_pending`) + a real-device FAST1/FAST2/Secure test (`#TASK_for_Charles` in
 PHASE4_PRELIVE_DE1_TUNING.md), then separately-gated tasks (periodic monitor + read-only SSH metrics, bot live latches
 + real opener, `sub.unseen.click` sidecar, live provisioning). Live promotion stays Charles-gated.
@@ -402,6 +409,22 @@ The verified Hiddify Manager **API v2** contract — endpoints, fields, units, a
 
 Chronological record of notable changes to the UNSEEN PROXY project.
 
+## 2026-06-16 — Phase 8B: portal auth/session foundation (render-only, dry-run) — PASS
+
+- **Hash-only portal auth/session primitives:** additive migration `0006_phase8b.sql` creates `portal_access_tokens`
+  and `portal_sessions`; both store only hashes/handles, FK refs, status, expiry, and revocation timestamps. No raw
+  portal token or raw session id column exists.
+- **Modules:** `portal_tokens` (secure randomness, SHA-256 handles, redaction, constant-time compare),
+  `portal_access` (issue/verify/revoke), `portal_sessions` (create/verify/revoke + future cookie attributes),
+  `branded_link_resolver` (`/s/<opaque-token>` boundary). Audit rows are sanitized.
+- **Route guards:** `/customer/status` and `/subscriptions/<id>` now require a `PortalSessionContext`; public pages stay
+  public. `/s/<token>` resolves synthetic hash-backed tokens and creates a dry-run session row; unknown/expired/revoked
+  tokens render safe not-found/expired pages without leaking the token.
+- **CLIs:** `bin/portal_auth_smoke.py`, `bin/portal_token_dry_run.py` use temp DBs by default and print only redacted
+  token labels/fingerprints and status summaries.
+- **No live surface:** no web server, no nginx/TLS, no public endpoint, no real cookie setting, no production DB auth,
+  no Hiddify call, no Telegram send/poll. **Full suite: 191 PASS.**
+
 ## 2026-06-16 — Phase 8A: portal local preview refinement — PASS
 
 - **Render-only, dry-run only**: no web server, no systemd, no nginx/TLS, no public endpoint, no auth, no Hiddify
@@ -469,22 +492,6 @@ Chronological record of notable changes to the UNSEEN PROXY project.
   per-region/protocol availability (dry_run/live); honest unavailable reasons; no silent region/protocol substitution.
 - **Integration:** `provisioning_plan.build_plan` now uses the resolver — adds `entitled/available/unavailable_regions`,
   `entitled_protocols`, `node_readiness` to the sanitized summary; existing `live_blockers` unchanged. Burmese
-  customer-facing availability copy added (no IP/secret). New CLIs: `bin/entitlement_audit.py`,
-  `bin/node_resilience_smoke.py`, `bin/availability_preview.py`.
-- **Tests: 144 PASS** (122 + 22 new). Updated DATABASE/REGIONS/PROTOCOLS/NODES/SECURITY/DEPLOYMENT/CURRENT_STATUS;
-  new PHASE7 doc.
-
-## 2026-06-16 — Phase 6: subscription delivery foundation (dry-run) — PASS
-
-- **Dry-run only** (stdlib): no live Hiddify call, no real subscription fetch from de1, no Telegram send, and **no raw
-  subscription/proxy link or QR payload persisted/logged**. de1 stays `status=test`. See
-  [PHASE6_SUBSCRIPTION_DELIVERY_FOUNDATION.md](PHASE6_SUBSCRIPTION_DELIVERY_FOUNDATION.md).
-- **Additive migration** `0004_phase6.sql`: new `subscription_deliveries` (safe refs/flags + branded token **hash**
-  only; **no raw-link/QR column** by design). Idempotent re-run verified.
-- **`link_renderer`** — branded link `https://sub.unseen.click/s/<token>` assembled in memory only; token **hash**
-  stored; raw-proxy-link detection (`hiddify://`/`vless://`/`ss://`/`hy2://`/`/api/v2/`/`all-configs`) + redaction.
-- **`hiddify_subscription_output`** — normalizes a **mocked** output to a sanitized summary (counts + engine names +
-  booleans); raw output discarded, never logged. **`qr_renderer`** — QR honestly **planned**, not generated (stdlib;
 
 
 ---

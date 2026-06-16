@@ -7,12 +7,17 @@ from __future__ import annotations
 
 import sqlite3
 
-from . import portal_routes
+from . import portal_routes, portal_sessions
 
 
-def render(conn: sqlite3.Connection, path: str, *, customer_id: int | None = None) -> portal_routes.PortalResponse:
-    return portal_routes.render_route(conn, path, customer_id=customer_id)
+def render(
+    conn: sqlite3.Connection,
+    path: str,
+    *,
+    customer_id: int | None = None,
+    session_context: portal_sessions.PortalSessionContext | None = None,
+) -> portal_routes.PortalResponse:
+    return portal_routes.render_route(conn, path, customer_id=customer_id, session_context=session_context)
 
 
 __all__ = ["render", "portal_routes"]
-

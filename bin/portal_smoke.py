@@ -9,7 +9,7 @@ import tempfile
 
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
-from backend import db as dbmod, migrate, portal_app, portal_viewmodels, seed  # noqa: E402
+from backend import db as dbmod, migrate, portal_app, portal_auth, portal_viewmodels, seed  # noqa: E402
 
 
 def main(argv=None) -> int:
@@ -22,6 +22,7 @@ def main(argv=None) -> int:
     conn = dbmod.connect(db_path)
     seed.seed(conn)
     sample = portal_viewmodels.sample_data(conn)
+    context = portal_auth.synthetic_context(sample["customer_id"])
     pages = [
         ("home", "/"),
         ("plans", "/plans"),
@@ -35,7 +36,7 @@ def main(argv=None) -> int:
         ("not-found", "/not-found"),
     ]
     for name, path in pages:
-        response = portal_app.render(conn, path, customer_id=sample["customer_id"])
+        response = portal_app.render(conn, path, session_context=context)
         assert "hiddify://" not in response.body
         assert "vless://" not in response.body
         assert "ss://" not in response.body
