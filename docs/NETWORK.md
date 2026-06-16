@@ -74,6 +74,10 @@ once Hiddify is installed. Detail: [PHASE2_DE1_PREFLIGHT.md](PHASE2_DE1_PREFLIGH
   tightening **must** add an explicit `16753` allow. **Real-device per-protocol CONNECT remains unconfirmed** (iOS SS
   upload drops, Windows VPN-mode core failure = client-side, Facebook unreliable) → see
   [PHASE9_DE1_REBUILD_FRESH_HIDDIFY.md](PHASE9_DE1_REBUILD_FRESH_HIDDIFY.md) addendum. **de1 stays `status=test`.**
+- **Mobile import PASS (2026-06-16):** after a Hiddify-App reinstall, mobile (and Windows) import works on the clean de1
+  profile; the prior iOS import failure was **app/cache/install-state**, not a node/network fault. The in-app
+  "lowest"/"balance" entries are **client-side Hiddify-App groups** — not de1 outbounds and not in the data path (the
+  node emits only the 3 product protocols + the "Select"/"Auto" sing-box groups). No data-plane change.
 
 ## Phase 2 preflight — current network state (2026-06-15, read-only) — MASTER
 

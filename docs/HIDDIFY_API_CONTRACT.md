@@ -24,6 +24,14 @@
 > the orchestrator depends on return 200, so the contract is unaffected. (This reconciles the earlier "spec builds fine
 > in-process" note: that predates the marshmallow-4→3.26.1 downgrade now in effect.) **All status codes only — no
 > bodies/links/UUIDs/keys printed; admin link used internally on-node.**
+> ### 🏷️ Generated sing-box output naming/groups (2026-06-16) — not API-configurable
+> The client sing-box profile's **outbound tags and selector groups are not controllable via the API or any
+> `hiddifypanel` setting.** Outbound tags come from `singbox.py:to_singbox` (`{extra_info} {proxy.name} § {port}
+> {dbdomain.id}`; `proxy.name` is auto-generated and `apply_configs`-regenerated); the **"Select"** (selector) +
+> **"Auto"** (urltest) groups are **hardcoded** in `singbox.py:configs_as_json`. `ConfigEnum` exposes only
+> `branding_title`/`branding_site`/`branding_freetext` (panel branding). UNSEEN customer labels (FAST1/FAST2/Secure) are
+> therefore an **UNSEEN delivery-layer concern** (bot/portal, or a backend-generated profile), **not** a Hiddify API
+> option. "lowest"/"balance" seen in-app are **client-side** Hiddify-App groups, never emitted by the node.
 > ### 🌐 Domain/host: node-de.unseen.click verified-live (2026-06-16)
 > The admin base + user subscription endpoints are now confirmed over the **real node domain with valid TLS** (not just
 > the install's raw-IP/sslip.io defaults): `GET https://node-de.unseen.click/<proxy_path>/api/v2/admin/me/` → 200 and

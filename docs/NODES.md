@@ -132,6 +132,18 @@ node **server-side READY and externally reachable for all three protocols**, but
   = mobile-network/client. **`realdevice_protocol_test_pending` REMAINS; de1 stays `status=test`; no node change made.**
 - **Phase 10 note:** SS `16753` is reachable only via default `INPUT=ACCEPT`; add an explicit allow before tightening to DROP.
 
+### Mobile import PASS + label/selector finding (2026-06-16) — Decision C
+
+- **Mobile import now PASS** after Charles deleted + reinstalled the Hiddify App (Windows import works too). The earlier
+  iOS "connection refused" was an **app/cache/install-state** issue, not a node fault.
+- **Cannot safely rename/hide on the node:** protocol entry tags come from auto-generated `proxy.name`
+  (`singbox.py:to_singbox`); the **"Select"/"Auto"** groups are hardcoded in `singbox.py:configs_as_json` and required by
+  the template; no `hiddifypanel` setting/API controls either (only `branding_*`). **"lowest"/"balance" are Hiddify App
+  client-side groups, never emitted by de1.** Editing source/DB is not upgrade-durable → **not done**.
+- **Decision = C:** keep the clean profile; **UNSEEN labels (FAST1=Hysteria2, FAST2=Shadowsocks, Secure=VLESS-Reality)
+  are a bot/portal/delivery concern** (or a future backend-generated profile). No node change; de1 stays `status=test`;
+  `realdevice_protocol_test_pending` remains.
+
 ## Phase 4C — de1 in dry-run provisioning (2026-06-16)
 
 The dry-run provisioning orchestration ([PHASE4C_DRY_RUN_PROVISIONING.md](PHASE4C_DRY_RUN_PROVISIONING.md)) may select

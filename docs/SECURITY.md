@@ -185,6 +185,19 @@ addendum) was **secret-safe by construction**:
 - **No node change was made** (HOLD decision); de1 stays `status=test`; `realdevice_protocol_test_pending` remains.
 - Repo changes are **docs + SOURCE_OF_TRUTH only**; pre-commit secret scan run before commit.
 
+## de1 mobile-import + label/selector finding secret-safety (2026-06-16)
+
+The mobile-import re-verification + Hiddify label/selector investigation
+([PHASE9_DE1_REBUILD_FRESH_HIDDIFY.md](PHASE9_DE1_REBUILD_FRESH_HIDDIFY.md) addendum) was **secret-safe**:
+
+- The sanitized sing-box scanner ran **on the node**, rendered the config **in-memory** (not to disk), and emitted **only**
+  counts, booleans, and **safe-filtered** group/protocol tag names (a regex redacts any UUID/domain/username-bearing
+  value) — never outbound bodies, links, UUIDs, keys, or passwords. The temp scanner script was removed after use.
+- Template/source inspection read **code/Jinja only** (no secret values); only function/setting **names** were recorded
+  in docs. No secret-bearing generated config or template was edited.
+- **No node/setting/template change** was made (Decision C); de1 stays `status=test`.
+- Repo changes are **docs + SOURCE_OF_TRUTH only**; pre-commit secret scan run before commit.
+
 ## Phase 4C secret-safety (dry-run provisioning — verified by tests)
 
 The Phase 4C orchestration ([PHASE4C_DRY_RUN_PROVISIONING.md](PHASE4C_DRY_RUN_PROVISIONING.md)) keeps rules 1–2 by

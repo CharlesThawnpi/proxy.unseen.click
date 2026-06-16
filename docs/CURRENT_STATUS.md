@@ -196,6 +196,19 @@ portal handles UNSEEN naming). **`realdevice_protocol_test_pending` REMAINS; de1
 Phase-10 hardening note: when tightening INPUT to DROP, **add an explicit allow for SS 16753** (today reachable only via
 default `INPUT=ACCEPT`).
 
+**de1 mobile import PASS + Hiddify label/selector finding (2026-06-16) — Decision C** ([PHASE9_DE1_REBUILD_FRESH_HIDDIFY.md](PHASE9_DE1_REBUILD_FRESH_HIDDIFY.md)
+addendum): after Charles deleted + reinstalled the Hiddify App, **mobile import now PASS** (Windows too); the earlier iOS
+"connection refused" was an **app/cache/install-state** issue, not a node fault. On the naming/selector cleanup ask: there
+is **no safe supported way** to rename the protocol entries to FAST1/FAST2/Secure or to hide the selector groups on the
+node. The outbound **tag** is built in `singbox.py:to_singbox` from the auto-generated `proxy.name` (no per-proxy
+display-name setting; `ConfigEnum` has only `branding_*`); the **"Select"+"Auto"** groups are **hardcoded** in
+`singbox.py:configs_as_json` and referenced by the template (`final:"Select"`, dns detour) so removing them breaks the
+profile; both would require venv source/DB edits that **Hiddify regenerates on upgrade**. **"lowest"/"balance" are not in
+de1's output at all** — they are **Hiddify App client-side UI groups** (the node emits only Select/Auto; "load-balance"
+is Clash-template-only). **Decision = C: keep the clean profile unchanged; UNSEEN labels (FAST1=Hysteria2,
+FAST2=Shadowsocks, Secure=VLESS-Reality) are presented by bot/portal/delivery** (a backend-generated custom profile is the
+path if ever required). **No node change made; de1 stays `status=test`; `realdevice_protocol_test_pending` remains.**
+
 **Next: Charles records the real-device FAST1/FAST2/Secure connect PASS** (clears `realdevice_protocol_test_pending`;
 `#TASK_for_Charles` in PHASE9_DE1_REBUILD_FRESH_HIDDIFY.md). Then separately-gated tasks remain (public portal
 deployment: nginx/TLS + systemd + public-bind approval for the portal HTTP adapter & `sub.unseen.click` sidecar;

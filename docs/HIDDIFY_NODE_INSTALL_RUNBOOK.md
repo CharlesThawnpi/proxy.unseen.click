@@ -249,6 +249,29 @@ mode won't start), separate **node-side** from **client/network-side** before ch
    driver, run-as-Administrator, app version); Windows **Proxy mode is not full-device VPN proof**; a single Speedtest
    upload drop is **not** proof (carriers shape UDP/upload).
 
+## 5E. Customer-facing labels (FAST1/FAST2/Secure) are NOT set on the node
+
+The Hiddify-generated client profile shows **Hiddify/sing-box names**, not UNSEEN product labels, and that is **expected
+and not fixable safely on the node** (verified on de1, 2026-06-16). Do not attempt to rename protocol entries or remove
+selector groups server-side.
+
+- **Protocol entry tags** (e.g. "Hysteria2", "Shadowsocks", "VLESS-Reality") are built in
+  `hutils/proxy/singbox.py:to_singbox` as `f"{extra_info} {name} § {port} {dbdomain.id}"`, where `name = proxy.name` is
+  an **auto-generated Proxy DB field** that `apply_configs` regenerates. There is **no supported `hiddifypanel` setting /
+  DB flag / API** for a per-proxy custom display name; `ConfigEnum` exposes only `branding_title`/`branding_site`/
+  `branding_freetext` (panel branding, not outbound tags).
+- **The "Select" (selector) + "Auto" (urltest) groups** are **hardcoded** in `singbox.py:configs_as_json`, and the
+  sing-box template references `"final": "Select"` + dns `detour: "Select"`, so removing them **breaks** the profile.
+- **"lowest" / "balance"** seen in the Hiddify App are **client-side (HiddifyNext) UI groups** — the node's sing-box
+  output emits **only** "Select"/"Auto" ("load-balance" exists only in the unused Clash templates). The node cannot
+  rename/remove them.
+- **Editing the venv source or DB rows to relabel is NOT upgrade-durable** (Hiddify reinstall/`apply_configs` overwrites
+  it) and risks the clean profile — **do not do it.**
+- **Correct approach:** present UNSEEN labels (**FAST1=Hysteria2, FAST2=Shadowsocks, Secure=VLESS-Reality**) in the
+  **bot/portal/customer instructions/delivery layer**. If a fully custom-labeled client profile is ever required, have
+  the **UNSEEN backend generate/sanitize the customer sing-box profile itself** (the delivery/link layer already mediates
+  output) rather than patching Hiddify.
+
 ## 6. Secret safety (applies to every step)
 
 - **Never print or commit:** Hiddify admin links, admin/proxy paths, admin UUID / API key, private keys,

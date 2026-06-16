@@ -1,6 +1,6 @@
 # UNSEEN PROXY — SOURCE OF TRUTH (consolidated, auto-generated)
 
-> **Generated:** 2026-06-16T16:43:23Z — by `scripts/build_source_of_truth.sh`.
+> **Generated:** 2026-06-16T17:20:53Z — by `scripts/build_source_of_truth.sh`.
 > **This is the live project state for external readers (e.g. the Custom GPT).** It is DERIVED from the
 > canonical docs below and regenerated each task. Upload THIS file to the GPT (not IMPLEMENTATION_PLAN.md,
 > which is the static v1.9 plan). Re-download after updates.
@@ -227,6 +227,19 @@ The "lowest"/"balance" selectors are **sing-box client groups, not protocols and
 portal handles UNSEEN naming). **`realdevice_protocol_test_pending` REMAINS; de1 stays `status=test`; no node change made.**
 Phase-10 hardening note: when tightening INPUT to DROP, **add an explicit allow for SS 16753** (today reachable only via
 default `INPUT=ACCEPT`).
+
+**de1 mobile import PASS + Hiddify label/selector finding (2026-06-16) — Decision C** ([PHASE9_DE1_REBUILD_FRESH_HIDDIFY.md](PHASE9_DE1_REBUILD_FRESH_HIDDIFY.md)
+addendum): after Charles deleted + reinstalled the Hiddify App, **mobile import now PASS** (Windows too); the earlier iOS
+"connection refused" was an **app/cache/install-state** issue, not a node fault. On the naming/selector cleanup ask: there
+is **no safe supported way** to rename the protocol entries to FAST1/FAST2/Secure or to hide the selector groups on the
+node. The outbound **tag** is built in `singbox.py:to_singbox` from the auto-generated `proxy.name` (no per-proxy
+display-name setting; `ConfigEnum` has only `branding_*`); the **"Select"+"Auto"** groups are **hardcoded** in
+`singbox.py:configs_as_json` and referenced by the template (`final:"Select"`, dns detour) so removing them breaks the
+profile; both would require venv source/DB edits that **Hiddify regenerates on upgrade**. **"lowest"/"balance" are not in
+de1's output at all** — they are **Hiddify App client-side UI groups** (the node emits only Select/Auto; "load-balance"
+is Clash-template-only). **Decision = C: keep the clean profile unchanged; UNSEEN labels (FAST1=Hysteria2,
+FAST2=Shadowsocks, Secure=VLESS-Reality) are presented by bot/portal/delivery** (a backend-generated custom profile is the
+path if ever required). **No node change made; de1 stays `status=test`; `realdevice_protocol_test_pending` remains.**
 
 **Next: Charles records the real-device FAST1/FAST2/Secure connect PASS** (clears `realdevice_protocol_test_pending`;
 `#TASK_for_Charles` in PHASE9_DE1_REBUILD_FRESH_HIDDIFY.md). Then separately-gated tasks remain (public portal
@@ -549,6 +562,14 @@ MMT timestamps explicitly.
 > the orchestrator depends on return 200, so the contract is unaffected. (This reconciles the earlier "spec builds fine
 > in-process" note: that predates the marshmallow-4→3.26.1 downgrade now in effect.) **All status codes only — no
 > bodies/links/UUIDs/keys printed; admin link used internally on-node.**
+> ### 🏷️ Generated sing-box output naming/groups (2026-06-16) — not API-configurable
+> The client sing-box profile's **outbound tags and selector groups are not controllable via the API or any
+> `hiddifypanel` setting.** Outbound tags come from `singbox.py:to_singbox` (`{extra_info} {proxy.name} § {port}
+> {dbdomain.id}`; `proxy.name` is auto-generated and `apply_configs`-regenerated); the **"Select"** (selector) +
+> **"Auto"** (urltest) groups are **hardcoded** in `singbox.py:configs_as_json`. `ConfigEnum` exposes only
+> `branding_title`/`branding_site`/`branding_freetext` (panel branding). UNSEEN customer labels (FAST1/FAST2/Secure) are
+> therefore an **UNSEEN delivery-layer concern** (bot/portal, or a backend-generated profile), **not** a Hiddify API
+> option. "lowest"/"balance" seen in-app are **client-side** Hiddify-App groups, never emitted by the node.
 > ### 🌐 Domain/host: node-de.unseen.click verified-live (2026-06-16)
 > The admin base + user subscription endpoints are now confirmed over the **real node domain with valid TLS** (not just
 > the install's raw-IP/sslip.io defaults): `GET https://node-de.unseen.click/<proxy_path>/api/v2/admin/me/` → 200 and
@@ -575,14 +596,6 @@ MMT timestamps explicitly.
 >   outbounds[N].tunnel-per-resolver: json: unknown field` means the generated sing-box config carries a field the app's
 >   bundled core doesn't know, and the app rejects the **entire** profile. `tunnel-per-resolver` comes **only** from the
 >   **DNSTT** outbound (`hutils/proxy/shared.py` + `singbox.py:add_dnstt`). Disable that transport with the supported CLI
->   `hiddifypanel set-setting -k dnstt_enable -v false` + `apply_configs.sh` (reversible). `get_proxies()` then omits the
->   DNSTT proxy (`shared.py:154-155`). The full sing-box config is rendered by `hutils.proxy.singbox.configs_as_json(**
->   get_common_data(uuid,'new'))` (the `/<proxy_path>/<uuid>/singbox/` endpoint) — but that route serves the HTML portal
->   to unrecognized UAs, so verify via an on-node app-context render (counts only).
-> ### 🧹 Protocol/domain pruning levers (verified 2026-06-16) — for an UNSEEN-only profile
-> The customer profile composition is governed by `hutils/proxy/shared.py:get_proxies()` (each `*_enable` hconfig strips
-> matching Proxy rows) and `panel/user/user.py:362` (customer-sub domains = `Domain.sub_link_only != True`). Set protocol
-> flags with `hiddifypanel set-setting -k <key> -v <bool>` (supported CLI). To deliver only **Hysteria2 (FAST1) +
 
 
 ---
@@ -595,6 +608,42 @@ MMT timestamps explicitly.
 > **Status:** Phase 1 skeleton — running log of changes by date
 
 Chronological record of notable changes to the UNSEEN PROXY project.
+
+## 2026-06-16 — de1: mobile import PASS after app reinstall; Hiddify selector/label control findings — Decision C (no safe node-side rename/hide)
+
+- **Mobile import now PASS.** Charles deleted + reinstalled the Hiddify App on mobile → **import works** (Windows
+  import also works; the clean de1 profile is importable). The earlier iOS "connection refused" / import failure was an
+  **app/cache/install-state** condition, **not** a node/profile fault (server output was already verified import-clean).
+  Remaining open items are now **(a) naming/selector cleanliness** (this entry) and **(b) real per-protocol
+  connectivity PASS** (still pending).
+- **Profile re-scan (sanitized app-context sing-box render; counts/booleans only, temp shredded):** unchanged & clean —
+  **7 outbounds** = hysteria2×1 + shadowsocks×1 + vless-Reality×1 + **2 groups** (`selector` tag **"Select"**, 4 members;
+  `urltest` tag **"Auto"**, 3 members) + 2 `direct`. `vless_nonreality=0`, raw-IP=0, sslip=0, dnstt=0,
+  tunnel-per-resolver=0, private-key=0, vmess/tuic/naive/wireguard=0. Import-clean retained.
+- **"lowest"/"balance" explained — they are NOT in de1's output.** The node's sing-box profile emits only **"Select"**
+  (selector) + **"Auto"** (urltest); "load-balance" exists **only in the Clash templates** (`clash_config*.yml`), which
+  the Hiddify App (sing-box core) does not use. So **"lowest" and "balance" are Hiddify App (HiddifyNext) client-side UI
+  groups**, generated by the app after import — **not UNSEEN protocols and not node-controllable.**
+- **Label/group control finding — Decision C (no safe supported method):**
+  - **Rename Hysteria2→FAST1 / Shadowsocks→FAST2 / VLESS-Reality→Secure:** NOT possible via any supported
+    `hiddifypanel` setting / DB flag / API option. The outbound **tag** is built in
+    `hutils/proxy/singbox.py:to_singbox` as `f"{extra_info} {name} § {port} {dbdomain.id}"`, where `name = proxy.name`
+    is an **auto-generated Proxy DB field** (regenerated on `apply_configs`). No per-proxy custom-display-name setting
+    exists. `ConfigEnum` exposes only `branding_title`/`branding_site`/`branding_freetext` (panel/profile branding) —
+    nothing for outbound tags.
+  - **Hide/remove "Select"/"Auto" groups:** **hardcoded** in `singbox.py:configs_as_json` (not settings-driven), and the
+    template references `"final": "Select"` + dns `detour: "Select"` — removing them **breaks** the profile. Source-edit
+    only, **not upgrade-durable**.
+  - Achieving the labels would require **patching venv source** (`singbox.py`/`shared.py`) or DB rows that Hiddify
+    regenerates — which **breaks on every Hiddify upgrade/reinstall** and risks the clean profile. **Not done.**
+- **Decision = C.** Keep the current clean profile **unchanged**; present **UNSEEN labels (FAST1=Hysteria2,
+  FAST2=Shadowsocks, Secure=VLESS-Reality) in the bot/portal/customer instructions/delivery layer.** If a fully
+  custom-labeled client profile is ever required, the **UNSEEN backend should generate/sanitize the customer sing-box
+  profile itself** (the delivery/link layer already mediates output) — never hand-patch Hiddify templates.
+- **No node change made** (no `set-setting`, no template edit, no service restart, no disposable-user recreate — output
+  unchanged). de1 stays **`status=test`**; **`realdevice_protocol_test_pending` remains** (awaits Charles's actual
+  per-protocol connectivity PASS). **Secret-safety:** only counts/booleans/tags(safe-filtered) emitted; admin link used
+  internally on-node; temp scanner removed; no secrets printed/committed. Docs + SOURCE_OF_TRUTH regenerated.
 
 ## 2026-06-16 — de1: diagnose real-device protocol connectivity after clean import — PARTIAL (server-side READY; client connect unconfirmed)
 
@@ -643,42 +692,6 @@ Chronological record of notable changes to the UNSEEN PROXY project.
   mode** is **not** accepted as full-device VPN proof.
 - **No node change made.** de1 stays **`status=test`**; **`realdevice_protocol_test_pending` NOT cleared** (awaits
   Charles's per-protocol real-device connect PASS). **Secret-safety:** only counts/booleans/HTTP-status/ports emitted;
-  admin link used internally on-node only (never printed); all temp scanner scripts removed; logs redacted. Docs +
-  SOURCE_OF_TRUTH regenerated. See [PHASE9_DE1_REBUILD_FRESH_HIDDIFY.md](PHASE9_DE1_REBUILD_FRESH_HIDDIFY.md).
-
-## 2026-06-16 — de1: prune Hiddify output to a clean UNSEEN-only profile (FAST1/FAST2/Secure, node-de only) — PASS
-
-- **Why:** Charles's imported profile was Hiddify's broad default — **100 outbounds** (vmess×42, vless-noise×36,
-  naive/tuic/mieru/ssh/wireguard, spread across raw-IP + sslip + node-de) with **no clean FAST1/FAST2/Secure** (and
-  shadowsocks/Reality missing from the sing-box output). Charles also pasted disposable profile text → that test user
-  was **rotated** (delete+recreate). Not a real leak / not a rebuild blocker (test-only node, no customers, nothing
-  committed).
-- **Supported pruning (CLI `hiddifypanel set-setting`, grounded in `hutils/proxy/shared.py:get_proxies`):**
-  - **Enabled:** `hysteria_enable` (FAST1), `shadowsocks2022_enable` (FAST2 — plain SS; faketls doesn't render in
-    sing-box), `reality_enable` (Secure). Kept `tcp_enable`.
-  - **Disabled:** `vmess, tuic, naive, mieru, ssh_server, wireguard, trojan, grpc, xhttp, httpupgrade, h2, ws,
-    ssfaketls, shadowtls, kcp` — and crucially **`vless_enable=false`**, which (per `get_proxies`) keeps **only**
-    `reality` vless and drops every non-Reality VLESS transport → clean Secure isolation.
-  - DNSTT already disabled (prior task).
-- **Domain cleanup (supported visibility flag):** set **`sub_link_only=1`** on `5.249.160.59` and
-  `5.249.160.59.sslip.io` (per `user.py:362` `Domain.query.filter(sub_link_only != True)`) so they're **excluded from
-  customer subscriptions** while staying configured (admin link unaffected). node-de + the Reality decoy `i.pinimg.com`
-  stay visible.
-- **Result (app-context sing-box render, sanitized counts):** **100 → 9 outbounds** (3.7 KB). Exactly **hysteria2×1
-  (FAST1) + shadowsocks×1 (FAST2) + vless-Reality×1 (Secure)**; `vless_nonreality=0`, no vmess/tuic/naive/mieru/ssh/
-  wireguard, `tunnel-per-resolver=0`, `dnstt=0`, **no private-key fields**. All three resolve to **node-de** (FAST1
-  udp:14430, FAST2 :16753, Secure tcp:443 + decoy SNI `i.pinimg.com`); raw-IP/sslip absent from customer outbounds. Each
-  product port has a live node listener; INPUT policy ACCEPT so all reachable.
-- **Node:** 16 `set-setting` flags + 2-domain `sub_link_only` + 2 applies; `hiddify-ss-faketls` now inactive (intended);
-  other services active; node-de TLS valid; no cert/firewall/port change. **Rollback** documented (restore flags +
-  `sub_link_only=0`; `current.json` backups in `/root/disk-rollback/`). One fresh `disposable-test-realdevice` (1 GB/1 d,
-  enabled, import-ready) kept. de1 stays **`status=test`**. **Protocols NOT marked PASS** — awaits Charles's real-device
-  connect. SOURCE_OF_TRUTH regenerated; no secrets printed/committed.
-
-## 2026-06-16 — de1: fix Hiddify App parser error (`tunnel-per-resolver`) by disabling DNSTT — PASS
-
-- **Symptom (Windows Hiddify App):** profile downloaded but the parser rejected it —
-  `[SingboxParser] unmarshal error: outbounds[37].tunnel-per-resolver: json: unknown field "tunnel-per-resolver"`.
 
 
 ---
