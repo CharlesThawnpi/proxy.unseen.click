@@ -158,3 +158,17 @@ there is **no daemon, no systemd timer/service**. Dry-run tools (temp DB; mock p
 (`--write-metrics` writes only to the explicit `--db`), `bin/node_alerts_preview.py`. A **gated** periodic scheduler
 (cron/timer) running `monitor_once --write-metrics` against the live DB — plus a read-only SSH metrics collector once a
 node is live — is a future, separately-authorized task. No node is modified; no secrets are fetched.
+
+## Phase 8 — customer portal foundation (render-only, not deployed, 2026-06-16)
+
+The portal foundation exists ([PHASE8_WEB_PORTAL_FOUNDATION.md](PHASE8_WEB_PORTAL_FOUNDATION.md), [PORTAL.md](PORTAL.md))
+but is **not deployed**: no web server, no nginx/TLS, no systemd unit, no public endpoint, and no real auth. Dry-run
+tools default to a fresh temp DB/sample data:
+
+- `python3 bin/portal_smoke.py`
+- `python3 bin/portal_render_dry_run.py --page plans`
+- `python3 bin/portal_render_dry_run.py --page subscription --out /tmp/unseen_portal_subscription.html`
+
+A real portal deployment is a future gated task requiring a public HTTP boundary, short-lived portal auth, `/s/`
+resolution, secret-safe access logging, and live delivery integration. It remains blocked from real provisioning until
+the de1 rebuild and real-device protocol PASS.

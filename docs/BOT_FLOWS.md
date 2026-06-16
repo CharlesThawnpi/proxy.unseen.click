@@ -11,6 +11,14 @@ How every front-end platform resolves to one customer, how outbound messages are
 - **Platform identities:** one `platform_accounts` table maps `(platform_name, platform_user_id) → customer_id` for `telegram`, `messenger`, `viber`, `whatsapp`, `web`.
 - A customer can have several platform accounts; all point at one `customer_id` (linking: see [ACCOUNT_LINKING.md](ACCOUNT_LINKING.md)).
 
+## Web portal foundation (Phase 8)
+
+The Phase 8 portal ([PORTAL.md](PORTAL.md)) uses the same unified identity model but does **not** implement real login
+yet. Dry-run rendering can use a sample `web` platform account in a temp DB, but customer-facing pages display only
+`public_customer_code`; raw platform ids are not primary identity and are not rendered. Future bot-to-web handoff should
+issue short-lived, hash-stored portal access handles and resolve them server-side before showing the same safe customer
+status/subscription pages.
+
 ## Service boundaries
 
 > **Phase 4B status:** the backend boundaries are **implemented (no bot UI, no sender)** —

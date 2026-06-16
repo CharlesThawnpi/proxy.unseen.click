@@ -17,7 +17,7 @@ Where the UNSEEN PROXY build stands across the §34 deployment phases.
 | 5 | Telegram bot implementation (Burmese-primary) | **Foundation + transport DONE (dry-run, gated).** Foundation: adapter + Burmese catalogue + router + AccountService identity + env-driven admin. Transport: Bot API boundary (token redacted; injectable opener), offset-tracked polling runner, NotificationService sender consuming `outbound_messages` (queued→sent/requeue/dead), fail-closed double gate. **No polling daemon/webhook/API/send; no systemd.** See PHASE5_TELEGRAM_BOT_FOUNDATION.md + PHASE5_TELEGRAM_TRANSPORT_FOUNDATION.md. Live bring-up = next, Charles-gated. |
 | 6 | Hiddify subscription delivery integration | **Foundation DONE (dry-run): delivery payload model (safe refs only) + branded link rule (`sub.unseen.click/s/<token>`, hash stored) + deep-link/copy-link priority + QR planned + mocked Hiddify-output normalizer + NotificationService/Telegram render integration. No raw links persisted/logged; no network.** See PHASE6_SUBSCRIPTION_DELIVERY_FOUNDATION.md. Sidecar + live = next, gated. |
 | 7 | Plan-based region/protocol entitlement + node resilience | **Foundation DONE (dry-run, DB-driven): `entitlements` (plan→region/protocol, FAST rule, safe errors) + `node_resilience` (status×health readiness, reason vocabulary, graceful degradation, data-driven `node_live_blockers`) + `availability` (region/protocol availability) + provisioning-plan integration + Burmese availability copy. Additive migration `0005`. No node live; no metrics fetch.** See PHASE7_ENTITLEMENT_NODE_RESILIENCE.md. Health monitor = next. |
-| 8 | Web app / customer portal | PENDING |
+| 8 | Web app / customer portal | **Foundation DONE (render-only, dry-run): stdlib portal boundary + compact responsive GitHub-inspired neutral UI + DB-driven plans/customer status/subscription detail + branded `/s/<opaque-token>` placeholder + Phase 7 availability rendering. No server, no public endpoint, no real auth, no live delivery, no Hiddify/Telegram network.** See PHASE8_WEB_PORTAL_FOUNDATION.md + PORTAL.md. |
 | 9 | Messenger and Viber bot integration | PENDING |
 | 10 | Monitoring, backup, security, production hardening | PENDING |
 | 11 | Internal beta testing | PENDING |
@@ -121,7 +121,14 @@ read-only sanitized probes (`node_probe` mock default + opt-in public-TCP) → `
 CRITICAL/WARN→degraded, dry-run candidate but not live-ready). `health_monitor.monitor_once` is single-pass, dry-run by
 default; **no daemon/systemd/secrets/network**. 163 tests PASS.
 
-**Next: Phase 8 (web portal) or a gated monitor scheduler.** **Before de1 goes live:** rebuild the node (clears
+**Phase 8 portal foundation complete (2026-06-16)** ([PHASE8_WEB_PORTAL_FOUNDATION.md](PHASE8_WEB_PORTAL_FOUNDATION.md),
+[PORTAL.md](PORTAL.md)): render-only customer portal foundation — app/router boundary returning `PortalResponse`
+objects, compact responsive GitHub-inspired neutral UI, DB-driven plans and customer/subscription status, branded
+`/s/<opaque-token>` placeholder, and Phase 7 availability rendering. Dry-run tools: `bin/portal_smoke.py`,
+`bin/portal_render_dry_run.py`. **No server/public endpoint/auth/live delivery/Hiddify call/Telegram send.** 174 tests
+PASS.
+
+**Next: gated monitor scheduler, real portal deployment/auth design, or Phase 9 channel work.** **Before de1 goes live:** rebuild the node (clears
 `leaked_key_rebuild_pending`) + a real-device FAST1/FAST2/Secure test (`#TASK_for_Charles` in
 PHASE4_PRELIVE_DE1_TUNING.md), then separately-gated tasks (periodic monitor + read-only SSH metrics, bot live latches
 + real opener, `sub.unseen.click` sidecar, live provisioning). Live promotion stays Charles-gated.

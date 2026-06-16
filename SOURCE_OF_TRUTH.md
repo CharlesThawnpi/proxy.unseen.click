@@ -1,6 +1,6 @@
 # UNSEEN PROXY — SOURCE OF TRUTH (consolidated, auto-generated)
 
-> **Generated:** 2026-06-16T06:13:31Z — by `scripts/build_source_of_truth.sh`.
+> **Generated:** 2026-06-16T06:33:06Z — by `scripts/build_source_of_truth.sh`.
 > **This is the live project state for external readers (e.g. the Custom GPT).** It is DERIVED from the
 > canonical docs below and regenerated each task. Upload THIS file to the GPT (not IMPLEMENTATION_PLAN.md,
 > which is the static v1.9 plan). Re-download after updates.
@@ -47,7 +47,7 @@ Where the UNSEEN PROXY build stands across the §34 deployment phases.
 | 5 | Telegram bot implementation (Burmese-primary) | **Foundation + transport DONE (dry-run, gated).** Foundation: adapter + Burmese catalogue + router + AccountService identity + env-driven admin. Transport: Bot API boundary (token redacted; injectable opener), offset-tracked polling runner, NotificationService sender consuming `outbound_messages` (queued→sent/requeue/dead), fail-closed double gate. **No polling daemon/webhook/API/send; no systemd.** See PHASE5_TELEGRAM_BOT_FOUNDATION.md + PHASE5_TELEGRAM_TRANSPORT_FOUNDATION.md. Live bring-up = next, Charles-gated. |
 | 6 | Hiddify subscription delivery integration | **Foundation DONE (dry-run): delivery payload model (safe refs only) + branded link rule (`sub.unseen.click/s/<token>`, hash stored) + deep-link/copy-link priority + QR planned + mocked Hiddify-output normalizer + NotificationService/Telegram render integration. No raw links persisted/logged; no network.** See PHASE6_SUBSCRIPTION_DELIVERY_FOUNDATION.md. Sidecar + live = next, gated. |
 | 7 | Plan-based region/protocol entitlement + node resilience | **Foundation DONE (dry-run, DB-driven): `entitlements` (plan→region/protocol, FAST rule, safe errors) + `node_resilience` (status×health readiness, reason vocabulary, graceful degradation, data-driven `node_live_blockers`) + `availability` (region/protocol availability) + provisioning-plan integration + Burmese availability copy. Additive migration `0005`. No node live; no metrics fetch.** See PHASE7_ENTITLEMENT_NODE_RESILIENCE.md. Health monitor = next. |
-| 8 | Web app / customer portal | PENDING |
+| 8 | Web app / customer portal | **Foundation DONE (render-only, dry-run): stdlib portal boundary + compact responsive GitHub-inspired neutral UI + DB-driven plans/customer status/subscription detail + branded `/s/<opaque-token>` placeholder + Phase 7 availability rendering. No server, no public endpoint, no real auth, no live delivery, no Hiddify/Telegram network.** See PHASE8_WEB_PORTAL_FOUNDATION.md + PORTAL.md. |
 | 9 | Messenger and Viber bot integration | PENDING |
 | 10 | Monitoring, backup, security, production hardening | PENDING |
 | 11 | Internal beta testing | PENDING |
@@ -151,7 +151,14 @@ read-only sanitized probes (`node_probe` mock default + opt-in public-TCP) → `
 CRITICAL/WARN→degraded, dry-run candidate but not live-ready). `health_monitor.monitor_once` is single-pass, dry-run by
 default; **no daemon/systemd/secrets/network**. 163 tests PASS.
 
-**Next: Phase 8 (web portal) or a gated monitor scheduler.** **Before de1 goes live:** rebuild the node (clears
+**Phase 8 portal foundation complete (2026-06-16)** ([PHASE8_WEB_PORTAL_FOUNDATION.md](PHASE8_WEB_PORTAL_FOUNDATION.md),
+[PORTAL.md](PORTAL.md)): render-only customer portal foundation — app/router boundary returning `PortalResponse`
+objects, compact responsive GitHub-inspired neutral UI, DB-driven plans and customer/subscription status, branded
+`/s/<opaque-token>` placeholder, and Phase 7 availability rendering. Dry-run tools: `bin/portal_smoke.py`,
+`bin/portal_render_dry_run.py`. **No server/public endpoint/auth/live delivery/Hiddify call/Telegram send.** 174 tests
+PASS.
+
+**Next: gated monitor scheduler, real portal deployment/auth design, or Phase 9 channel work.** **Before de1 goes live:** rebuild the node (clears
 `leaked_key_rebuild_pending`) + a real-device FAST1/FAST2/Secure test (`#TASK_for_Charles` in
 PHASE4_PRELIVE_DE1_TUNING.md), then separately-gated tasks (periodic monitor + read-only SSH metrics, bot live latches
 + real opener, `sub.unseen.click` sidecar, live provisioning). Live promotion stays Charles-gated.
@@ -389,6 +396,25 @@ The verified Hiddify Manager **API v2** contract — endpoints, fields, units, a
 
 Chronological record of notable changes to the UNSEEN PROXY project.
 
+## 2026-06-16 — Phase 8: web/customer portal foundation (render-only, dry-run) — PASS
+
+- **Render-only, dry-run only** (stdlib): no web server, no systemd, no nginx/TLS, no public endpoint, no real auth,
+  no Hiddify call, no Telegram send/poll, no live subscription resolution. See
+  [PHASE8_WEB_PORTAL_FOUNDATION.md](PHASE8_WEB_PORTAL_FOUNDATION.md) and [PORTAL.md](PORTAL.md).
+- **Portal boundary:** `backend/portal_app.py` + `portal_routes.py` return `PortalResponse` HTML for local render/smoke
+  only. Pages: home, plans, customer status, subscription detail, branded `/s/<opaque-token>` placeholder, help,
+  unavailable, expired, not-found.
+- **DB-driven customer views:** plans/regions/protocols read from DB rows and existing Phase 7 entitlement/availability
+  helpers; DE default, SG premium-only PRO/MAX, and Fast/Fast1/Fast2 display rules preserved. Dashboard uses
+  `public_customer_code`, not raw platform ids. Subscription pages show snapshot values and safe lifecycle/provision
+  statuses.
+- **Compact responsive UI:** GitHub-inspired neutral style (bordered panels, muted backgrounds, compact tables, status
+  badges) with local embedded CSS only; no GitHub branding/assets copied; no CDN/fonts/images/scripts.
+- **Security:** dynamic HTML escaped; no raw subscription/proxy link, QR payload, node IP/hostname, admin path, UUID,
+  platform id, or raw opaque token rendered. Branded link shown only as `https://sub.unseen.click/s/<opaque-token>`.
+- New CLIs: `bin/portal_render_dry_run.py`, `bin/portal_smoke.py` (fresh temp DB/sample data by default).
+  **Tests: 174 PASS** (163 + 11 new).
+
 ## 2026-06-16 — Phase 7: health monitor foundation (read-only, dry-run) — PASS
 
 - **Read-only, dry-run only** (stdlib): no daemon, no systemd, no node modified, no Hiddify mutation, no secrets
@@ -453,25 +479,6 @@ Chronological record of notable changes to the UNSEEN PROXY project.
 - **`telegram_transport`** — Bot API boundary (`getUpdates`/`sendMessage`/`editMessageText`/`answerCallbackQuery`);
   injectable `opener` (tests mock; no real network); dry-run default; token name-mangled + redacted; the token-bearing
   URL is never logged/returned; timeout/retry boundaries.
-- **`telegram_polling`** — offset-tracked runner routing batches through `TelegramRouter`; no daemon; live poll
-  hard-refused without the gate. **`notification_sender`/`outbound_worker`** — consume queued telegram
-  `outbound_messages`, render from `payload_ref` (template key only), transitions queued→sent / queued (attempts++,
-  backoff) / dead; live send hard-refused without the gate.
-- **`runtime_gates`** — centralized fail-closed double gate: live send needs `ALLOW_LIVE_BOT_SENDS=1` + `--live-send
-  --confirm`; live poll needs `ALLOW_LIVE_BOT_POLLING=1` + `--live-poll --confirm`. Even when gated, tests use a mock
-  transport.
-- `.env.example`: added `ALLOW_LIVE_BOT_SENDS=0` / `ALLOW_LIVE_BOT_POLLING=0`. New CLIs:
-  `bin/telegram_poll_dry_run.py`, `bin/outbound_worker_dry_run.py`, `bin/send_notification_dry_run.py` (temp DB/mock).
-  **Tests: 107 PASS** (89 + 18 new, incl. no-network-call guard). Updated BOT_FLOWS/SECURITY/DEPLOYMENT/CURRENT_STATUS;
-  new transport doc. No schema change.
-
-## 2026-06-16 — Phase 5: Telegram bot foundation (Burmese-primary, dry-run) — PASS
-
-- **Dry-run only** (stdlib): no Telegram API call, no message sent, no polling/webhook, no service started, no live
-  provisioning; de1 stays `status=test`. See [PHASE5_TELEGRAM_BOT_FOUNDATION.md](PHASE5_TELEGRAM_BOT_FOUNDATION.md).
-- **New modules:** `telegram_adapter` (dry-run boundary; token redacted; live sends hard-refused via
-  `config.PHASE5_LIVE_SEND_DISABLED`), `telegram_messages` (Burmese-primary catalogue; English product terms kept),
-  `telegram_commands` (defensive `parse_update`), `bot_flows` (DB-driven plan/status/admin content), `telegram_router`
 
 
 ---

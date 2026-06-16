@@ -5,6 +5,25 @@
 
 Chronological record of notable changes to the UNSEEN PROXY project.
 
+## 2026-06-16 — Phase 8: web/customer portal foundation (render-only, dry-run) — PASS
+
+- **Render-only, dry-run only** (stdlib): no web server, no systemd, no nginx/TLS, no public endpoint, no real auth,
+  no Hiddify call, no Telegram send/poll, no live subscription resolution. See
+  [PHASE8_WEB_PORTAL_FOUNDATION.md](PHASE8_WEB_PORTAL_FOUNDATION.md) and [PORTAL.md](PORTAL.md).
+- **Portal boundary:** `backend/portal_app.py` + `portal_routes.py` return `PortalResponse` HTML for local render/smoke
+  only. Pages: home, plans, customer status, subscription detail, branded `/s/<opaque-token>` placeholder, help,
+  unavailable, expired, not-found.
+- **DB-driven customer views:** plans/regions/protocols read from DB rows and existing Phase 7 entitlement/availability
+  helpers; DE default, SG premium-only PRO/MAX, and Fast/Fast1/Fast2 display rules preserved. Dashboard uses
+  `public_customer_code`, not raw platform ids. Subscription pages show snapshot values and safe lifecycle/provision
+  statuses.
+- **Compact responsive UI:** GitHub-inspired neutral style (bordered panels, muted backgrounds, compact tables, status
+  badges) with local embedded CSS only; no GitHub branding/assets copied; no CDN/fonts/images/scripts.
+- **Security:** dynamic HTML escaped; no raw subscription/proxy link, QR payload, node IP/hostname, admin path, UUID,
+  platform id, or raw opaque token rendered. Branded link shown only as `https://sub.unseen.click/s/<opaque-token>`.
+- New CLIs: `bin/portal_render_dry_run.py`, `bin/portal_smoke.py` (fresh temp DB/sample data by default).
+  **Tests: 174 PASS** (163 + 11 new).
+
 ## 2026-06-16 — Phase 7: health monitor foundation (read-only, dry-run) — PASS
 
 - **Read-only, dry-run only** (stdlib): no daemon, no systemd, no node modified, no Hiddify mutation, no secrets

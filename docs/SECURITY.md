@@ -184,3 +184,20 @@ sanitized by construction:
   subscription/proxy link, or QR. Customer availability copy has no IP/host/secret.
 - **No daemon / no systemd / no node modification / no Hiddify or Telegram call.** Writes happen only when a CLI is run
   with `--write-metrics` against an explicit local/test DB.
+
+## Phase 8 portal secret-safety (render-only — verified by tests)
+
+The portal foundation ([PHASE8_WEB_PORTAL_FOUNDATION.md](PHASE8_WEB_PORTAL_FOUNDATION.md), [PORTAL.md](PORTAL.md))
+keeps the customer web surface dry-run and secret-safe:
+
+- **No public endpoint exists.** The portal returns HTML strings/`PortalResponse` objects only; no web server, nginx/TLS,
+  systemd unit, live auth, Hiddify call, or Telegram send/poll is configured.
+- **All dynamic HTML is escaped.** Plan names, statuses, dates, region labels, and customer/subscription labels are
+  passed through `html.escape`; tests inject markup-shaped plan/status values and verify they render as text.
+- **Identity stays public-code based.** The dashboard shows `customers.public_customer_code`; raw platform ids and
+  `platform_accounts` values are never displayed.
+- **Delivery stays placeholder-only.** The branded link renders as `https://sub.unseen.click/s/<opaque-token>` and
+  `/s/<opaque-token>` does not resolve anything. No raw subscription/proxy link, QR payload, admin path, UUID-shaped
+  value, node IP/hostname, or raw opaque token appears in rendered HTML (test-asserted).
+- **Assets are local.** CSS is embedded from `backend/portal_static.py`; no CDN, external font, image, or script
+  reference is used.
