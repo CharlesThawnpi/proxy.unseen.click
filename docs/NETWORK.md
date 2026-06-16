@@ -53,6 +53,9 @@ once Hiddify is installed. Detail: [PHASE2_DE1_PREFLIGHT.md](PHASE2_DE1_PREFLIGH
   verifies with **no `-k`** and serves the panel/subscription, so the customer→node TLS path uses the real domain, not
   raw-IP/sslip.io. Bare `/` returns 502 by design (Hiddify camouflage). No network/port change — `80/tcp` stays open
   for ACME renewal. See [HIDDIFY_NODE_INSTALL_RUNBOOK.md](HIDDIFY_NODE_INSTALL_RUNBOOK.md) §5A.
+- **Import-readiness note (2026-06-16):** a Hiddify-App import error citing `127.0.0.1:64127` is **client-side** (the
+  App's own embedded core/clash-api local port on the phone) — it is **not** in de1's data path and not a de1 listener.
+  The node's subscription output was verified clean of loopback references; see runbook §5B + PHASE9 addendum.
 
 ## Phase 2 preflight — current network state (2026-06-15, read-only) — MASTER
 

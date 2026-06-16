@@ -1,6 +1,6 @@
 # UNSEEN PROXY — SOURCE OF TRUTH (consolidated, auto-generated)
 
-> **Generated:** 2026-06-16T14:14:15Z — by `scripts/build_source_of_truth.sh`.
+> **Generated:** 2026-06-16T14:33:13Z — by `scripts/build_source_of_truth.sh`.
 > **This is the live project state for external readers (e.g. the Custom GPT).** It is DERIVED from the
 > canonical docs below and regenerated each task. Upload THIS file to the GPT (not IMPLEMENTATION_PLAN.md,
 > which is the static v1.9 plan). Re-download after updates.
@@ -44,7 +44,7 @@ Where the UNSEEN PROXY build stands across the §34 deployment phases.
 | 0 | Clean-VPS verification (gate before any build) | DONE (gate passed) |
 | 1 | Documentation, repo & architecture planning | DONE (pushed to origin/main, 25e5ddc) |
 | 2 | Hiddify test node setup | **RE-SCOPED to a separate DE VPS** (`de1`, `5.249.160.59`, Ubuntu 22.04, planned/test). Master-co-location preflight done then RETIRED. Forward plan: PHASE2_3_DE_NODE_PLAN.md |
-| 3 | Hiddify API & subscription compatibility audit | **DONE (PASS) — Hiddify v12.3.3 on de1; API v2 contract VERIFIED-LIVE; disposable test user create→sub→delete confirmed.** Phase 4 API layer UNBLOCKED. **Re-verified after a fresh de1 rebuild + clean reinstall (2026-06-16, PHASE9_DE1_REBUILD_FRESH_HIDDIFY.md): contract re-confirmed (bounded `marshmallow==3.26.1` venv pin needed), disposable-user lifecycle PASS, FAST1/FAST2/Secure present, SSH hardened. `leaked_key_rebuild_pending` CLEARED.** **Node domain `node-de.unseen.click` now SET with a valid Let's Encrypt cert (2026-06-16): added via `hiddifypanel add-domain` + `apply_configs.sh`; API/all-configs verified-live over the public node-de path with valid TLS; subscription output now references `node-de.unseen.click` (resolves Phase 9 blocker #4).** Remaining: real-device FAST1/FAST2/Secure connect PASS + RAM lock. See HIDDIFY_API_CONTRACT.md + PHASE3_DE1_HIDDIFY_LIVE_VERIFY.md + PHASE9_DE1_REBUILD_FRESH_HIDDIFY.md |
+| 3 | Hiddify API & subscription compatibility audit | **DONE (PASS) — Hiddify v12.3.3 on de1; API v2 contract VERIFIED-LIVE; disposable test user create→sub→delete confirmed.** Phase 4 API layer UNBLOCKED. **Re-verified after a fresh de1 rebuild + clean reinstall (2026-06-16, PHASE9_DE1_REBUILD_FRESH_HIDDIFY.md): contract re-confirmed (bounded `marshmallow==3.26.1` venv pin needed), disposable-user lifecycle PASS, FAST1/FAST2/Secure present, SSH hardened. `leaked_key_rebuild_pending` CLEARED.** **Node domain `node-de.unseen.click` now SET with a valid Let's Encrypt cert (2026-06-16): added via `hiddifypanel add-domain` + `apply_configs.sh`; API/all-configs verified-live over the public node-de path with valid TLS; subscription output now references `node-de.unseen.click` (resolves Phase 9 blocker #4).** **Real-device import attempt (2026-06-16) failed app-side with `127.0.0.1:64127` (Hiddify App's own local core port) BEFORE the profile saved — server subscription output verified CLEAN (no `127.0.0.1`/`localhost`/`64127`); this is import/app-state readiness, NOT protocol connectivity. Secondary: sub output still lists raw-IP/sslip endpoints (no safe auto-removal; manual panel prune). Real-device retest is HOLD until Charles clears the app-side core (see #TASK).** Remaining: real-device FAST1/FAST2/Secure connect PASS + RAM lock. See HIDDIFY_API_CONTRACT.md + PHASE3_DE1_HIDDIFY_LIVE_VERIFY.md + PHASE9_DE1_REBUILD_FRESH_HIDDIFY.md |
 | 4 | Database & backend clone design | **Phase 4A + 4B + 4C DONE (dry-run/test-safe).** 4A: migrations + schema + seed + Hiddify client + provisioner CLI. 4B: AccountService + account-link codes + NotificationService (queue-first) + idempotency + WAL-safe online backup (`0002`). 4C: dry-run provisioning orchestration — payment-approval boundary → subscription snapshots → access-profile placeholder → provisioning plan (entitlements + live blockers + sanitized Hiddify intent) → delivery enqueue → audit + forward-only compensation; **live hard-refused**; additive migration `0003`. **70 tests PASS**. No live mutations/sends/real customers. See PHASE4A/4B/4C docs. |
 | 5 | Telegram bot implementation (Burmese-primary) | **Foundation + transport DONE (dry-run, gated).** Foundation: adapter + Burmese catalogue + router + AccountService identity + env-driven admin. Transport: Bot API boundary (token redacted; injectable opener), offset-tracked polling runner, NotificationService sender consuming `outbound_messages` (queued→sent/requeue/dead), fail-closed double gate. **No polling daemon/webhook/API/send; no systemd.** See PHASE5_TELEGRAM_BOT_FOUNDATION.md + PHASE5_TELEGRAM_TRANSPORT_FOUNDATION.md. Live bring-up = next, Charles-gated. |
 | 6 | Hiddify subscription delivery integration | **Foundation DONE (dry-run): delivery payload model (safe refs only) + branded link rule (`sub.unseen.click/s/<token>`, hash stored) + deep-link/copy-link priority + QR planned + mocked Hiddify-output normalizer + NotificationService/Telegram render integration. No raw links persisted/logged; no network.** See PHASE6_SUBSCRIPTION_DELIVERY_FOUNDATION.md. Sidecar + live = next, gated. |
@@ -533,6 +533,21 @@ MMT timestamps explicitly.
 > **references `node-de.unseen.click`**. The node domain + its Let's Encrypt cert are set via `hiddifypanel add-domain -m
 > direct` + `apply_configs.sh` — see [HIDDIFY_NODE_INSTALL_RUNBOOK.md](HIDDIFY_NODE_INSTALL_RUNBOOK.md) §5A. The bare
 > domain root `/` returns **502 by design** (Hiddify camouflage); always probe the `/<proxy_path>/api/v2/…` path.
+> ### 📥 Subscription-output behavior (verified 2026-06-16) — for real-device import readiness
+> - The **clean source of truth** for a user's configs is the admin endpoint `GET
+>   /<proxy_path>/api/v2/admin/all-configs/?uuid=<uuid>` (200; ~16 KB; contains the hy2/ss/vless+reality outbounds).
+> - The user-facing format URLs `…/<user_uuid>/{auto,sub,sub64,singbox,clash}/` **302-redirect to an HTML user-portal
+>   page for an unmatched User-Agent** (`text/html`, no `outbounds`) — expected, not the raw config. The structured
+>   `…/<user_uuid>/api/v2/user/all-configs/` returned **400** without the right params. Don't treat the HTML page as the
+>   config when scanning.
+> - Output is **multi-domain**: it lists every configured `direct` domain (node-de **and** the install's raw-IP +
+>   sslip.io). Only the node-domain entries have a matching cert; raw-IP/sslip entries won't connect. There is **no
+>   supported CLI** to remove a domain or set a primary sub domain (`hiddifypanel` exposes `add-domain` only) — prune via
+>   the panel **Settings → Domains** if a single-domain output is wanted.
+> - A client error like *"connection refused 127.0.0.1:<port>"* on **add profile** is the **Hiddify App's own local
+>   core/clash-api port** (the sing-box template's clash-api is the standard `127.0.0.1:9090`; the node emits no such
+>   remote target) — an **app-side** condition, not a node/API fault. Always run the §5B sanitized output inspection
+>   before attributing an import failure to the node.
 
 > ## ✅ VERIFIED-LIVE on de1 — Hiddify **v12.3.3**, API **"Hiddify API v2.2.0"** (2026-06-16)
 > Source: the panel's own OpenAPI spec (generated in-process via `hiddifypanel`/apiflask — 22 paths) **and** confirmed
@@ -554,21 +569,6 @@ MMT timestamps explicitly.
 > - **Subscription/config output:** `GET …/api/v2/user/all-configs/` and `…/user/me/` (also uuid-in-path variants);
 >   admin can fetch via `/admin/all-configs/?uuid=<uuid>` (returned 200, ~14.8 KB for the test user). Output-format
 >   suffixes (auto/sub/sub64/singbox/clash) are the user-link formats — confirm exact form when the sidecar is built.
-> - **Disposable test user lifecycle VERIFIED:** create→200, GET→200, all-configs→200, DELETE→200, re-GET→404.
->
-> **Phase 4 is UNBLOCKED for the API layer.** (Remaining node-tuning, not contract: SS :8388 + UDP proxy ports were
-> not externally reachable in the firewall check — see [PHASE3_DE1_HIDDIFY_LIVE_VERIFY.md](PHASE3_DE1_HIDDIFY_LIVE_VERIFY.md).)
-
-The verified Hiddify Manager **API v2** contract — endpoints, fields, units, and link/deep-link formats — pinned per Hiddify version per node.
-
-> This document is a structured skeleton. **Nothing here is trustworthy until probed against a pinned Hiddify version on a real node.** The exact field names, units, and endpoint paths must be verified against the actual installed version before any code depends on them; the API changes between versions. The read-only `hiddify_api_probe.py` is a Phase 3 deliverable that generates this contract from the panel's Swagger/OpenAPI (Settings → API).
-
-## API v2 base & auth
-
-> **[VERIFIED]** (official API docs)
-> Three base path families:
-> - Admin: `https://<node-domain>/<admin_proxy_path>/api/v2/admin/…`
-> - Panel: `https://<node-domain>/<admin_proxy_path>/api/v2/panel/…` (e.g. `…/panel/version`)
 
 
 ---
@@ -581,6 +581,30 @@ The verified Hiddify Manager **API v2** contract — endpoints, fields, units, a
 > **Status:** Phase 1 skeleton — running log of changes by date
 
 Chronological record of notable changes to the UNSEEN PROXY project.
+
+## 2026-06-16 — de1: diagnose Hiddify App import failure (`127.0.0.1:64127`) — PARTIAL (server output clean; app-side)
+
+- **Symptom:** importing the `disposable-test-realdevice` subscription into the Hiddify App failed **before the profile
+  saved** — "Failed to add profile / Unexpected error / Error connecting: SocketException / Connection refused /
+  127.0.0.1:64127".
+- **Diagnosis (sanitized, no links/configs printed):** scanned the user subscription across formats (auto/singbox/clash/
+  sub/sub64) **and** the admin `all-configs` with a counts-only sanitizer (temp files shredded). The real config (admin
+  `all-configs`, ~16.4 KB, 322 lines) is **clean**: `127.0.0.1`=0, `localhost`=0, `64127`=0; protocols present
+  (hy2/ss/vless+reality). On-disk search: **`64127` exists in NO Hiddify config/template** (only an unrelated `jqvmap`
+  USA-map JS asset). The client sing-box template's clash-api `external_controller` is the standard **`127.0.0.1:9090`**,
+  not 64127.
+- **Root cause = B (app-side):** `127.0.0.1:64127` is the **Hiddify App's own embedded core/clash-api local control
+  port** (dynamically chosen), refused because the app's core/VPN service was not running/reachable when adding the
+  profile. The server never emits it. Not a protocol-connectivity failure.
+- **Secondary = C (multi-domain output, not the blocker):** the subscription legitimately lists **node-de (valid TLS) +
+  raw-IP + sslip.io** endpoints. The raw-IP/sslip ones have no matching cert and won't connect; they don't cause the
+  64127 error (import fails before connect). **No safe automated cleanup exists** — `hiddifypanel` has `add-domain` only
+  (no remove/set-default), no per-domain sub toggle, and removing the raw-IP domain would break the IP-based admin link
+  → **HOLD**: pruning is a manual panel action (Settings → Domains), documented for Charles.
+- **No node change made** (none safe or needed for an app-side error); de1 stays **`status=test`**; one
+  `disposable-test-realdevice` user kept (its output is import-clean and includes node-de). Docs + runbook updated with a
+  **mandatory sanitized subscription-output inspection before any real-device test**; SOURCE_OF_TRUTH regenerated. No
+  secrets printed or committed.
 
 ## 2026-06-16 — de1: set node domain `node-de.unseen.click` + valid TLS for real-device import — PASS
 
@@ -641,30 +665,6 @@ Chronological record of notable changes to the UNSEEN PROXY project.
   Real-device connect test deferred → #TASK_for_Charles.
 - SSH re-hardened: password auth disabled (key-only), `PermitRootLogin prohibit-password`, port unchanged; cloud-init
   override neutralized; fresh key login verified + password refused. Firewall: Hiddify iptables allow 22/80/443
-  tcp + 443 udp; SSH safe.
-- **`leaked_key_rebuild_pending` CLEARED** (rebuild regenerated all node secrets): `config.LEAKED_KEY_REBUILD_PENDING
-  = False`; seed `node_live_blockers` row swapped to `realdevice_protocol_test_pending`. **de1 stays `status=test`;
-  live still hard-disabled by `phase4c_live_disabled`.** Tests updated + added; full suite PASS.
-- New doc [PHASE9_DE1_REBUILD_FRESH_HIDDIFY.md](PHASE9_DE1_REBUILD_FRESH_HIDDIFY.md). No secrets printed/committed;
-  admin link stored only at `/root/hiddify-de1-admin.link` (0600) on the node.
-
-## 2026-06-16 — Phase 8C: portal HTTP deployment boundary (gated, local-only) — PASS
-
-- Added a local-only portal HTTP deployment boundary: `backend/portal_http.py` (`HttpRequest`/`HttpResponse`
-  abstraction + `PortalHttpApp` router wrapping `render_route` behind a strict route allowlist),
-  `backend/portal_middleware.py` (hardened security headers + cookie→session-context middleware),
-  `backend/portal_cookies.py` (HttpOnly+Secure+SameSite+Path+Max-Age `Set-Cookie` builder/parser),
-  `backend/portal_csrf.py` (signed, constant-time, expiring CSRF foundation for future POST routes),
-  `backend/rate_limit.py` (in-memory fail-closed fixed-window limiter; branded-token default policy),
-  `backend/access_log.py` (access-log sanitizer redacting `/s/<token>`, cookies, auth headers, query tokens,
-  UUIDs, proxy links, bot/Hiddify secrets; masks client IP), and `backend/sidecar_boundary.py` (dry-run
-  `sub.unseen.click` sidecar: verifies branded token hash-backed, returns safe placeholder, no live Hiddify fetch).
-- Added local-only CLIs: `bin/portal_http_smoke.py`, `bin/sidecar_boundary_smoke.py`, and
-  `bin/portal_local_preview_server.py` (binds loopback only, refuses `0.0.0.0`, starts nothing without
-  `--serve-local`, no systemd/nginx/TLS).
-- CSRF token expiry is stamped via `backend.timezone` MMT helpers; no new DB timestamp writes were added.
-- **No persistent server, no public endpoint, no nginx/TLS, no systemd, no public bind, no real cookie/session
-  service, no live subscription resolution, no Hiddify/Telegram network.** de1 stays `status=test`.
 
 
 ---

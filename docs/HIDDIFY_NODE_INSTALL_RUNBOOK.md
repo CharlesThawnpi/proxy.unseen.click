@@ -80,6 +80,7 @@ Do these in order. Each is a gate — if one fails, STOP and report PARTIAL/HOLD
 | 12 | SSH **password auth** came back enabled after the reinstall (cloud-init `50-cloud-init.conf`, first-match-wins). | Re-harden after install: neutralize cloud-init's `PasswordAuthentication yes` **in place** (a `99-` drop-in does NOT win — OpenSSH is first-match) + `ssh_pwauth: false`; verify key login + password refusal. |
 | 13 | `--no-gui` install auto-configured **only the raw IP + sslip.io** domains; `node-<region>.unseen.click` was **never** a configured domain and the served TLS cert was **IP-only** (`SAN = IP Address:<ip>`). Real-device Hiddify-App import then failed (admin/user QR → HTTP 500 / "connection reset"); bare-root `/` returned **502 — which is Hiddify camouflage, not a fault** (every Hiddify domain 502s on `/`; content lives only at `/<proxy_path>/…`). | **Always set the real node domain + a domain cert before real-device testing** (see §5A). Add it via `hiddifypanel add-domain -d node-<region>.unseen.click -m direct`, then `apply_configs.sh`. Never judge health by the bare-root status — test the `/<proxy_path>/api/v2/…` path. |
 | 14 | `apply_configs.sh` needs a **PTY** (it runs a `cli-progress`/`urwid` progress UI **and** a final whiptail "success" dialog). Run detached with no TTY → it dies with `PermissionError` in asyncio `add_reader`; the panel's own background-apply hook is also broken on v12.3.3 (`TypeError: cmd_in_back() missing 1 required positional argument: 'cmd'`), so a **panel-UI-initiated** apply silently does nothing. | **Apply from the CLI through a PTY, detached:** `setsid script -qfc "TERM=xterm DO_NOT_INSTALL=true bash apply_configs.sh" <log> </dev/null &`. The final whiptail dialog keeps the process alive after the work is done — dismiss with `pkill -f whiptail`. Confirm the cert + `current.json` domains + services afterward. |
+| 15 | First real-device Hiddify-App import failed **before the profile saved**: "Failed to add profile … Connection refused 127.0.0.1:64127". This is the **App's own embedded core / clash-api local port** (client-side; the node never emits 64127 — the sing-box template's clash-api is the standard `127.0.0.1:9090`), refused because the app's core/VPN service wasn't running on a fresh app install. **Not** a protocol-connect failure. | **Don't conflate app-side import errors with node faults.** A `127.0.0.1:<port>` "connection refused" on *add profile* is the client core, not the server. Before blaming the node, **inspect the server subscription output (§5B)**; if it's clean, the fix is app-side (grant VPN permission, update/restart the app, clear cache, re-import). |
 
 ## 4. Future node checklist (copy per node)
 
@@ -145,6 +146,26 @@ real-device protocol test you **must** set the node's real domain and get a doma
 6. **Real-device import uses a disposable USER subscription under the node domain — never the admin/terminal QR, never a
    raw-IP link.** The install's raw-IP + sslip.io domains remain (there is no supported `remove-domain` CLI; prune via
    the panel **Settings → Domains** only if a single-domain output is wanted, then regenerate the admin link).
+
+## 5B. Inspect the subscription output BEFORE asking for a real-device test (REQUIRED)
+
+Do **not** ask the operator to import on a phone until the generated output is verified import-clean. On de1 the first
+import failed app-side with `127.0.0.1:64127`; this inspection is what proves the *node* side is clean so the failure
+can be correctly attributed (see §3 #15). Fetch the disposable user's output with the admin key and a **counts-only
+sanitizer** — write bodies to a root-only `mktemp`, **`shred -u`** them after, and **never print links/configs/QR**.
+
+- **Source of truth = the admin endpoint** `GET /<proxy_path>/api/v2/admin/all-configs/?uuid=<uuid>` (returns the full
+  config). The user-facing `…/<uuid>/{auto,sub,singbox,clash}/` URLs **302-redirect to an HTML portal page for an
+  unmatched UA** — expected, not a fault; don't mistake that HTML for the config.
+- **Report only:** byte size, line count, and occurrence counts of: `node-<region>.unseen.click`, raw IP, `sslip.io`,
+  `127.0.0.1`, `localhost`, any app-local port seen in a client error, and protocol-family counts (hy2 / ss / vless+reality).
+- **Import-clean criteria:** node domain **present**; `127.0.0.1` / `localhost` / the app-error port **absent**;
+  protocols present. (Raw-IP/sslip refs may still appear as extra endpoints — see §5A #6; they won't connect but don't
+  block import.)
+- **Also confirm `64127`/app-error-port is in NO node config/template** (`grep -rIl` the Hiddify tree): the client
+  sing-box template's clash-api is the standard `127.0.0.1:9090`. If the app-error port is absent server-side and the
+  config is clean, a `127.0.0.1:<port>` "connection refused" on *add profile* is **app-side** — fix on the device
+  (VPN permission, app update/restart, cache clear, re-import), not on the node.
 
 ## 6. Secret safety (applies to every step)
 

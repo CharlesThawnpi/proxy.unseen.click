@@ -57,7 +57,10 @@ above applies normally (fresh VPS, host install, least-privilege API key, manage
   `node-de.unseen.click` **(set as a Hiddify `direct` domain with a valid Let's Encrypt cert, 2026-06-16 — API +
   subscription verified-live over the public node-de path; before this the install used only raw-IP/sslip.io defaults,
   which broke real-device import. See [HIDDIFY_NODE_INSTALL_RUNBOOK.md](HIDDIFY_NODE_INSTALL_RUNBOOK.md) §5A)**.
-  Starts **`status=test`**, never auto-promoted to `live`; proxy traffic only.
+  **Real-device import readiness (2026-06-16): server subscription output verified CLEAN via sanitized scan (admin
+  `all-configs` ~16 KB, no `127.0.0.1`/`localhost`/`64127`, protocols present, node-de listed). The first phone import
+  failed app-side with `127.0.0.1:64127` (the Hiddify App's own local core port) — not a node fault; see runbook §5B +
+  PHASE9 addendum.** Starts **`status=test`**, never auto-promoted to `live`; proxy traffic only.
   **Specs are provider/purchase ESTIMATES (unverified)** — per [DECISIONS.md](DECISIONS.md) ADR-002 the Master detects
   and records the node's **actual** facts (read-only) at preflight and those override the estimates; bandwidth stays
   `estimate` until provider-confirmed.

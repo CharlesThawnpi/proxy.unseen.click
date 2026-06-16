@@ -22,6 +22,21 @@
 > **references `node-de.unseen.click`**. The node domain + its Let's Encrypt cert are set via `hiddifypanel add-domain -m
 > direct` + `apply_configs.sh` — see [HIDDIFY_NODE_INSTALL_RUNBOOK.md](HIDDIFY_NODE_INSTALL_RUNBOOK.md) §5A. The bare
 > domain root `/` returns **502 by design** (Hiddify camouflage); always probe the `/<proxy_path>/api/v2/…` path.
+> ### 📥 Subscription-output behavior (verified 2026-06-16) — for real-device import readiness
+> - The **clean source of truth** for a user's configs is the admin endpoint `GET
+>   /<proxy_path>/api/v2/admin/all-configs/?uuid=<uuid>` (200; ~16 KB; contains the hy2/ss/vless+reality outbounds).
+> - The user-facing format URLs `…/<user_uuid>/{auto,sub,sub64,singbox,clash}/` **302-redirect to an HTML user-portal
+>   page for an unmatched User-Agent** (`text/html`, no `outbounds`) — expected, not the raw config. The structured
+>   `…/<user_uuid>/api/v2/user/all-configs/` returned **400** without the right params. Don't treat the HTML page as the
+>   config when scanning.
+> - Output is **multi-domain**: it lists every configured `direct` domain (node-de **and** the install's raw-IP +
+>   sslip.io). Only the node-domain entries have a matching cert; raw-IP/sslip entries won't connect. There is **no
+>   supported CLI** to remove a domain or set a primary sub domain (`hiddifypanel` exposes `add-domain` only) — prune via
+>   the panel **Settings → Domains** if a single-domain output is wanted.
+> - A client error like *"connection refused 127.0.0.1:<port>"* on **add profile** is the **Hiddify App's own local
+>   core/clash-api port** (the sing-box template's clash-api is the standard `127.0.0.1:9090`; the node emits no such
+>   remote target) — an **app-side** condition, not a node/API fault. Always run the §5B sanitized output inspection
+>   before attributing an import failure to the node.
 
 > ## ✅ VERIFIED-LIVE on de1 — Hiddify **v12.3.3**, API **"Hiddify API v2.2.0"** (2026-06-16)
 > Source: the panel's own OpenAPI spec (generated in-process via `hiddifypanel`/apiflask — 22 paths) **and** confirmed

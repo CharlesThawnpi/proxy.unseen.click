@@ -40,6 +40,11 @@ reachability for QUIC/Reality is a #TASK_for_Charles. See [PHASE9_DE1_REBUILD_FR
 > HTTP-01 challenge when issuing/renewing the domain cert. `443/tcp` serves the panel/subscription + TLS proxies for
 > the node domain; `443/udp` serves Hysteria2/QUIC.
 
+> **Client-side ports are NOT node ports.** A Hiddify-App import error citing `127.0.0.1:64127` (seen on de1's first
+> real-device attempt) is the **App's own embedded core / clash-api local control port on the phone**, not a de1
+> listener — the node emits no `64127` (the sing-box client template's clash-api is the standard `127.0.0.1:9090`).
+> Don't add/open any node port for it; it's an app-side condition. See [HIDDIFY_NODE_INSTALL_RUNBOOK.md](HIDDIFY_NODE_INSTALL_RUNBOOK.md) §5B.
+
 ## Phase 2 preflight — current live port map (Master, 2026-06-15)
 
 Observed via `ss -tulpn` (read-only). See `PHASE2_MASTER_DE_HIDDIFY_PREFLIGHT.md`.

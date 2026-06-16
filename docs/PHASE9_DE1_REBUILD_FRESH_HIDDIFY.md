@@ -206,6 +206,32 @@ Charles's real-device Hiddify-App import was failing (admin/terminal QR → HTTP
   its **node-de** subscription from the panel and run the real-device FAST1/FAST2/Secure connect test. **Do not scan
   the admin/terminal QR; do not use raw-IP links.** de1 stays **`status=test`**. No secrets printed or committed.
 
+## Addendum (2026-06-16) — Hiddify App import failure `127.0.0.1:64127` diagnosed (app-side; server output clean)
+
+First real-device import of the `disposable-test-realdevice` subscription failed **before the profile saved**: "Failed to
+add profile / Unexpected error / Error connecting: SocketException / Connection refused / 127.0.0.1:64127".
+
+- **Inspection (sanitized — counts/bytes only; temp files shredded; no links/configs printed):** the real config
+  (admin `all-configs`, ~16.4 KB / 322 lines) is **clean** — `127.0.0.1`=0, `localhost`=0, `64127`=0, protocols
+  present. User-facing format URLs (auto/singbox/clash/sub) redirect to the **HTML user portal** for an unmatched UA
+  (text/html, no `outbounds`) — expected, not anomalous. On-disk: **`64127` is in NO Hiddify config/template** (only an
+  unrelated `jqvmap` map-JS asset); the client sing-box template's clash-api `external_controller` is the standard
+  **`127.0.0.1:9090`**.
+- **Root cause = B (app-side):** `127.0.0.1:64127` is the **Hiddify App's own embedded core / clash-api local control
+  port**, refused because the app's core/VPN service wasn't running/reachable when adding the profile (fresh-install
+  core not started / VPN permission not granted / app-version import bug). The node never emits it. **Not** a
+  FAST1/FAST2/Secure protocol failure.
+- **Secondary = C:** the subscription legitimately lists **node-de (valid TLS) + raw-IP + sslip.io** endpoints; the
+  raw-IP/sslip ones won't connect (no matching cert) but don't cause the 64127 error. **No safe automated cleanup**
+  (`hiddifypanel` = `add-domain` only; no remove/set-default; removing raw-IP breaks the IP-based admin link) → **HOLD**;
+  manual prune only (panel **Settings → Domains** → delete `5.249.160.59` + `5.249.160.59.sslip.io`, keep
+  `node-de.unseen.click`, then regenerate the admin link).
+- **No node change made** (none safe/needed for an app-side error). de1 stays **`status=test`**; one import-clean
+  `disposable-test-realdevice` user kept.
+- **Charles app-side remediation (server output confirmed clean):** remove the failed profile; ensure the Hiddify App
+  has VPN permission and the core can start (update the app to latest; restart app/device; clear app cache if needed);
+  then re-import the **node-de** subscription from the panel (never the admin/terminal QR, never a raw-IP/sslip link).
+
 ## Exact next recommended task
 
 **Charles records the real-device FAST1/FAST2/Secure connect PASS** (clears `realdevice_protocol_test_pending`). After

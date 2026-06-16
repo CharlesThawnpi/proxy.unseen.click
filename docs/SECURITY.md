@@ -35,6 +35,12 @@ The non-negotiable security and secret-safety rules for UNSEEN PROXY. These are 
   1 GB/1 day) only; `current.json` was backed up on-node before the change. de1 remains `status=test`. **Real-device
   import must use a disposable user's subscription under `node-de.unseen.click` with valid TLS — never the admin/terminal
   QR, never a raw-IP/sslip.io link.**
+- **Subscription-output inspection stays sanitized (2026-06-16).** Diagnosing the Hiddify-App import failure required
+  fetching the disposable user's subscription/all-configs; this was done with a **counts-only sanitizer** (byte sizes,
+  line counts, and occurrence counts of host/loopback/port/protocol tokens — **no raw lines, links, configs, or QR
+  printed**). Bodies were written to root-only `mktemp` files and **`shred -u`**'d afterward; nothing raw was staged or
+  committed. The admin link/proxy path/UUIDs/keys stayed on the node. **Future nodes must inspect subscription output
+  this way (runbook §5B) before any real-device test.**
 
 ## Portal HTTP boundary (Phase 8C — local-only, verified by tests)
 

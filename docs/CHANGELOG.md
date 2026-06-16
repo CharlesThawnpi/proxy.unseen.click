@@ -5,6 +5,30 @@
 
 Chronological record of notable changes to the UNSEEN PROXY project.
 
+## 2026-06-16 — de1: diagnose Hiddify App import failure (`127.0.0.1:64127`) — PARTIAL (server output clean; app-side)
+
+- **Symptom:** importing the `disposable-test-realdevice` subscription into the Hiddify App failed **before the profile
+  saved** — "Failed to add profile / Unexpected error / Error connecting: SocketException / Connection refused /
+  127.0.0.1:64127".
+- **Diagnosis (sanitized, no links/configs printed):** scanned the user subscription across formats (auto/singbox/clash/
+  sub/sub64) **and** the admin `all-configs` with a counts-only sanitizer (temp files shredded). The real config (admin
+  `all-configs`, ~16.4 KB, 322 lines) is **clean**: `127.0.0.1`=0, `localhost`=0, `64127`=0; protocols present
+  (hy2/ss/vless+reality). On-disk search: **`64127` exists in NO Hiddify config/template** (only an unrelated `jqvmap`
+  USA-map JS asset). The client sing-box template's clash-api `external_controller` is the standard **`127.0.0.1:9090`**,
+  not 64127.
+- **Root cause = B (app-side):** `127.0.0.1:64127` is the **Hiddify App's own embedded core/clash-api local control
+  port** (dynamically chosen), refused because the app's core/VPN service was not running/reachable when adding the
+  profile. The server never emits it. Not a protocol-connectivity failure.
+- **Secondary = C (multi-domain output, not the blocker):** the subscription legitimately lists **node-de (valid TLS) +
+  raw-IP + sslip.io** endpoints. The raw-IP/sslip ones have no matching cert and won't connect; they don't cause the
+  64127 error (import fails before connect). **No safe automated cleanup exists** — `hiddifypanel` has `add-domain` only
+  (no remove/set-default), no per-domain sub toggle, and removing the raw-IP domain would break the IP-based admin link
+  → **HOLD**: pruning is a manual panel action (Settings → Domains), documented for Charles.
+- **No node change made** (none safe or needed for an app-side error); de1 stays **`status=test`**; one
+  `disposable-test-realdevice` user kept (its output is import-clean and includes node-de). Docs + runbook updated with a
+  **mandatory sanitized subscription-output inspection before any real-device test**; SOURCE_OF_TRUTH regenerated. No
+  secrets printed or committed.
+
 ## 2026-06-16 — de1: set node domain `node-de.unseen.click` + valid TLS for real-device import — PASS
 
 - **Root cause (real-device Hiddify-App import failing):** the `--no-gui` fresh install auto-configured **only** the
