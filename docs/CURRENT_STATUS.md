@@ -80,8 +80,16 @@ dry-run payment/provision boundary, and a WAL-safe `sqlite3.Connection.backup()`
 Additive migration `0002_phase4b.sql`. **48 tests PASS.** No platform sends, no real customers, no live Hiddify
 mutations, no services started; de1 stays `status=test`. See PHASE4B_ACCOUNT_NOTIFICATION_BACKUP.md.
 
-**Next: Phase 5 (bot foundation) or Phase 4C (provisioning wiring).** **de1 pre-live tuning** (SS:8388/UDP ports, RAM
-lock, SSH hardening, regenerate leaked default-user keys) remains required before any live Hiddify provisioning.
+**de1 pre-live tuning (2026-06-16) — PARTIAL** ([PHASE4_PRELIVE_DE1_TUNING.md](PHASE4_PRELIVE_DE1_TUNING.md)): firewall
+verified (**no change needed** — Hiddify's nf_tables ACCEPTs precede ufw; 22/80/443 tcp + 443 udp + 55573 open, SSH
+safe; 8388 loopback-only by design); **SSH password login disabled** (root key-only retained; verified by fresh login
++ refused password attempt; cloud-init's `PasswordAuthentication yes` neutralized so the `99-` drop-in actually wins);
+all Hiddify services healthy; host key pinned. **Leaked default-user/server keys → `REBUILD_REQUIRED_BEFORE_LIVE`**
+(no safe surgical regen in Hiddify; did not improvise). RAM balloon-risk = accepted. **de1 stays `status=test`.**
+
+**Next: Phase 5 (bot foundation) or Phase 4C (provisioning wiring)** — all dry-run; de1 as a test node is fine.
+**Before de1 goes live:** rebuild the node (clears the leaked-key blocker) + a real-device FAST1/FAST2/Secure test
+(see `#TASK_for_Charles` in PHASE4_PRELIVE_DE1_TUNING.md). Live promotion stays Charles-gated.
 
 **OS path decided (2026-06-15):** in-place `do-release-upgrade` was considered, but since `de1` is **empty** the
 safer, same-outcome choice is a **clean provider reinstall to Ubuntu 22.04** (Charles). A read-only pre-upgrade gate

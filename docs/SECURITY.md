@@ -89,3 +89,20 @@ From the verified Hiddify model (see [PHASE3_HIDDIFY_AUDIT_PLAN.md](PHASE3_HIDDI
   `scripts/node_preflight_probe.sh`) **only reads** node state over SSH — it must **never mutate the node** and
   **never print/commit secrets** (no admin link/UUID/proxy paths/keys); results recorded sanitized. Don't trust
   manually-entered specs for security/role decisions — verify by detection.
+
+## de1 pre-live hardening + leaked-key decision (Phase 4, 2026-06-16)
+
+See [PHASE4_PRELIVE_DE1_TUNING.md](PHASE4_PRELIVE_DE1_TUNING.md).
+
+- **SSH is now key-only on de1.** `PasswordAuthentication no` / `KbdInteractiveAuthentication no` /
+  `PubkeyAuthentication yes` via `/etc/ssh/sshd_config.d/99-unseen-proxy-hardening.conf`; the cloud-init
+  `PasswordAuthentication yes` (which sorts before `99-` and would otherwise win) was neutralized and
+  `ssh_pwauth: false` set so cloud-init won't re-enable it. **Root key login retained** (`without-password`);
+  SSH port unchanged. Verified: fresh key login works; a password-only attempt is **refused** (`publickey` only).
+- **Node host key pinned** in the Master `known_hosts` (`ED25519 SHA256:lsD6hjAKLOdH/jqQZ28Ps0/1NLW5fW6/aV+nuwxn3gg`)
+  → future connections use `StrictHostKeyChecking=yes`.
+- **Leaked default-user/server keys → `REBUILD_REQUIRED_BEFORE_LIVE`.** Rule 10 (no fabrication) + rule 6 (no risky
+  improvisation): Hiddify offers no safe surgical rotation of the leaked default-user/server protocol secrets
+  (`reset-owner-password` is admin-password-only; reinstall is destructive). The leaked secrets are treated as
+  compromised; the node must be **rebuilt** before any live/real provisioning (regenerates all server/user secrets).
+  Dry-run work may continue on the test node. **No secret value was printed or committed during this task.**

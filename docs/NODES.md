@@ -70,3 +70,11 @@ above applies normally (fresh VPS, host install, least-privilege API key, manage
   create→sub→delete confirmed; Phase 4 API layer unblocked (contract in [HIDDIFY_API_CONTRACT.md](HIDDIFY_API_CONTRACT.md);
   **Hiddify uses GB**). Node-tuning before live: SS:8388/UDP reachability, RAM lock, SSH hardening, regenerate the
   leaked default-user keys. Still `status=test`.
+
+## de1 pre-live tuning (2026-06-16) — PARTIAL
+
+Test-safe hardening (no customers/live; `status=test`) — [PHASE4_PRELIVE_DE1_TUNING.md](PHASE4_PRELIVE_DE1_TUNING.md):
+firewall verified (no change needed), **SSH password login disabled (root key-only kept, verified)**, Hiddify services
+healthy, host key pinned in the Master `known_hosts`. **Leaked default-user/server keys → `REBUILD_REQUIRED_BEFORE_LIVE`**
+— first real/live provisioning is blocked until de1 is rebuilt (provider reinstall → re-key → preflight → fresh Hiddify
+install → re-apply hardening → fresh least-privilege API key → disposable-user verify). Dry-run work may continue.

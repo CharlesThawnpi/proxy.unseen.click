@@ -137,3 +137,11 @@ default-user keys before live use.
 2. **Node-tuning follow-ups (before live):** open the proxy ports through ufw / verify Hiddify-iptables (SS:8388, UDP),
    real-device Hiddify-App connect test (#TASK_for_Charles), lock 4 GB RAM, disable SSH password login, and regenerate
    the default-user/server secrets (the leaked test-node keys). Node remains `status=test` until these are done.
+
+## Phase 4 pre-live tuning update (2026-06-16)
+
+de1 was hardened test-safe (see [PHASE4_PRELIVE_DE1_TUNING.md](PHASE4_PRELIVE_DE1_TUNING.md)): firewall verified (no
+change needed — Hiddify nf_tables ACCEPTs precede ufw; 22/80/443 tcp + 443 udp + 55573 open; 8388 loopback-only by
+design); **SSH password auth disabled** (root key-only retained, verified); all Hiddify services healthy; host key
+pinned (`ED25519 SHA256:lsD6hjAKLOdH/jqQZ28Ps0/1NLW5fW6/aV+nuwxn3gg`). **Leaked default-user/server keys →
+`REBUILD_REQUIRED_BEFORE_LIVE`** (no safe surgical regen; not improvised). de1 stays `status=test`.

@@ -67,3 +67,10 @@ once Hiddify is installed. Detail: [PHASE2_DE1_PREFLIGHT.md](PHASE2_DE1_PREFLIGH
   - **Option B:** Hiddify HAProxy fronts 443 (SNI split) with the Master nginx behind it.
   - **Option C (CHOSEN):** **separate DE VPS** — no 443 sharing at all (§6.1 made this a code-free move).
 - Customers still receive only `https://sub.unseen.click/s/<token>`; the node's raw sub URL stays internal.
+
+## de1 firewall/SSH coexistence verified (Phase 4 pre-live tuning, 2026-06-16)
+
+ufw is **active** (default-deny incoming) and coexists with Hiddify on the same nf_tables backend: Hiddify's `ACCEPT`
+rules precede ufw's chains, so proxy ports are open and SSH:22 stays allowed. No firewall change was needed. SSH was
+hardened to **key-only** (password auth disabled, root key login kept) — verified by a fresh login and a refused
+password attempt. Detail: [PHASE4_PRELIVE_DE1_TUNING.md](PHASE4_PRELIVE_DE1_TUNING.md).

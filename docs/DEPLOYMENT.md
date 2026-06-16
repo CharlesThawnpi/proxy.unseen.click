@@ -96,3 +96,12 @@ The DB+`.env` backup before migrating is mandatory (see [BACKUPS.md](BACKUPS.md)
   via `download.sh v12.3.3 --no-gui` (version-pinned, non-interactive). Lesson: run installers under the **default
   umask (022)** — a restrictive umask broke perms and needed remediation. See
   [PHASE3_DE1_HIDDIFY_LIVE_VERIFY.md](PHASE3_DE1_HIDDIFY_LIVE_VERIFY.md).
+
+## de1 pre-live tuning status (Phase 4, 2026-06-16)
+
+de1 was hardened test-safe ([PHASE4_PRELIVE_DE1_TUNING.md](PHASE4_PRELIVE_DE1_TUNING.md)): firewall verified (no change
+needed — Hiddify nf_tables ACCEPTs precede ufw; SSH:22 allowed), **SSH password login disabled** (root key-only kept,
+verified), services healthy, host key pinned. **Live is BLOCKED until rebuild:** the leaked default-user/server keys
+have no safe surgical regen, so before de1 serves real customers it must be rebuilt (provider reinstall Ubuntu 22.04 →
+re-add Master key → preflight → fresh Hiddify host install under umask 022 → re-apply SSH hardening → fresh
+least-privilege service admin API key → disposable-user verify → only then Charles-gated `live`). de1 stays `status=test`.

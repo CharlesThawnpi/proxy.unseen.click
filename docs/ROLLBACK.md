@@ -68,3 +68,12 @@ needed — nothing to preserve. See [PHASE3_DE1_HIDDIFY_LIVE_VERIFY.md](PHASE3_D
 ## Restore drill
 
 > Verified in Phase 10
+
+## de1 SSH hardening rollback (Phase 4, 2026-06-16)
+
+The Phase 4 SSH hardening is reversible and was applied behind a held-open ControlMaster revert path (verified before
+`reload`). To roll back on de1: remove `/etc/ssh/sshd_config.d/99-unseen-proxy-hardening.conf`, restore
+`/root/50-cloud-init.conf.bak-unseen-*` over `/etc/ssh/sshd_config.d/50-cloud-init.conf`, remove
+`/etc/cloud/cloud.cfg.d/99-unseen-ssh.cfg`, then `sshd -t && systemctl reload ssh`. Root **key** login is unaffected
+by the hardening (only password auth was disabled), so a botched password-auth change cannot lock out the key holder.
+The node host key is pinned in the Master `known_hosts`; a future legitimate rebuild changes it (re-pin then).

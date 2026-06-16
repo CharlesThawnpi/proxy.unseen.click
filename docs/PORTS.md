@@ -70,3 +70,13 @@ See [PHASE3_HIDDIFY_AUDIT_PLAN.md](PHASE3_HIDDIFY_AUDIT_PLAN.md) for sources.
   mode; redis/mariadb stayed container-internal), then was **torn down — 80/443 are FREE again**. Because the DE node
   now moves to a **separate VPS**, the §B1 80/443 co-location conflict on the Master no longer applies; the Master
   nginx (when built) will own 80/443 with no Hiddify contention. See `PHASE3_HIDDIFY_LIVE_VERIFY.md`.
+
+## de1 firewall verified (Phase 4 pre-live tuning, 2026-06-16)
+
+ufw + Hiddify share one **nf_tables** ruleset; Hiddify's `ACCEPT` rules sit **ahead of ufw's chains** in `INPUT`, so
+required ports are accepted before ufw's default-deny. **No firewall change was required.** Verified externally from
+the Master (TCP connect only, no payloads): **22/80/443 tcp OPEN** (443 TLS→HTTP 200), **55573 tcp OPEN**, 443 udp +
+dynamic Hiddify inbounds accepted (Hysteria2/QUIC — real-device test needed). **8388 is filtered by design**
+(`ss-server` binds loopback only; Shadowsocks reaches clients via HAProxy/faketls over 443 — do **not** open raw 8388).
+3306/6379 loopback-only. Note: dynamic proxy ports are regenerated on rebuild — don't hardcode them. See
+[PHASE4_PRELIVE_DE1_TUNING.md](PHASE4_PRELIVE_DE1_TUNING.md).

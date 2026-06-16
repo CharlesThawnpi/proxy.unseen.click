@@ -1,6 +1,6 @@
 # UNSEEN PROXY — SOURCE OF TRUTH (consolidated, auto-generated)
 
-> **Generated:** 2026-06-16T03:34:41Z — by `scripts/build_source_of_truth.sh`.
+> **Generated:** 2026-06-16T03:48:45Z — by `scripts/build_source_of_truth.sh`.
 > **This is the live project state for external readers (e.g. the Custom GPT).** It is DERIVED from the
 > canonical docs below and regenerated each task. Upload THIS file to the GPT (not IMPLEMENTATION_PLAN.md,
 > which is the static v1.9 plan). Re-download after updates.
@@ -110,8 +110,16 @@ dry-run payment/provision boundary, and a WAL-safe `sqlite3.Connection.backup()`
 Additive migration `0002_phase4b.sql`. **48 tests PASS.** No platform sends, no real customers, no live Hiddify
 mutations, no services started; de1 stays `status=test`. See PHASE4B_ACCOUNT_NOTIFICATION_BACKUP.md.
 
-**Next: Phase 5 (bot foundation) or Phase 4C (provisioning wiring).** **de1 pre-live tuning** (SS:8388/UDP ports, RAM
-lock, SSH hardening, regenerate leaked default-user keys) remains required before any live Hiddify provisioning.
+**de1 pre-live tuning (2026-06-16) — PARTIAL** ([PHASE4_PRELIVE_DE1_TUNING.md](PHASE4_PRELIVE_DE1_TUNING.md)): firewall
+verified (**no change needed** — Hiddify's nf_tables ACCEPTs precede ufw; 22/80/443 tcp + 443 udp + 55573 open, SSH
+safe; 8388 loopback-only by design); **SSH password login disabled** (root key-only retained; verified by fresh login
++ refused password attempt; cloud-init's `PasswordAuthentication yes` neutralized so the `99-` drop-in actually wins);
+all Hiddify services healthy; host key pinned. **Leaked default-user/server keys → `REBUILD_REQUIRED_BEFORE_LIVE`**
+(no safe surgical regen in Hiddify; did not improvise). RAM balloon-risk = accepted. **de1 stays `status=test`.**
+
+**Next: Phase 5 (bot foundation) or Phase 4C (provisioning wiring)** — all dry-run; de1 as a test node is fine.
+**Before de1 goes live:** rebuild the node (clears the leaked-key blocker) + a real-device FAST1/FAST2/Secure test
+(see `#TASK_for_Charles` in PHASE4_PRELIVE_DE1_TUNING.md). Live promotion stays Charles-gated.
 
 **OS path decided (2026-06-15):** in-place `do-release-upgrade` was considered, but since `de1` is **empty** the
 safer, same-outcome choice is a **clean provider reinstall to Ubuntu 22.04** (Charles). A read-only pre-upgrade gate
@@ -346,6 +354,27 @@ The verified Hiddify Manager **API v2** contract — endpoints, fields, units, a
 
 Chronological record of notable changes to the UNSEEN PROXY project.
 
+## 2026-06-16 — Phase 4: de1 pre-live tuning & security hardening (test-safe) — PARTIAL
+
+- **No customers/subscriptions/live provisioning; de1 stays `status=test`.** See
+  [PHASE4_PRELIVE_DE1_TUNING.md](PHASE4_PRELIVE_DE1_TUNING.md).
+- **Firewall — no change required.** ufw + Hiddify share one nf_tables ruleset; Hiddify's `ACCEPT` rules precede
+  ufw's chains in `INPUT`, so required ports (22/80/443 tcp, 443 udp, 55573, dynamic Hiddify inbounds) are open while
+  ufw default-denies the rest. Verified from the Master: 22/80/443 tcp OPEN (443 TLS→200), 55573 OPEN; **8388 filtered
+  by design** (`ss-server` is loopback-only; Shadowsocks fronts via 443/faketls). SSH allowed throughout.
+- **SSH hardened — PASS.** Found `50-cloud-init.conf` set `PasswordAuthentication yes`; since sshd uses the first
+  keyword value, a `99-` drop-in alone would lose — so neutralized the cloud-init line (backed up on node) + added
+  `/etc/cloud/cloud.cfg.d/99-unseen-ssh.cfg` (`ssh_pwauth: false`) + created
+  `/etc/ssh/sshd_config.d/99-unseen-proxy-hardening.conf` (`PasswordAuthentication no`, `KbdInteractiveAuthentication
+  no`, `PubkeyAuthentication yes`). Root key login kept. Validated with `sshd -t`/`sshd -T` and a held-open
+  ControlMaster revert path; graceful `reload`; fresh key login verified; password-only attempt **refused**.
+- **Leaked-key handling — `REBUILD_REQUIRED_BEFORE_LIVE`.** No Hiddify-supported safe surgical regen of the leaked
+  default-user/server keys exists (`reset-owner-password` = admin password only; reinstall = destructive). Did not
+  improvise. Dry-run work may continue on the test node; first live/real provisioning is blocked until rebuild.
+- **Host key pinned** in the Master `known_hosts` (`ED25519 SHA256:lsD6hjAKLOdH/jqQZ28Ps0/1NLW5fW6/aV+nuwxn3gg`).
+- No node files committed; docs only. Updated PHASE3_DE1_HIDDIFY_LIVE_VERIFY/NODES/PORTS/NETWORK/SECURITY/DEPLOYMENT/
+  ROLLBACK/CURRENT_STATUS; new PHASE4_PRELIVE_DE1_TUNING.md.
+
 ## 2026-06-16 — Phase 4B: account/notification/idempotency + WAL-safe backup foundations — PASS
 
 - **Backend-foundation / dry-run only** (stdlib). No platform sends, no real customers, no live Hiddify mutations, no
@@ -408,27 +437,6 @@ Chronological record of notable changes to the UNSEEN PROXY project.
   ufw active (22 + 4 Hiddify proxy ACCEPT rules). SSH safe throughout.
 - **⚠ Secret-safety incident (disclosed, not committed):** a shell-quoting bug printed an API response to the terminal,
   exposing the Hiddify **default** user's ed25519/WireGuard keys (no-customer test node; never entered git). Fixed
-  process (bodies→files, UA quoted). Remediation: regenerate default-user/server keys before live (or on rebuild).
-- **Phase 4 API layer UNBLOCKED.** Updated HIDDIFY_API_CONTRACT/PHASE3_DE1/CURRENT_STATUS/NODES/SERVERS/PORTS/NETWORK/
-  SECURITY. Node stays `status=test`; no package/OS changes; no real customers.
-
-## 2026-06-16 — Phase 3-DE: Hiddify v12.3.3 installed & running on de1 — PARTIAL (API contract deferred)
-
-- Charles accepted the low-RAM risk; proceeded. Installed Hiddify Manager **v12.3.3** via the official **host**
-  installer (`download.sh v12.3.3 --no-gui`, non-interactive, NOT Docker, version-pinned).
-- **All services active** (panel/nginx/haproxy/xray/singbox/mariadb); **443 tcp+udp up**; **FAST1(Hysteria2)/
-  FAST2(Shadowsocks, :8388)/Secure(VLESS-Reality) inbounds present**; SSH safe; ufw active (22 allowed); admin link
-  stored at `/root/hiddify-de1-admin.link` (0600, never printed). API title **Hiddify v2.2.0**; auth header
-  `Hiddify-API-Key: <admin-UUID>`.
-- **Permission cascade (transparent):** first install failed to start — root cause was the agent's **`umask 077`** at
-  launch (made installer dirs 700 + poisoned uv's cache with 600 files that uv hardlinks into the venv). Remediated:
-  reinstall under `umask 022` + `chmod -R a+rX /usr/local/share/uv` + `chmod -R a+rX .venv313` → panel active +
-  apply_configs regenerated all services. Lesson: never set a restrictive umask when launching third-party installers.
-- RAM balloon-dynamic: ~1.8 GiB idle → ~3.8 GiB under load, no OOM.
-- **Deferred (blocks Phase 4):** exact API v2 CRUD paths/fields/units + disposable test user — v12.3.3 API path not
-  black-box-discoverable (probes hit Hiddify's decoy site); OpenAPI route errors (likely marshmallow-v4 bug). Capture
-  via browser Swagger or fix the spec route. New `PHASE3_DE1_HIDDIFY_LIVE_VERIFY.md`; updated HIDDIFY_API_CONTRACT/
-  CURRENT_STATUS/NODES/SERVERS/PORTS/NETWORK/SECURITY/DEPLOYMENT/ROLLBACK. Node stays `status=test`.
 
 
 ---
