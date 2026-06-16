@@ -70,18 +70,24 @@ DE1_NODE = dict(
     public_hostname="node-de.unseen.click", public_ip="5.249.160.59",
     status="test", is_master_colocated=0, api_secret_handle="NODE_DE1_API_KEY",
     est_vcpu=4, est_ram_mb=4096, est_disk_gb=25, est_bandwidth_gb=30000,
-    det_os="Ubuntu 22.04.5 LTS", det_vcpu=4, det_ram_mb=1908, det_disk_gb=23,
+    det_os="Ubuntu 22.04.5 LTS", det_vcpu=4, det_ram_mb=3911, det_disk_gb=48,
     conf_bandwidth_gb=None, verification_status="detected",
-    notes="Hiddify v12.3.3 installed (PASS w/ follow-ups). RAM balloon-dynamic "
-          "(~1.8 idle/~3.8 load). Pre-live TODO: regenerate leaked default-user keys, "
-          "open SS/UDP ports, lock 4GB RAM, disable SSH password login. NOT live.",
+    notes="Fresh provider rebuild (Ubuntu 22.04.5) + clean Hiddify v12.3.3 host reinstall verified "
+          "(Phase 9, 2026-06-16): API v2 contract PASS, disposable-user lifecycle PASS, "
+          "FAST1/FAST2/Secure inbounds present, SSH password-auth disabled (key-only), disk grown to "
+          "~48GB. Leaked-key blocker CLEARED. Remaining pre-live: real-device FAST1/FAST2/Secure "
+          "connect PASS. NOT live; status=test.",
 )
 
 
 # (node_code, reason, sanitized detail) — Phase 7 data-driven live blockers.
+# Phase 9 (2026-06-16): leaked_key_rebuild_pending CLEARED by a fresh de1 provider rebuild + clean
+# Hiddify reinstall (all node secrets regenerated). de1 stays status=test; the remaining pre-live
+# requirement is a real-device FAST1/FAST2/Secure connect PASS (to be recorded by Charles), kept as
+# a data-driven blocker so de1 is never treated as live-ready until that PASS is logged.
 NODE_LIVE_BLOCKERS = [
-    ("de1", "leaked_key_rebuild_pending",
-     "default-user/server keys exposed in earlier testing; rebuild node before live (no secrets here)"),
+    ("de1", "realdevice_protocol_test_pending",
+     "fresh rebuild + Hiddify reinstall verified; awaiting real-device FAST1/FAST2/Secure connect PASS"),
 ]
 
 

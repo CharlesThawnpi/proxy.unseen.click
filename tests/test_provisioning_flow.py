@@ -124,7 +124,8 @@ class TestProvisioningFlow(unittest.TestCase):
         r = prov.plan_and_dry_run_provision(self.conn, sid, node_code="de1", live=True, confirm=True)
         self.assertTrue(r.live_refused)
         self.assertIn("phase4c_live_disabled", r.live_blockers)
-        self.assertIn("leaked_key_rebuild_pending", r.live_blockers)
+        # Phase 9: leaked-key blocker cleared by fresh rebuild; live still hard-refused by Phase 4C.
+        self.assertNotIn("leaked_key_rebuild_pending", r.live_blockers)
         # no Hiddify user row could exist (we have no such table) and provision stays dry-run
         self.assertEqual(r.provision_status, "dry_run_planned")
 

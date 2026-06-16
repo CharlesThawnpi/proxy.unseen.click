@@ -59,9 +59,12 @@ def live_latch_enabled() -> bool:
 # env/flags/node status. Flipping this to False is a future, separately-gated task.
 PHASE4C_LIVE_PROVISION_DISABLED = True
 
-# de1's leaked default-user/server keys mean it must be rebuilt before serving live traffic
-# (docs/PHASE4_PRELIVE_DE1_TUNING.md → REBUILD_REQUIRED_BEFORE_LIVE). Until cleared, live is blocked.
-LEAKED_KEY_REBUILD_PENDING = True
+# de1's earlier leaked default-user/server keys were CLEARED by a fresh provider rebuild + clean
+# Hiddify v12.3.3 reinstall (Phase 9, 2026-06-16 — docs/PHASE9_DE1_REBUILD_FRESH_HIDDIFY.md). The
+# rebuild regenerated all node secrets, so this blocker no longer applies. Live provisioning stays
+# hard-disabled by PHASE4C_LIVE_PROVISION_DISABLED and de1 remains status=test (the remaining
+# pre-live requirement is a real-device FAST1/FAST2/Secure connect PASS recorded by Charles).
+LEAKED_KEY_REBUILD_PENDING = False
 
 
 # ---- Phase 5 Telegram bot blockers ----------------------------------------------------------

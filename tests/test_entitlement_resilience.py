@@ -75,7 +75,10 @@ class TestNodeReadiness(unittest.TestCase):
         self.assertFalse(r.live_ready)
         self.assertIn(nr.NODE_NOT_LIVE, r.reasons)
         self.assertIn(nr.NODE_STATUS_TEST, r.reasons)
-        self.assertIn(nr.LEAKED_KEY_REBUILD_PENDING, r.reasons)   # data-driven (seeded)
+        # Phase 9: leaked-key blocker cleared by fresh rebuild; remaining blocker is the
+        # real-device protocol connect PASS (data-driven, seeded).
+        self.assertIn(nr.REALDEVICE_PROTOCOL_TEST_PENDING, r.reasons)
+        self.assertNotIn(nr.LEAKED_KEY_REBUILD_PENDING, r.reasons)
         self.assertTrue(r.dry_run_candidate)                       # test node usable for dry-run
 
     def test_live_healthy_node_is_live_ready(self):
@@ -137,7 +140,10 @@ class TestAvailability(unittest.TestCase):
         self.assertNotIn("de", av.available_regions)
         de = av.regions["de"]
         self.assertIn(nr.NODE_STATUS_TEST, de["reasons"])
-        self.assertIn(nr.LEAKED_KEY_REBUILD_PENDING, de["reasons"])
+        # Phase 9: leaked-key blocker cleared; de1 still blocked live via status=test +
+        # the remaining real-device protocol-test requirement.
+        self.assertIn(nr.REALDEVICE_PROTOCOL_TEST_PENDING, de["reasons"])
+        self.assertNotIn(nr.LEAKED_KEY_REBUILD_PENDING, de["reasons"])
 
     def test_graceful_degradation_other_regions_serve(self):
         # PRO_3M entitled to de+us+sg. Add a healthy live US node and a DOWN live SG node.
@@ -203,9 +209,9 @@ class TestProvisioningPlanIntegration(unittest.TestCase):
         unavail = {u["region"] for u in plan.unavailable_regions}
         self.assertIn("us", unavail)
         self.assertIn("sg", unavail)
-        # existing live_blockers preserved (Phase 4C contract)
+        # existing live_blockers preserved (Phase 4C contract); leaked-key cleared in Phase 9
         self.assertIn("phase4c_live_disabled", plan.live_blockers)
-        self.assertIn("leaked_key_rebuild_pending", plan.live_blockers)
+        self.assertNotIn("leaked_key_rebuild_pending", plan.live_blockers)
         self.assertIn("node_not_live:test", plan.live_blockers)
         # node_readiness present + sanitized
         self.assertTrue(any(n["node_code"] == "de1" for n in plan.node_readiness))

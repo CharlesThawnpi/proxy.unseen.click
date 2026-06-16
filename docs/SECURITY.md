@@ -107,6 +107,12 @@ From the verified Hiddify model (see [PHASE3_HIDDIFY_AUDIT_PLAN.md](PHASE3_HIDDI
   (1) **always write API response bodies to files** (`-o`), never let them hit stdout; (2) **always quote** UA/headers;
   (3) before de1 goes live, **regenerate the default-user/server secrets** (or rebuild the node). Recorded so the
   pattern isn't repeated when the orchestrator handles real per-customer keys.
+- **✅ Leaked-key incident RESOLVED (Phase 9, 2026-06-16):** de1 was **rebuilt fresh** (provider reinstall) and Hiddify
+  v12.3.3 cleanly reinstalled, **regenerating all default-user/server secrets** — the previously exposed keys are gone.
+  SSH re-hardened (**password auth disabled, key-only**, port unchanged, verified). API re-verification followed the
+  same secret-safe discipline (bodies to files; only status codes / JSON key names / counts emitted; admin
+  link/proxy-path/UUID/keys never printed). `leaked_key_rebuild_pending` cleared in code/seed. de1 stays `status=test`.
+  See [PHASE9_DE1_REBUILD_FRESH_HIDDIFY.md](PHASE9_DE1_REBUILD_FRESH_HIDDIFY.md).
 - **Master minimalism / attack-surface** ([DECISIONS.md](DECISIONS.md) ADR-003): the Master runs only control-plane
   services; packages installed solely for the retired co-location path (notably the now-unused **Docker engine**) are
   cleanup candidates to be removed in a future audited task — keeping the protected control plane minimal.

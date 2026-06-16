@@ -42,6 +42,12 @@ once Hiddify is installed. Detail: [PHASE2_DE1_PREFLIGHT.md](PHASE2_DE1_PREFLIGH
 - **Reachability check from Master (2026-06-16):** tcp 22/80/443 reachable externally (443 TLS 200); **8388 filtered**;
   UDP needs a device test → the **API/panel on 443 is reachable (Phase-4 orchestrator path works)**, but some proxy
   inbounds aren't externally open yet (node-tuning before serving traffic).
+- **Fresh-rebuild update (Phase 9, 2026-06-16):** after Charles's reinstall, `de1` network re-verified — `ens18` =
+  `5.249.160.59/24`, default via `5.249.160.1`, egress `5.249.160.59`, DNS `node-de.unseen.click → 5.249.160.59`.
+  Storage upgraded to a 53.7 GB disk; root volume grown online to ~48 GB. Post-Hiddify listeners: **80/tcp, 443/tcp,
+  443/udp** (panel/sub + Hysteria2/QUIC) + SSH:22; Shadowsocks faketls-fronted (8388 loopback). `ufw` is now
+  **inactive** on the fresh install — Hiddify manages its own iptables (ACCEPT for 22/80/443 tcp + 443 udp); SSH safe.
+  See [PHASE9_DE1_REBUILD_FRESH_HIDDIFY.md](PHASE9_DE1_REBUILD_FRESH_HIDDIFY.md).
 
 ## Phase 2 preflight — current network state (2026-06-15, read-only) — MASTER
 

@@ -79,6 +79,24 @@ healthy, host key pinned in the Master `known_hosts`. **Leaked default-user/serv
 — first real/live provisioning is blocked until de1 is rebuilt (provider reinstall → re-key → preflight → fresh Hiddify
 install → re-apply hardening → fresh least-privilege API key → disposable-user verify). Dry-run work may continue.
 
+## de1 fresh rebuild + clean Hiddify reinstall (2026-06-16) — PASS; leaked-key blocker CLEARED
+
+Charles rebuilt de1 fresh (provider reinstall, Ubuntu 22.04.5) and re-added the Master root key; a clean **Hiddify
+v12.3.3 host reinstall** (pinned `download.sh v12.3.3 --no-gui`, NOT Docker, **umask 022** — no permission cascade)
+was verified ([PHASE9_DE1_REBUILD_FRESH_HIDDIFY.md](PHASE9_DE1_REBUILD_FRESH_HIDDIFY.md)):
+
+- **Preflight PASS** after Charles's storage upgrade (disk 53.7 GB) + an approved online root-volume grow
+  (`growpart`→`pvresize`→`lvextend`→`resize2fs`) to ~48 GB / 40 GB free. Detected facts updated in seed: disk ~48 GB,
+  RAM ~3.9 GB.
+- **API v2 contract RE-VERIFIED-LIVE** (Hiddify API v2.2.0; auth header; admin base `/<proxy>/api/v2/admin/`; units
+  **GB**) after a bounded `marshmallow==3.26.1` venv pin (apiflask 3.0.2 had pulled incompatible marshmallow 4.x).
+- **Disposable-user lifecycle PASS** (create→get→all-configs→patch→delete→404). FAST1/FAST2/Secure inbounds present.
+- **SSH re-hardened** (password-auth off, key-only, port unchanged; verified). Firewall: 22/80/443 tcp + 443 udp
+  allowed; SSH safe.
+- **`leaked_key_rebuild_pending` CLEARED** — fresh rebuild regenerated all node secrets. Seed now records
+  `realdevice_protocol_test_pending`. **de1 stays `status=test`**; remaining pre-live: a real-device FAST1/FAST2/Secure
+  connect PASS (#TASK_for_Charles) + RAM lock + set `node-de.unseen.click` panel domain/cert.
+
 ## Phase 4C — de1 in dry-run provisioning (2026-06-16)
 
 The dry-run provisioning orchestration ([PHASE4C_DRY_RUN_PROVISIONING.md](PHASE4C_DRY_RUN_PROVISIONING.md)) may select

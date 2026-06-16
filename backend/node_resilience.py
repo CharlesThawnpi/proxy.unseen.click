@@ -24,7 +24,12 @@ NODE_STATUS_RETIRED = "node_status_retired"
 NODE_DOWN = "node_down"
 NODE_DEGRADED = "node_degraded"
 PROTOCOL_MISSING = "protocol_missing"
+# Historical vocabulary: de1's leaked-key blocker (CLEARED in Phase 9 by a fresh rebuild). Kept as a
+# known reason string for back-compat; no longer seeded.
 LEAKED_KEY_REBUILD_PENDING = "leaked_key_rebuild_pending"
+# Post-rebuild remaining pre-live blocker: a real-device FAST1/FAST2/Secure connect PASS must be
+# recorded before de1 is live-eligible (seeded for de1 in Phase 9).
+REALDEVICE_PROTOCOL_TEST_PENDING = "realdevice_protocol_test_pending"
 NO_CANDIDATE_NODE = "no_candidate_node"
 REGION_NOT_ENTITLED = "region_not_entitled"
 PROTOCOL_NOT_ENTITLED = "protocol_not_entitled"

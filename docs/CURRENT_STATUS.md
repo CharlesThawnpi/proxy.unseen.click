@@ -12,7 +12,7 @@ Where the UNSEEN PROXY build stands across the §34 deployment phases.
 | 0 | Clean-VPS verification (gate before any build) | DONE (gate passed) |
 | 1 | Documentation, repo & architecture planning | DONE (pushed to origin/main, 25e5ddc) |
 | 2 | Hiddify test node setup | **RE-SCOPED to a separate DE VPS** (`de1`, `5.249.160.59`, Ubuntu 22.04, planned/test). Master-co-location preflight done then RETIRED. Forward plan: PHASE2_3_DE_NODE_PLAN.md |
-| 3 | Hiddify API & subscription compatibility audit | **DONE (PASS w/ follow-ups) — Hiddify v12.3.3 on de1; API v2 contract VERIFIED-LIVE; disposable test user create→sub→delete confirmed.** Phase 4 API layer UNBLOCKED. Node-tuning follow-ups: SS:8388/UDP reachability, RAM lock, SSH hardening, regenerate leaked default-user keys. See HIDDIFY_API_CONTRACT.md + PHASE3_DE1_HIDDIFY_LIVE_VERIFY.md |
+| 3 | Hiddify API & subscription compatibility audit | **DONE (PASS) — Hiddify v12.3.3 on de1; API v2 contract VERIFIED-LIVE; disposable test user create→sub→delete confirmed.** Phase 4 API layer UNBLOCKED. **Re-verified after a fresh de1 rebuild + clean reinstall (2026-06-16, PHASE9_DE1_REBUILD_FRESH_HIDDIFY.md): contract re-confirmed (bounded `marshmallow==3.26.1` venv pin needed), disposable-user lifecycle PASS, FAST1/FAST2/Secure present, SSH hardened. `leaked_key_rebuild_pending` CLEARED.** Remaining: real-device FAST1/FAST2/Secure connect PASS + RAM lock. See HIDDIFY_API_CONTRACT.md + PHASE3_DE1_HIDDIFY_LIVE_VERIFY.md + PHASE9_DE1_REBUILD_FRESH_HIDDIFY.md |
 | 4 | Database & backend clone design | **Phase 4A + 4B + 4C DONE (dry-run/test-safe).** 4A: migrations + schema + seed + Hiddify client + provisioner CLI. 4B: AccountService + account-link codes + NotificationService (queue-first) + idempotency + WAL-safe online backup (`0002`). 4C: dry-run provisioning orchestration — payment-approval boundary → subscription snapshots → access-profile placeholder → provisioning plan (entitlements + live blockers + sanitized Hiddify intent) → delivery enqueue → audit + forward-only compensation; **live hard-refused**; additive migration `0003`. **70 tests PASS**. No live mutations/sends/real customers. See PHASE4A/4B/4C docs. |
 | 5 | Telegram bot implementation (Burmese-primary) | **Foundation + transport DONE (dry-run, gated).** Foundation: adapter + Burmese catalogue + router + AccountService identity + env-driven admin. Transport: Bot API boundary (token redacted; injectable opener), offset-tracked polling runner, NotificationService sender consuming `outbound_messages` (queued→sent/requeue/dead), fail-closed double gate. **No polling daemon/webhook/API/send; no systemd.** See PHASE5_TELEGRAM_BOT_FOUNDATION.md + PHASE5_TELEGRAM_TRANSPORT_FOUNDATION.md. Live bring-up = next, Charles-gated. |
 | 6 | Hiddify subscription delivery integration | **Foundation DONE (dry-run): delivery payload model (safe refs only) + branded link rule (`sub.unseen.click/s/<token>`, hash stored) + deep-link/copy-link priority + QR planned + mocked Hiddify-output normalizer + NotificationService/Telegram render integration. No raw links persisted/logged; no network.** See PHASE6_SUBSCRIPTION_DELIVERY_FOUNDATION.md. Sidecar + live = next, gated. |
@@ -161,12 +161,24 @@ Local-only CLIs: `bin/portal_http_smoke.py`, `bin/sidecar_boundary_smoke.py`, `b
 server/public endpoint/nginx/TLS/systemd/public bind/real cookie service/live subscription resolution/Hiddify/Telegram
 network.** CSRF expiry uses MMT helpers; no new DB timestamp writes. 224 tests PASS. de1 stays `status=test`.
 
-**Next: de1 rebuild + real-device FAST1/FAST2/Secure verification (clears `leaked_key_rebuild_pending`), then a
-separately-gated public-deployment task (nginx/TLS + systemd + public-bind approval for the portal HTTP adapter and
-`sub.unseen.click` sidecar), gated monitor scheduler, or Phase 9 channel work.** **Before de1 goes live:** rebuild the node (clears
-`leaked_key_rebuild_pending`) + a real-device FAST1/FAST2/Secure test (`#TASK_for_Charles` in
-PHASE4_PRELIVE_DE1_TUNING.md), then separately-gated tasks (periodic monitor + read-only SSH metrics, bot live latches
-+ real opener, `sub.unseen.click` sidecar, live provisioning). Live promotion stays Charles-gated.
+**de1 fresh rebuild + clean Hiddify reinstall complete (2026-06-16)** ([PHASE9_DE1_REBUILD_FRESH_HIDDIFY.md](PHASE9_DE1_REBUILD_FRESH_HIDDIFY.md)):
+de1 reinstalled fresh (Ubuntu 22.04.5); `known_hosts` refreshed; preflight PASS after Charles's storage upgrade + an
+online, approved root-volume grow (`growpart`→`pvresize`→`lvextend`→`resize2fs`) to ~48 GB/40 GB free. Clean
+**Hiddify v12.3.3 host reinstall** (pinned `download.sh v12.3.3 --no-gui`, NOT Docker, **umask 022** — no permission
+cascade). **API v2 contract re-verified-live** (Hiddify API v2.2.0; auth header; admin base `/<proxy>/api/v2/admin/`;
+units **GB**) after a bounded `marshmallow==3.26.1` venv pin (apiflask 3.0.2 had pulled incompatible marshmallow 4.x).
+**Disposable-user lifecycle PASS** (create→get→all-configs→patch→delete→404). FAST1/Hysteria2 + FAST2/Shadowsocks +
+Secure/VLESS-Reality inbounds present. SSH re-hardened (password-auth off, key-only, port unchanged; verified).
+Firewall: 22/80/443 tcp + 443 udp allowed, SSH safe. **`leaked_key_rebuild_pending` CLEARED** (`config` flag False;
+seed blocker swapped to `realdevice_protocol_test_pending`). **de1 stays `status=test`; live still hard-disabled by
+`phase4c_live_disabled`.** Admin link stored only at `/root/hiddify-de1-admin.link` (0600); no secrets committed.
+225 tests PASS.
+
+**Next: Charles records the real-device FAST1/FAST2/Secure connect PASS** (clears `realdevice_protocol_test_pending`;
+`#TASK_for_Charles` in PHASE9_DE1_REBUILD_FRESH_HIDDIFY.md). Then separately-gated tasks remain (public portal
+deployment: nginx/TLS + systemd + public-bind approval for the portal HTTP adapter & `sub.unseen.click` sidecar;
+periodic monitor + read-only SSH metrics; bot live latches + real opener; Phase 4C live-provisioning flip; set
+`node-de.unseen.click` panel domain + cert; RAM lock). **de1 `status=test → live` promotion stays Charles-gated.**
 
 **OS path decided (2026-06-15):** in-place `do-release-upgrade` was considered, but since `de1` is **empty** the
 safer, same-outcome choice is a **clean provider reinstall to Ubuntu 22.04** (Charles). A read-only pre-upgrade gate

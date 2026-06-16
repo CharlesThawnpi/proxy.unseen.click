@@ -5,6 +5,31 @@
 
 Chronological record of notable changes to the UNSEEN PROXY project.
 
+## 2026-06-16 — Phase 9: de1 rebuild + fresh Hiddify reinstall + API/protocol verify — PASS
+
+- Verified the freshly rebuilt de1 (Ubuntu 22.04.5), refreshed only its `known_hosts` entry, ran read-only preflight.
+- Disk gate initially failed (5.4 GB free); Charles had upgraded VPS storage (disk → 53.7 GB), so with his approval
+  the root volume was grown online/non-destructively (`growpart`→`pvresize`→`lvextend`→`resize2fs`) to ~48 GB/40 GB
+  free. Partition table backed up on-node first.
+- Clean **Hiddify Manager v12.3.3 host reinstall** via the pinned `download.sh v12.3.3 --no-gui` flow (NOT Docker),
+  under **umask 022** (prior umask-077 cascade lesson applied) — no permission cascade; all services active.
+- **API v2 contract re-verified-live** (Hiddify API v2.2.0): auth header `Hiddify-API-Key`, admin base
+  `/<proxy_path>/api/v2/admin/` (UUID in header), fields incl. `usage_limit_GB`/`current_usage_GB` (**units GB**).
+  Required a **bounded, documented fix**: apiflask 3.0.2 has no marshmallow upper bound and pulled marshmallow 4.3.0
+  (breaks API-v2 registration) → pinned `marshmallow==3.26.1` in the Hiddify venv (uv) + restarted hiddify-panel.
+- Disposable test user (`disposable-test`, 1 GB/1 day, no real data) full lifecycle PASS:
+  create 200 → get 200 → all-configs 200 (~14.8 KB) → patch 200 → delete 200 → re-GET 404; users back to 1.
+- Protocols present: FAST1/Hysteria2 (443/udp), FAST2/Shadowsocks (faketls), Secure/VLESS-Reality (reality config).
+  Real-device connect test deferred → #TASK_for_Charles.
+- SSH re-hardened: password auth disabled (key-only), `PermitRootLogin prohibit-password`, port unchanged; cloud-init
+  override neutralized; fresh key login verified + password refused. Firewall: Hiddify iptables allow 22/80/443
+  tcp + 443 udp; SSH safe.
+- **`leaked_key_rebuild_pending` CLEARED** (rebuild regenerated all node secrets): `config.LEAKED_KEY_REBUILD_PENDING
+  = False`; seed `node_live_blockers` row swapped to `realdevice_protocol_test_pending`. **de1 stays `status=test`;
+  live still hard-disabled by `phase4c_live_disabled`.** Tests updated + added; full suite PASS.
+- New doc [PHASE9_DE1_REBUILD_FRESH_HIDDIFY.md](PHASE9_DE1_REBUILD_FRESH_HIDDIFY.md). No secrets printed/committed;
+  admin link stored only at `/root/hiddify-de1-admin.link` (0600) on the node.
+
 ## 2026-06-16 — Phase 8C: portal HTTP deployment boundary (gated, local-only) — PASS
 
 - Added a local-only portal HTTP deployment boundary: `backend/portal_http.py` (`HttpRequest`/`HttpResponse`

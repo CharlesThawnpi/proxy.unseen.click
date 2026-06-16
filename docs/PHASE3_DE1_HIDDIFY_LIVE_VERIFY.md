@@ -1,5 +1,13 @@
 # PHASE 3-DE — Hiddify host install + live verify on de1
 
+> **🔁 Re-verified after a fresh rebuild (Phase 9, 2026-06-16):** de1 was rebuilt fresh and Hiddify v12.3.3 was
+> cleanly reinstalled (pinned `download.sh v12.3.3 --no-gui`, umask 022 — no permission cascade). The API v2 contract
+> was **re-verified-live** and a disposable-user lifecycle re-passed. One change vs. this original run: the fresh
+> install pulled **marshmallow 4.3.0** (apiflask 3.0.2 has no upper bound), which broke API-v2 registration, so a
+> bounded **`marshmallow==3.26.1`** venv pin was applied (the exact fix the installer references). SSH re-hardened;
+> `leaked_key_rebuild_pending` CLEARED. de1 stays `status=test`. Full detail:
+> [PHASE9_DE1_REBUILD_FRESH_HIDDIFY.md](PHASE9_DE1_REBUILD_FRESH_HIDDIFY.md).
+
 > **Source of truth:** [IMPLEMENTATION_PLAN.md](../IMPLEMENTATION_PLAN.md) §14, §34; [DECISIONS.md](DECISIONS.md) ADR-001/002; [PHASE2_DE1_PREFLIGHT.md](PHASE2_DE1_PREFLIGHT.md)
 > **Result:** **PASS (with non-blocking follow-ups).** Hiddify Manager **v12.3.3** installed & running on de1; **API v2
 > contract VERIFIED-LIVE**; **disposable test user create→verify→subscription→delete confirmed**; panel/API reachable

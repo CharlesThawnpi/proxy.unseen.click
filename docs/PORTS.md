@@ -27,6 +27,14 @@ nginx is the **sole** owner of `:80`/`:443` on the Master. Node proxy ports are 
 
 > Node-side proxy inbound ports: Verified in Phase 3 (node test gate).
 
+### de1 node ports after fresh Hiddify reinstall (Phase 9, 2026-06-16)
+
+On `de1` (`status=test`), Hiddify manages its own iptables (no ufw). Externally relevant: **22/tcp** (SSH, key-only),
+**80/tcp** (ACME/redirect), **443/tcp** (panel/sub + TLS proxies), **443/udp** (Hysteria2/QUIC). Shadowsocks is
+faketls-fronted (`8388` loopback only); MariaDB/Redis loopback only; many high-range Reality/proxy inbound ports are
+Hiddify-managed. All four required ACCEPTs (22/80/443 tcp + 443 udp) present; SSH verified reachable. Real-device
+reachability for QUIC/Reality is a #TASK_for_Charles. See [PHASE9_DE1_REBUILD_FRESH_HIDDIFY.md](PHASE9_DE1_REBUILD_FRESH_HIDDIFY.md).
+
 ## Phase 2 preflight — current live port map (Master, 2026-06-15)
 
 Observed via `ss -tulpn` (read-only). See `PHASE2_MASTER_DE_HIDDIFY_PREFLIGHT.md`.

@@ -154,7 +154,10 @@ class TestResilienceIntegration(unittest.TestCase):
         r = nr.node_readiness(self.conn, "de1", "de", "test")
         self.assertFalse(r.live_ready)
         self.assertIn(nr.NODE_STATUS_TEST, r.reasons)
-        self.assertIn(nr.LEAKED_KEY_REBUILD_PENDING, r.reasons)
+        # Phase 9: leaked-key blocker cleared; de1 still blocks live via status=test +
+        # the remaining real-device protocol connect PASS requirement.
+        self.assertIn(nr.REALDEVICE_PROTOCOL_TEST_PENDING, r.reasons)
+        self.assertNotIn(nr.LEAKED_KEY_REBUILD_PENDING, r.reasons)
 
 
 class TestMonitorOnce(unittest.TestCase):

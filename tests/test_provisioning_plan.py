@@ -55,12 +55,14 @@ class TestProvisioningPlan(unittest.TestCase):
         self.assertTrue(de1.usable_for_dry_run)
         self.assertFalse(de1.usable_for_live)
 
-    def test_live_blocked_by_status_and_leaked_keys_and_phase(self):
+    def test_live_blocked_by_status_and_phase(self):
         plan = pplan.build_plan(self.conn, "TRIAL", preferred_node="de1")
         self.assertFalse(plan.live_allowed)
         self.assertIn("phase4c_live_disabled", plan.live_blockers)
-        self.assertIn("leaked_key_rebuild_pending", plan.live_blockers)
         self.assertIn("node_not_live:test", plan.live_blockers)
+        # Phase 9: the leaked-key blocker was cleared by the fresh de1 rebuild; live stays
+        # blocked by the Phase 4C gate + de1 status=test.
+        self.assertNotIn("leaked_key_rebuild_pending", plan.live_blockers)
 
     def test_sanitized_summary_has_no_secrets(self):
         plan = pplan.build_plan(self.conn, "PRO_3M", preferred_node="de1")

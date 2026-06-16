@@ -4,6 +4,14 @@
 > [PHASE3_DE1_HIDDIFY_LIVE_VERIFY.md](PHASE3_DE1_HIDDIFY_LIVE_VERIFY.md); [SECURITY.md](SECURITY.md); [PORTS.md](PORTS.md); [ROLLBACK.md](ROLLBACK.md)
 > **Status:** **PARTIAL — node made safer; LIVE STILL BLOCKED on leaked-key rebuild.** No customers, no subscriptions,
 > no live provisioning. de1 stays `status=test`.
+>
+> ## ✅ Phase 9 update (2026-06-16): leaked-key blocker CLEARED by fresh rebuild
+> The `REBUILD_REQUIRED_BEFORE_LIVE` / `leaked_key_rebuild_pending` blocker recorded below is **CLEARED**. Charles did
+> a fresh provider reinstall (Ubuntu 22.04.5) and a clean Hiddify v12.3.3 host reinstall was verified — regenerating
+> all node secrets. SSH was re-hardened (password-auth off, key-only), the API v2 contract re-verified, and a
+> disposable-user lifecycle passed. `config.LEAKED_KEY_REBUILD_PENDING=False`; the seed `node_live_blockers` row is now
+> `realdevice_protocol_test_pending`. **de1 stays `status=test`**; the remaining pre-live requirement is a real-device
+> FAST1/FAST2/Secure connect PASS (see [PHASE9_DE1_REBUILD_FRESH_HIDDIFY.md](PHASE9_DE1_REBUILD_FRESH_HIDDIFY.md)).
 
 ## Run metadata
 - Date/time (UTC): 2026-06-16T03:50Z

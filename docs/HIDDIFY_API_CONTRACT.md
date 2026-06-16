@@ -4,6 +4,18 @@
 > **Status:** Phase 3 audit (docs) — base/auth **verified from official docs**; CRUD/fields/units **need live Swagger**.
 > Tiers: **[VERIFIED]** official docs · **[LIVE]** confirm on a real install · **[ASSUMPTION]** do not depend yet.
 > See [PHASE3_HIDDIFY_AUDIT_PLAN.md](PHASE3_HIDDIFY_AUDIT_PLAN.md).
+> ## 🔁 RE-VERIFIED-LIVE after fresh rebuild (Phase 9, 2026-06-16)
+> After a fresh de1 rebuild + clean Hiddify v12.3.3 reinstall, the contract below was **re-confirmed live**: auth
+> header `Hiddify-API-Key: <admin-UUID>`; admin API base **`https://<domain>/<proxy_path>/api/v2/admin/…`** (admin
+> UUID in the **header**, NOT in the API path — the UUID appears only in the admin *UI* link
+> `…/<proxy_path>/<admin_uuid>/`); `GET /admin/me/`→200, `GET /admin/user/`→200 (array); disposable-user
+> create→get→all-configs(~14.8 KB)→patch→delete→re-GET 404; user fields + **GB units** unchanged. **Environment
+> caveat:** apiflask 3.0.2 declares only `marshmallow>=3.20` (no upper bound), so a fresh install pulls **marshmallow
+> 4.x**, which breaks API-v2 blueprint registration (every `/api/v2/*` → app-level 404). Fix = pin
+> **`marshmallow==3.26.1`** in the Hiddify venv (the installer's own commented workaround) and restart `hiddify-panel`;
+> re-apply after any Hiddify update that reinstalls marshmallow 4.x. See
+> [PHASE9_DE1_REBUILD_FRESH_HIDDIFY.md](PHASE9_DE1_REBUILD_FRESH_HIDDIFY.md).
+
 > ## ✅ VERIFIED-LIVE on de1 — Hiddify **v12.3.3**, API **"Hiddify API v2.2.0"** (2026-06-16)
 > Source: the panel's own OpenAPI spec (generated in-process via `hiddifypanel`/apiflask — 22 paths) **and** confirmed
 > by live HTTP calls (create/get/delete a disposable user, 200s). The earlier OpenAPI HTTP failures were **routing/

@@ -1,6 +1,6 @@
 # UNSEEN PROXY — SOURCE OF TRUTH (consolidated, auto-generated)
 
-> **Generated:** 2026-06-16T08:27:26Z — by `scripts/build_source_of_truth.sh`.
+> **Generated:** 2026-06-16T12:50:34Z — by `scripts/build_source_of_truth.sh`.
 > **This is the live project state for external readers (e.g. the Custom GPT).** It is DERIVED from the
 > canonical docs below and regenerated each task. Upload THIS file to the GPT (not IMPLEMENTATION_PLAN.md,
 > which is the static v1.9 plan). Re-download after updates.
@@ -44,7 +44,7 @@ Where the UNSEEN PROXY build stands across the §34 deployment phases.
 | 0 | Clean-VPS verification (gate before any build) | DONE (gate passed) |
 | 1 | Documentation, repo & architecture planning | DONE (pushed to origin/main, 25e5ddc) |
 | 2 | Hiddify test node setup | **RE-SCOPED to a separate DE VPS** (`de1`, `5.249.160.59`, Ubuntu 22.04, planned/test). Master-co-location preflight done then RETIRED. Forward plan: PHASE2_3_DE_NODE_PLAN.md |
-| 3 | Hiddify API & subscription compatibility audit | **DONE (PASS w/ follow-ups) — Hiddify v12.3.3 on de1; API v2 contract VERIFIED-LIVE; disposable test user create→sub→delete confirmed.** Phase 4 API layer UNBLOCKED. Node-tuning follow-ups: SS:8388/UDP reachability, RAM lock, SSH hardening, regenerate leaked default-user keys. See HIDDIFY_API_CONTRACT.md + PHASE3_DE1_HIDDIFY_LIVE_VERIFY.md |
+| 3 | Hiddify API & subscription compatibility audit | **DONE (PASS) — Hiddify v12.3.3 on de1; API v2 contract VERIFIED-LIVE; disposable test user create→sub→delete confirmed.** Phase 4 API layer UNBLOCKED. **Re-verified after a fresh de1 rebuild + clean reinstall (2026-06-16, PHASE9_DE1_REBUILD_FRESH_HIDDIFY.md): contract re-confirmed (bounded `marshmallow==3.26.1` venv pin needed), disposable-user lifecycle PASS, FAST1/FAST2/Secure present, SSH hardened. `leaked_key_rebuild_pending` CLEARED.** Remaining: real-device FAST1/FAST2/Secure connect PASS + RAM lock. See HIDDIFY_API_CONTRACT.md + PHASE3_DE1_HIDDIFY_LIVE_VERIFY.md + PHASE9_DE1_REBUILD_FRESH_HIDDIFY.md |
 | 4 | Database & backend clone design | **Phase 4A + 4B + 4C DONE (dry-run/test-safe).** 4A: migrations + schema + seed + Hiddify client + provisioner CLI. 4B: AccountService + account-link codes + NotificationService (queue-first) + idempotency + WAL-safe online backup (`0002`). 4C: dry-run provisioning orchestration — payment-approval boundary → subscription snapshots → access-profile placeholder → provisioning plan (entitlements + live blockers + sanitized Hiddify intent) → delivery enqueue → audit + forward-only compensation; **live hard-refused**; additive migration `0003`. **70 tests PASS**. No live mutations/sends/real customers. See PHASE4A/4B/4C docs. |
 | 5 | Telegram bot implementation (Burmese-primary) | **Foundation + transport DONE (dry-run, gated).** Foundation: adapter + Burmese catalogue + router + AccountService identity + env-driven admin. Transport: Bot API boundary (token redacted; injectable opener), offset-tracked polling runner, NotificationService sender consuming `outbound_messages` (queued→sent/requeue/dead), fail-closed double gate. **No polling daemon/webhook/API/send; no systemd.** See PHASE5_TELEGRAM_BOT_FOUNDATION.md + PHASE5_TELEGRAM_TRANSPORT_FOUNDATION.md. Live bring-up = next, Charles-gated. |
 | 6 | Hiddify subscription delivery integration | **Foundation DONE (dry-run): delivery payload model (safe refs only) + branded link rule (`sub.unseen.click/s/<token>`, hash stored) + deep-link/copy-link priority + QR planned + mocked Hiddify-output normalizer + NotificationService/Telegram render integration. No raw links persisted/logged; no network.** See PHASE6_SUBSCRIPTION_DELIVERY_FOUNDATION.md. Sidecar + live = next, gated. |
@@ -193,12 +193,24 @@ Local-only CLIs: `bin/portal_http_smoke.py`, `bin/sidecar_boundary_smoke.py`, `b
 server/public endpoint/nginx/TLS/systemd/public bind/real cookie service/live subscription resolution/Hiddify/Telegram
 network.** CSRF expiry uses MMT helpers; no new DB timestamp writes. 224 tests PASS. de1 stays `status=test`.
 
-**Next: de1 rebuild + real-device FAST1/FAST2/Secure verification (clears `leaked_key_rebuild_pending`), then a
-separately-gated public-deployment task (nginx/TLS + systemd + public-bind approval for the portal HTTP adapter and
-`sub.unseen.click` sidecar), gated monitor scheduler, or Phase 9 channel work.** **Before de1 goes live:** rebuild the node (clears
-`leaked_key_rebuild_pending`) + a real-device FAST1/FAST2/Secure test (`#TASK_for_Charles` in
-PHASE4_PRELIVE_DE1_TUNING.md), then separately-gated tasks (periodic monitor + read-only SSH metrics, bot live latches
-+ real opener, `sub.unseen.click` sidecar, live provisioning). Live promotion stays Charles-gated.
+**de1 fresh rebuild + clean Hiddify reinstall complete (2026-06-16)** ([PHASE9_DE1_REBUILD_FRESH_HIDDIFY.md](PHASE9_DE1_REBUILD_FRESH_HIDDIFY.md)):
+de1 reinstalled fresh (Ubuntu 22.04.5); `known_hosts` refreshed; preflight PASS after Charles's storage upgrade + an
+online, approved root-volume grow (`growpart`→`pvresize`→`lvextend`→`resize2fs`) to ~48 GB/40 GB free. Clean
+**Hiddify v12.3.3 host reinstall** (pinned `download.sh v12.3.3 --no-gui`, NOT Docker, **umask 022** — no permission
+cascade). **API v2 contract re-verified-live** (Hiddify API v2.2.0; auth header; admin base `/<proxy>/api/v2/admin/`;
+units **GB**) after a bounded `marshmallow==3.26.1` venv pin (apiflask 3.0.2 had pulled incompatible marshmallow 4.x).
+**Disposable-user lifecycle PASS** (create→get→all-configs→patch→delete→404). FAST1/Hysteria2 + FAST2/Shadowsocks +
+Secure/VLESS-Reality inbounds present. SSH re-hardened (password-auth off, key-only, port unchanged; verified).
+Firewall: 22/80/443 tcp + 443 udp allowed, SSH safe. **`leaked_key_rebuild_pending` CLEARED** (`config` flag False;
+seed blocker swapped to `realdevice_protocol_test_pending`). **de1 stays `status=test`; live still hard-disabled by
+`phase4c_live_disabled`.** Admin link stored only at `/root/hiddify-de1-admin.link` (0600); no secrets committed.
+225 tests PASS.
+
+**Next: Charles records the real-device FAST1/FAST2/Secure connect PASS** (clears `realdevice_protocol_test_pending`;
+`#TASK_for_Charles` in PHASE9_DE1_REBUILD_FRESH_HIDDIFY.md). Then separately-gated tasks remain (public portal
+deployment: nginx/TLS + systemd + public-bind approval for the portal HTTP adapter & `sub.unseen.click` sidecar;
+periodic monitor + read-only SSH metrics; bot live latches + real opener; Phase 4C live-provisioning flip; set
+`node-de.unseen.click` panel domain + cert; RAM lock). **de1 `status=test → live` promotion stays Charles-gated.**
 
 **OS path decided (2026-06-15):** in-place `do-release-upgrade` was considered, but since `de1` is **empty** the
 safer, same-outcome choice is a **clean provider reinstall to Ubuntu 22.04** (Charles). A read-only pre-upgrade gate
@@ -495,6 +507,18 @@ MMT timestamps explicitly.
 > **Status:** Phase 3 audit (docs) — base/auth **verified from official docs**; CRUD/fields/units **need live Swagger**.
 > Tiers: **[VERIFIED]** official docs · **[LIVE]** confirm on a real install · **[ASSUMPTION]** do not depend yet.
 > See [PHASE3_HIDDIFY_AUDIT_PLAN.md](PHASE3_HIDDIFY_AUDIT_PLAN.md).
+> ## 🔁 RE-VERIFIED-LIVE after fresh rebuild (Phase 9, 2026-06-16)
+> After a fresh de1 rebuild + clean Hiddify v12.3.3 reinstall, the contract below was **re-confirmed live**: auth
+> header `Hiddify-API-Key: <admin-UUID>`; admin API base **`https://<domain>/<proxy_path>/api/v2/admin/…`** (admin
+> UUID in the **header**, NOT in the API path — the UUID appears only in the admin *UI* link
+> `…/<proxy_path>/<admin_uuid>/`); `GET /admin/me/`→200, `GET /admin/user/`→200 (array); disposable-user
+> create→get→all-configs(~14.8 KB)→patch→delete→re-GET 404; user fields + **GB units** unchanged. **Environment
+> caveat:** apiflask 3.0.2 declares only `marshmallow>=3.20` (no upper bound), so a fresh install pulls **marshmallow
+> 4.x**, which breaks API-v2 blueprint registration (every `/api/v2/*` → app-level 404). Fix = pin
+> **`marshmallow==3.26.1`** in the Hiddify venv (the installer's own commented workaround) and restart `hiddify-panel`;
+> re-apply after any Hiddify update that reinstalls marshmallow 4.x. See
+> [PHASE9_DE1_REBUILD_FRESH_HIDDIFY.md](PHASE9_DE1_REBUILD_FRESH_HIDDIFY.md).
+
 > ## ✅ VERIFIED-LIVE on de1 — Hiddify **v12.3.3**, API **"Hiddify API v2.2.0"** (2026-06-16)
 > Source: the panel's own OpenAPI spec (generated in-process via `hiddifypanel`/apiflask — 22 paths) **and** confirmed
 > by live HTTP calls (create/get/delete a disposable user, 200s). The earlier OpenAPI HTTP failures were **routing/
@@ -537,18 +561,6 @@ The verified Hiddify Manager **API v2** contract — endpoints, fields, units, a
 > store in `.env` by handle, never in the DB, logs, or git. The `<admin_proxy_path>`/`<user_proxy_path>` are
 > **secret proxy paths** — also `.env`-only, never logged. **Always use v2** (v1 is deprecating).
 
-## User: create
-
-> **[VERIFIED-LIVE 2026-06-16, de1 v12.3.3]** — see the ✅ VERIFIED-LIVE summary at the top of this file for the
-> confirmed paths/fields/units (GB), auth header, and subscription endpoints. Details below are consistent with it.
-> `POST …/admin/user/` — confirm exact path and field names. Fields seen in the API: `uuid, name, usage_limit_GB, package_days, current_usage_GB, start_date, mode, comment, telegram_id, enable`.
-
-## User: update
-
-> **[VERIFIED-LIVE 2026-06-16, de1 v12.3.3]** — see the ✅ VERIFIED-LIVE summary at the top of this file for the
-> confirmed paths/fields/units (GB), auth header, and subscription endpoints. Details below are consistent with it.
-> `PATCH …/admin/user/<uuid>/` — change quota / expiry / enable.
-
 
 
 ---
@@ -561,6 +573,31 @@ The verified Hiddify Manager **API v2** contract — endpoints, fields, units, a
 > **Status:** Phase 1 skeleton — running log of changes by date
 
 Chronological record of notable changes to the UNSEEN PROXY project.
+
+## 2026-06-16 — Phase 9: de1 rebuild + fresh Hiddify reinstall + API/protocol verify — PASS
+
+- Verified the freshly rebuilt de1 (Ubuntu 22.04.5), refreshed only its `known_hosts` entry, ran read-only preflight.
+- Disk gate initially failed (5.4 GB free); Charles had upgraded VPS storage (disk → 53.7 GB), so with his approval
+  the root volume was grown online/non-destructively (`growpart`→`pvresize`→`lvextend`→`resize2fs`) to ~48 GB/40 GB
+  free. Partition table backed up on-node first.
+- Clean **Hiddify Manager v12.3.3 host reinstall** via the pinned `download.sh v12.3.3 --no-gui` flow (NOT Docker),
+  under **umask 022** (prior umask-077 cascade lesson applied) — no permission cascade; all services active.
+- **API v2 contract re-verified-live** (Hiddify API v2.2.0): auth header `Hiddify-API-Key`, admin base
+  `/<proxy_path>/api/v2/admin/` (UUID in header), fields incl. `usage_limit_GB`/`current_usage_GB` (**units GB**).
+  Required a **bounded, documented fix**: apiflask 3.0.2 has no marshmallow upper bound and pulled marshmallow 4.3.0
+  (breaks API-v2 registration) → pinned `marshmallow==3.26.1` in the Hiddify venv (uv) + restarted hiddify-panel.
+- Disposable test user (`disposable-test`, 1 GB/1 day, no real data) full lifecycle PASS:
+  create 200 → get 200 → all-configs 200 (~14.8 KB) → patch 200 → delete 200 → re-GET 404; users back to 1.
+- Protocols present: FAST1/Hysteria2 (443/udp), FAST2/Shadowsocks (faketls), Secure/VLESS-Reality (reality config).
+  Real-device connect test deferred → #TASK_for_Charles.
+- SSH re-hardened: password auth disabled (key-only), `PermitRootLogin prohibit-password`, port unchanged; cloud-init
+  override neutralized; fresh key login verified + password refused. Firewall: Hiddify iptables allow 22/80/443
+  tcp + 443 udp; SSH safe.
+- **`leaked_key_rebuild_pending` CLEARED** (rebuild regenerated all node secrets): `config.LEAKED_KEY_REBUILD_PENDING
+  = False`; seed `node_live_blockers` row swapped to `realdevice_protocol_test_pending`. **de1 stays `status=test`;
+  live still hard-disabled by `phase4c_live_disabled`.** Tests updated + added; full suite PASS.
+- New doc [PHASE9_DE1_REBUILD_FRESH_HIDDIFY.md](PHASE9_DE1_REBUILD_FRESH_HIDDIFY.md). No secrets printed/committed;
+  admin link stored only at `/root/hiddify-de1-admin.link` (0600) on the node.
 
 ## 2026-06-16 — Phase 8C: portal HTTP deployment boundary (gated, local-only) — PASS
 
@@ -620,31 +657,6 @@ Chronological record of notable changes to the UNSEEN PROXY project.
 - **Route guards:** `/customer/status` and `/subscriptions/<id>` now require a `PortalSessionContext`; public pages stay
   public. `/s/<token>` resolves synthetic hash-backed tokens and creates a dry-run session row; unknown/expired/revoked
   tokens render safe not-found/expired pages without leaking the token.
-- **CLIs:** `bin/portal_auth_smoke.py`, `bin/portal_token_dry_run.py` use temp DBs by default and print only redacted
-  token labels/fingerprints and status summaries.
-- **No live surface:** no web server, no nginx/TLS, no public endpoint, no real cookie setting, no production DB auth,
-  no Hiddify call, no Telegram send/poll. **Initial Phase 8B suite: 191 PASS; current combined MMT timestamp
-  foundation suite: 198 PASS.**
-
-## 2026-06-16 — Phase 8A: portal local preview refinement — PASS
-
-- **Render-only, dry-run only**: no web server, no systemd, no nginx/TLS, no public endpoint, no auth, no Hiddify
-  fetch/call, no Telegram send/poll. See [PHASE8A_PORTAL_PREVIEW_REFINEMENT.md](PHASE8A_PORTAL_PREVIEW_REFINEMENT.md).
-- **Preview export:** new `bin/portal_preview_export.py` renders sanitized static HTML under git-ignored
-  `tmp/portal-preview/` (home, plans, dashboard, subscription, branded placeholder, help, unavailable, degraded,
-  expired, not-found). Export refuses paths outside repo `tmp/`.
-- **UI/copy refinement:** denser compact CSS, stacked mobile plan rows, quick subscription status strip, clearer
-  status badges, improved Burmese-primary copy while keeping Plan/Trial/Basic/Core/Plus/Pro/Max/Fast/Fast1/Fast2/Secure
-  terms in English.
-- **Security:** dynamic HTML escaping preserved; preview export scans for raw Hiddify/proxy shapes and UUID-shaped
-  values; generated previews contain no real tokens, raw opaque tokens, admin paths, proxy links, QR payloads, node
-  hostname, or private customer data. Generated preview files were not committed.
-- **Tests:** portal test file expanded to 16 tests; full suite result after Phase 8A: 179 PASS.
-
-## 2026-06-16 — Phase 8: web/customer portal foundation (render-only, dry-run) — PASS
-
-- **Render-only, dry-run only** (stdlib): no web server, no systemd, no nginx/TLS, no public endpoint, no real auth,
-  no Hiddify call, no Telegram send/poll, no live subscription resolution. See
 
 
 ---

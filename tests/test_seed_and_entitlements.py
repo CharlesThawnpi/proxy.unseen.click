@@ -43,6 +43,14 @@ class TestSeed(unittest.TestCase):
         self.assertNotEqual(row["status"], "live")
         self.assertEqual(row["is_master_colocated"], 0)  # co-location retired
 
+    def test_de1_leaked_key_blocker_cleared_realdevice_pending(self):
+        # Phase 9: leaked_key_rebuild_pending CLEARED by the fresh de1 rebuild + clean Hiddify
+        # reinstall; the seed now records only the remaining real-device protocol-test blocker.
+        reasons = [r[0] for r in self.conn.execute(
+            "SELECT reason FROM node_live_blockers WHERE node_code='de1'").fetchall()]
+        self.assertNotIn("leaked_key_rebuild_pending", reasons)
+        self.assertIn("realdevice_protocol_test_pending", reasons)
+
     def test_de_default_sg_premium(self):
         de = self.conn.execute("SELECT is_default,is_premium_only FROM proxy_regions WHERE region_code='de'").fetchone()
         sg = self.conn.execute("SELECT is_default,is_premium_only FROM proxy_regions WHERE region_code='sg'").fetchone()

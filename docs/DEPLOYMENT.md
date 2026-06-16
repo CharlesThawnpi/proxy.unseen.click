@@ -126,10 +126,18 @@ The portal HTTP adapter (`backend/portal_http.py` + `portal_middleware`/`portal_
 
 de1 was hardened test-safe ([PHASE4_PRELIVE_DE1_TUNING.md](PHASE4_PRELIVE_DE1_TUNING.md)): firewall verified (no change
 needed — Hiddify nf_tables ACCEPTs precede ufw; SSH:22 allowed), **SSH password login disabled** (root key-only kept,
-verified), services healthy, host key pinned. **Live is BLOCKED until rebuild:** the leaked default-user/server keys
-have no safe surgical regen, so before de1 serves real customers it must be rebuilt (provider reinstall Ubuntu 22.04 →
-re-add Master key → preflight → fresh Hiddify host install under umask 022 → re-apply SSH hardening → fresh
-least-privilege service admin API key → disposable-user verify → only then Charles-gated `live`). de1 stays `status=test`.
+verified), services healthy, host key pinned.
+
+**✅ Rebuild DONE (Phase 9, 2026-06-16) — leaked-key blocker cleared.** de1 was rebuilt fresh (provider reinstall,
+Ubuntu 22.04.5) and **Hiddify v12.3.3 was cleanly reinstalled** via the pinned `download.sh v12.3.3 --no-gui` flow
+under **umask 022** (no permission cascade). The fresh-install gotcha to remember: apiflask 3.0.2 has **no marshmallow
+upper bound**, so it pulls marshmallow 4.x and breaks the API v2 (every `/api/v2/*` → 404); fix by pinning
+`marshmallow==3.26.1` in the Hiddify venv (`uv pip install --python /opt/hiddify-manager/.venv313/bin/python
+"marshmallow==3.26.1"`) and restarting `hiddify-panel` (re-apply after any Hiddify update). API v2 contract
+re-verified-live, disposable-user lifecycle PASS, SSH re-hardened, firewall safe; `leaked_key_rebuild_pending` cleared.
+**de1 stays `status=test`**; remaining pre-live: real-device FAST1/FAST2/Secure connect PASS + RAM lock + set
+`node-de.unseen.click` panel domain/cert, then Charles-gated `live`. See
+[PHASE9_DE1_REBUILD_FRESH_HIDDIFY.md](PHASE9_DE1_REBUILD_FRESH_HIDDIFY.md).
 
 ## Phase 4C — dry-run provisioning CLIs (2026-06-16)
 

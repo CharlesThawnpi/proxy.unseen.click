@@ -31,6 +31,22 @@ How to safely undo a change. Code rollback and data rollback are **separate** me
 > the **ordinary node rollback** (rebuild/re-provision from the Master; a fresh node VPS is disposable, so a snapshot
 > is optional). The text below is retained as history of the attempted co-location.
 
+## de1 fresh-rebuild + reinstall rollback (Phase 9, 2026-06-16)
+
+The de1 rebuild/reinstall ([PHASE9_DE1_REBUILD_FRESH_HIDDIFY.md](PHASE9_DE1_REBUILD_FRESH_HIDDIFY.md)) is reversible:
+
+- **Node:** clean provider reinstall (proven path) or Hiddify `uninstall.sh`. de1 is a disposable test node; the Master
+  holds no live dependency on it.
+- **marshmallow venv pin:** reinstall the prior version —
+  `uv pip install --python /opt/hiddify-manager/.venv313/bin/python "marshmallow==4.3.0"` (note: the pin is the *fix*;
+  reverting it re-breaks the API). A future Hiddify update may reset it.
+- **SSH hardening:** remove `/etc/ssh/sshd_config.d/99-unseen-proxy-hardening.conf` and restore the backed-up
+  `50-cloud-init.conf` from `/root/disk-rollback/` on the node, then `sshd -t` + reload.
+- **Disk grow:** the partition table backup is at `/root/disk-rollback/sda.sfdisk.*.bak` on the node. The
+  `growpart`→`pvresize`→`lvextend`→`resize2fs` grow is **non-destructive but not reversible online** (ext4 can't shrink
+  mounted) — restore from backup/reinstall if a smaller volume is ever required.
+- **Repo:** `git revert` the Phase 9 commit restores the prior `leaked_key_rebuild_pending` seed/config flag.
+
 Installing Hiddify Manager on the **Master** (the former §4.1 co-located DE node) is **host-wide and invasive**: the
 installer changes nginx, systemd units, packages, and may modify the firewall — on a **non-disposable** control
 plane. The standard "disable, don't delete / re-pull a git tag" rollback does **not** cover host-level damage.
