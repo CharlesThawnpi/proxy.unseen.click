@@ -1,6 +1,6 @@
 # UNSEEN PROXY — SOURCE OF TRUTH (consolidated, auto-generated)
 
-> **Generated:** 2026-06-16T04:26:35Z — by `scripts/build_source_of_truth.sh`.
+> **Generated:** 2026-06-16T04:43:32Z — by `scripts/build_source_of_truth.sh`.
 > **This is the live project state for external readers (e.g. the Custom GPT).** It is DERIVED from the
 > canonical docs below and regenerated each task. Upload THIS file to the GPT (not IMPLEMENTATION_PLAN.md,
 > which is the static v1.9 plan). Re-download after updates.
@@ -44,7 +44,7 @@ Where the UNSEEN PROXY build stands across the §34 deployment phases.
 | 2 | Hiddify test node setup | **RE-SCOPED to a separate DE VPS** (`de1`, `5.249.160.59`, Ubuntu 22.04, planned/test). Master-co-location preflight done then RETIRED. Forward plan: PHASE2_3_DE_NODE_PLAN.md |
 | 3 | Hiddify API & subscription compatibility audit | **DONE (PASS w/ follow-ups) — Hiddify v12.3.3 on de1; API v2 contract VERIFIED-LIVE; disposable test user create→sub→delete confirmed.** Phase 4 API layer UNBLOCKED. Node-tuning follow-ups: SS:8388/UDP reachability, RAM lock, SSH hardening, regenerate leaked default-user keys. See HIDDIFY_API_CONTRACT.md + PHASE3_DE1_HIDDIFY_LIVE_VERIFY.md |
 | 4 | Database & backend clone design | **Phase 4A + 4B + 4C DONE (dry-run/test-safe).** 4A: migrations + schema + seed + Hiddify client + provisioner CLI. 4B: AccountService + account-link codes + NotificationService (queue-first) + idempotency + WAL-safe online backup (`0002`). 4C: dry-run provisioning orchestration — payment-approval boundary → subscription snapshots → access-profile placeholder → provisioning plan (entitlements + live blockers + sanitized Hiddify intent) → delivery enqueue → audit + forward-only compensation; **live hard-refused**; additive migration `0003`. **70 tests PASS**. No live mutations/sends/real customers. See PHASE4A/4B/4C docs. |
-| 5 | Telegram bot implementation (Burmese-primary) | **Foundation DONE (dry-run): adapter + Burmese catalogue + router (/start,/help,/plans,/account,/link,/admin) + AccountService identity + env-driven admin + queue-only NotificationService. No polling/webhook/API/send.** See PHASE5_TELEGRAM_BOT_FOUNDATION.md. Transport/sender = next, gated. |
+| 5 | Telegram bot implementation (Burmese-primary) | **Foundation + transport DONE (dry-run, gated).** Foundation: adapter + Burmese catalogue + router + AccountService identity + env-driven admin. Transport: Bot API boundary (token redacted; injectable opener), offset-tracked polling runner, NotificationService sender consuming `outbound_messages` (queued→sent/requeue/dead), fail-closed double gate. **No polling daemon/webhook/API/send; no systemd.** See PHASE5_TELEGRAM_BOT_FOUNDATION.md + PHASE5_TELEGRAM_TRANSPORT_FOUNDATION.md. Live bring-up = next, Charles-gated. |
 | 6 | Hiddify subscription delivery integration | PENDING |
 | 7 | Plan-based region/protocol entitlement + node resilience | PENDING |
 | 8 | Web app / customer portal | PENDING |
@@ -129,10 +129,16 @@ catalogue, router (`/start`,`/help`,`/plans`,`/account`,`/link`,`/admin`,fallbac
 id is a platform key, never the customer identity; `/start` idempotent), DB-driven plan rendering, env-driven admin
 ids, queue-only NotificationService. **No polling/webhook/Telegram API/send; no service started.** 89 tests PASS.
 
-**Next: Phase 5 transport (gated) or Phase 6 (subscription delivery)** — add the NotificationService sender + a gated
-long-poll bot runner consuming `outbound_messages`. **Before de1 goes live:** rebuild the node (clears
-`leaked_key_rebuild_pending`) + a real-device FAST1/FAST2/Secure test (`#TASK_for_Charles` in
-PHASE4_PRELIVE_DE1_TUNING.md), then a separately-gated task to enable live provisioning. Live promotion stays Charles-gated.
+**Phase 5 transport foundation complete (2026-06-16)** ([PHASE5_TELEGRAM_TRANSPORT_FOUNDATION.md](PHASE5_TELEGRAM_TRANSPORT_FOUNDATION.md)):
+gated Bot API transport boundary (token redacted; injectable opener; dry-run default), offset-tracked polling runner
+(no daemon), NotificationService sender + outbound worker consuming `outbound_messages` (queued→sent/requeue→backoff/
+dead), and a centralized fail-closed double gate (`ALLOW_LIVE_BOT_SENDS`/`ALLOW_LIVE_BOT_POLLING` + `--live-* --confirm`).
+107 tests PASS. **No network/send/poll daemon/systemd.**
+
+**Next: Phase 6 (subscription delivery) or the gated live bot bring-up.** **Before de1 goes live:** rebuild the node
+(clears `leaked_key_rebuild_pending`) + a real-device FAST1/FAST2/Secure test (`#TASK_for_Charles` in
+PHASE4_PRELIVE_DE1_TUNING.md), then a separately-gated task to flip the env latches + wire a real opener. Live
+promotion stays Charles-gated.
 
 **OS path decided (2026-06-15):** in-place `do-release-upgrade` was considered, but since `de1` is **empty** the
 safer, same-outcome choice is a **clean provider reinstall to Ubuntu 22.04** (Charles). A read-only pre-upgrade gate
@@ -367,6 +373,25 @@ The verified Hiddify Manager **API v2** contract — endpoints, fields, units, a
 
 Chronological record of notable changes to the UNSEEN PROXY project.
 
+## 2026-06-16 — Phase 5: gated Telegram transport foundation (dry-run) — PASS
+
+- **Dry-run only, gated** (stdlib): no Telegram API call, no send, no polling daemon, no webhook, no systemd service;
+  de1 stays `status=test`. See [PHASE5_TELEGRAM_TRANSPORT_FOUNDATION.md](PHASE5_TELEGRAM_TRANSPORT_FOUNDATION.md).
+- **`telegram_transport`** — Bot API boundary (`getUpdates`/`sendMessage`/`editMessageText`/`answerCallbackQuery`);
+  injectable `opener` (tests mock; no real network); dry-run default; token name-mangled + redacted; the token-bearing
+  URL is never logged/returned; timeout/retry boundaries.
+- **`telegram_polling`** — offset-tracked runner routing batches through `TelegramRouter`; no daemon; live poll
+  hard-refused without the gate. **`notification_sender`/`outbound_worker`** — consume queued telegram
+  `outbound_messages`, render from `payload_ref` (template key only), transitions queued→sent / queued (attempts++,
+  backoff) / dead; live send hard-refused without the gate.
+- **`runtime_gates`** — centralized fail-closed double gate: live send needs `ALLOW_LIVE_BOT_SENDS=1` + `--live-send
+  --confirm`; live poll needs `ALLOW_LIVE_BOT_POLLING=1` + `--live-poll --confirm`. Even when gated, tests use a mock
+  transport.
+- `.env.example`: added `ALLOW_LIVE_BOT_SENDS=0` / `ALLOW_LIVE_BOT_POLLING=0`. New CLIs:
+  `bin/telegram_poll_dry_run.py`, `bin/outbound_worker_dry_run.py`, `bin/send_notification_dry_run.py` (temp DB/mock).
+  **Tests: 107 PASS** (89 + 18 new, incl. no-network-call guard). Updated BOT_FLOWS/SECURITY/DEPLOYMENT/CURRENT_STATUS;
+  new transport doc. No schema change.
+
 ## 2026-06-16 — Phase 5: Telegram bot foundation (Burmese-primary, dry-run) — PASS
 
 - **Dry-run only** (stdlib): no Telegram API call, no message sent, no polling/webhook, no service started, no live
@@ -431,25 +456,6 @@ Chronological record of notable changes to the UNSEEN PROXY project.
   services started; de1 stays `status=test`. See [PHASE4B_ACCOUNT_NOTIFICATION_BACKUP.md](PHASE4B_ACCOUNT_NOTIFICATION_BACKUP.md).
 - **Additive migration** `0002_phase4b.sql`: `idempotency_keys` += `status`/`updated_at`; `outbound_messages` +=
   `payload_ref`/`last_error`/`next_attempt_at`/`max_attempts`; two indexes. No drops/rewrites; integrity + FK verified.
-- **AccountService** (`backend/account_service.py`): `resolve_customer` maps a platform identity to ONE canonical
-  customer (idempotent create + gap-safe `public_customer_code`); raw platform id is never the identity; validates the
-  five platforms; `preferred_language` default `my`; transactional.
-- **Account-link codes** (`backend/account_linking.py`): one-time 8-char codes, 24h expiry, **hash-only** storage,
-  **reason-opaque** validation; consume = link / already-linked no-op / **merge_required_dry_run (no mutation)**.
-- **NotificationService** (`backend/notification_service.py`): queue-first `enqueue` (default `queued`),
-  retry/dead-letter helpers, placeholder per-platform `classify_policy`. **No sender; no raw body stored** (payload_ref).
-- **Idempotency** (`backend/idempotency.py`): `begin`/`complete` with `started`/`already_completed`/`in_progress`
-  states, stable replay; scopes payment_approval/provision_subscription/referral_grant/account_link_merge.
-  `backend/payment_flow.py` is a **dry-run** boundary proving exactly-once (no subscription/access rows, no Hiddify).
-- **WAL-safe backup** (`backend/backup.py`, `bin/backup_db.py`): `sqlite3.Connection.backup()` only (never raw-copies
-  WAL); verifies integrity + FK on the snapshot; sanitized manifest (paths only, env contents never read). No timer yet.
-- New CLIs: `bin/backup_db.py`, `bin/queue_notifications.py` (audit/dry-run), `bin/account_service_smoke.py` (temp DB).
-- **Tests: 48 PASS** (17 Phase 4A + 31 new). Updated DATABASE/ACCOUNT_LINKING/BACKUPS/BOT_FLOWS/SECURITY/DEPLOYMENT/
-  CURRENT_STATUS/BRAIN_API_DESIGN; new PHASE4B doc.
-
-## 2026-06-16 — Phase 4A: DB foundation + Hiddify client/provisioner (dry-run) — PASS
-
-- **Stdlib-only** backend foundation (sqlite3/urllib/unittest — no pip on the control plane). No live mutations, no
 
 
 ---

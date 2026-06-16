@@ -81,6 +81,26 @@ def plan_line(display_name_en: str, plan_code: str, gib: int, days: int, price_m
             f"   regions: {regions_txt}{premium_note} · protocols: {profiles}")
 
 
+# Outbound notification templates, keyed by the payload_ref PREFIX (never the raw body/secret).
+# The sender maps a queued message's payload_ref → one of these Burmese-primary strings. No
+# subscription/proxy links or QR payloads are ever produced here.
+DELIVERY_PREP = (
+    "✅ သင့်ဝန်ဆောင်မှုကို ပြင်ဆင်နေပါသည်။ အသေးစိတ်ကို မကြာမီ အကြောင်းကြားပါမည်။ (dry-run)"
+)
+GENERIC_TRANSACTIONAL = "🔔 အသိပေးချက် — {brand}".format(brand=BRAND)
+
+
+def render_payload(payload_ref: str) -> str:
+    """Resolve a queued notification's payload_ref to Burmese-primary text. The payload_ref is a
+    reference/template key (e.g. 'bot:welcome:7', 'delivery:sub:7') — never raw content."""
+    ref = (payload_ref or "").strip()
+    if ref.startswith("bot:welcome"):
+        return WELCOME
+    if ref.startswith("delivery:sub"):
+        return DELIVERY_PREP
+    return GENERIC_TRANSACTIONAL
+
+
 def admin_summary(customers: int, subscriptions: int, queued_notifications: int,
                   dry_run_attempts: int) -> str:
     return (f"{ADMIN_SUMMARY_HEADER}\n"

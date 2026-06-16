@@ -5,6 +5,25 @@
 
 Chronological record of notable changes to the UNSEEN PROXY project.
 
+## 2026-06-16 — Phase 5: gated Telegram transport foundation (dry-run) — PASS
+
+- **Dry-run only, gated** (stdlib): no Telegram API call, no send, no polling daemon, no webhook, no systemd service;
+  de1 stays `status=test`. See [PHASE5_TELEGRAM_TRANSPORT_FOUNDATION.md](PHASE5_TELEGRAM_TRANSPORT_FOUNDATION.md).
+- **`telegram_transport`** — Bot API boundary (`getUpdates`/`sendMessage`/`editMessageText`/`answerCallbackQuery`);
+  injectable `opener` (tests mock; no real network); dry-run default; token name-mangled + redacted; the token-bearing
+  URL is never logged/returned; timeout/retry boundaries.
+- **`telegram_polling`** — offset-tracked runner routing batches through `TelegramRouter`; no daemon; live poll
+  hard-refused without the gate. **`notification_sender`/`outbound_worker`** — consume queued telegram
+  `outbound_messages`, render from `payload_ref` (template key only), transitions queued→sent / queued (attempts++,
+  backoff) / dead; live send hard-refused without the gate.
+- **`runtime_gates`** — centralized fail-closed double gate: live send needs `ALLOW_LIVE_BOT_SENDS=1` + `--live-send
+  --confirm`; live poll needs `ALLOW_LIVE_BOT_POLLING=1` + `--live-poll --confirm`. Even when gated, tests use a mock
+  transport.
+- `.env.example`: added `ALLOW_LIVE_BOT_SENDS=0` / `ALLOW_LIVE_BOT_POLLING=0`. New CLIs:
+  `bin/telegram_poll_dry_run.py`, `bin/outbound_worker_dry_run.py`, `bin/send_notification_dry_run.py` (temp DB/mock).
+  **Tests: 107 PASS** (89 + 18 new, incl. no-network-call guard). Updated BOT_FLOWS/SECURITY/DEPLOYMENT/CURRENT_STATUS;
+  new transport doc. No schema change.
+
 ## 2026-06-16 — Phase 5: Telegram bot foundation (Burmese-primary, dry-run) — PASS
 
 - **Dry-run only** (stdlib): no Telegram API call, no message sent, no polling/webhook, no service started, no live

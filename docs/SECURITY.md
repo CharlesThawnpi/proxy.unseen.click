@@ -129,3 +129,18 @@ by construction:
 - **No secrets in bot copy or flows** — messages/plan/status/admin summaries carry no token, UUID, subscription URL,
   proxy link, QR payload, admin path, or payment ref. Notifications store a `payload_ref` only. Malformed updates and
   errors yield safe Burmese replies — no stack traces, no secrets.
+
+## Phase 5 transport secret-safety (gated; verified by tests)
+
+The Phase 5 transport layer ([PHASE5_TELEGRAM_TRANSPORT_FOUNDATION.md](PHASE5_TELEGRAM_TRANSPORT_FOUNDATION.md)) keeps
+rules 1, 9 & 10 by construction:
+
+- **Bot token never leaks.** `TelegramTransport` stores the token name-mangled (no public field), never logs it, and
+  redacts it in `repr`/fingerprint. The Bot API URL embeds the token (`/bot<token>/<method>`) and is built **only**
+  inside `_request` — never logged, returned, or placed in an error/repr (errors carry the method name only). A test
+  asserts the token and token-URL never appear in `repr` or request params.
+- **Live is fail-closed (double gate).** `runtime_gates` requires the exact env latch `"1"` **and** explicit
+  `--live-send`/`--live-poll` + `--confirm`; anything missing/invalid refuses with sanitized blocker reasons. Default
+  is dry-run/no-network. Even when gated open, tests inject a **mock** transport — no real network in the suite.
+- **Queue stores references only.** The sender renders from `outbound_messages.payload_ref` (a template key) — no raw
+  body, link, token, or QR is ever stored or sent. Admin ids remain env-driven and unlogged.

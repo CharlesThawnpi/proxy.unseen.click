@@ -109,3 +109,20 @@ The Burmese-primary Telegram foundation now exists ([PHASE5_TELEGRAM_BOT_FOUNDAT
   key, never the customer identity; idempotent.
 - **Admin:** `ADMIN_TELEGRAM_IDS` (fallback `TELEGRAM_ADMIN_IDS`), parsed safely, never logged; `/admin` = DB-only
   sanitized counts. **NotificationService** integration is queue-only (`payload_ref`, no body/secret).
+
+## Phase 5 — gated transport foundation IMPLEMENTED (dry-run, 2026-06-16)
+
+The transport layer now exists ([PHASE5_TELEGRAM_TRANSPORT_FOUNDATION.md](PHASE5_TELEGRAM_TRANSPORT_FOUNDATION.md)) —
+**dry-run only, gated: no Telegram API call, no send, no polling daemon, no webhook, no systemd.**
+
+- **`backend/telegram_transport.py`** — Bot API boundary (`getUpdates`/`sendMessage`/`editMessageText`/
+  `answerCallbackQuery`); network `opener` is injectable (mock in tests); dry-run records intent (no network); the bot
+  token is name-mangled/redacted and the token-bearing API URL is never logged/returned.
+- **`backend/telegram_polling.py`** — `TelegramPollingRunner` routes a fetched/fixture batch through `TelegramRouter`,
+  tracking the `update_id` offset; **no daemon**; live polling refused without the double gate.
+- **`backend/notification_sender.py` + `outbound_worker.py`** — consume queued `outbound_messages` (channel=telegram),
+  render Burmese-primary text from the row's `payload_ref` (template key only — no body/link/secret), and transition
+  `queued → sent` (success) / `queued` (retryable, attempts++ + backoff) / `dead` (permanent or max attempts). This is
+  the concrete NotificationService send path the matrix above anticipated; live send refused without the gate.
+- **`backend/runtime_gates.py`** — fail-closed double gate: live send needs `ALLOW_LIVE_BOT_SENDS=1` + `--live-send
+  --confirm`; live poll needs `ALLOW_LIVE_BOT_POLLING=1` + `--live-poll --confirm`.

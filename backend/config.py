@@ -74,3 +74,9 @@ TELEGRAM_BOT_TOKEN_ENV = "TELEGRAM_BOT_TOKEN"
 # Primary admin-ids env name (per Phase 5 spec); falls back to the older template name.
 ADMIN_TELEGRAM_IDS_ENV = "ADMIN_TELEGRAM_IDS"
 ADMIN_TELEGRAM_IDS_ENV_FALLBACK = "TELEGRAM_ADMIN_IDS"
+
+# ---- Phase 5 transport gates (env half of the double gate; flag half is --live-* --confirm) -
+# Live Telegram sends/polling require BOTH the env latch == "1" AND explicit CLI flags. Default
+# (env unset/0/invalid) is dry-run, fail-closed. Values live in .env on the Master only.
+ALLOW_LIVE_BOT_SENDS_ENV = "ALLOW_LIVE_BOT_SENDS"
+ALLOW_LIVE_BOT_POLLING_ENV = "ALLOW_LIVE_BOT_POLLING"

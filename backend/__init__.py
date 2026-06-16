@@ -16,4 +16,7 @@ __all__ = [
     # Phase 5 Telegram bot foundation (dry-run; no polling/webhook/API/sends):
     "bot_context", "telegram_adapter", "telegram_messages", "telegram_commands",
     "bot_flows", "telegram_router",
+    # Phase 5 transport foundation (gated; dry-run default; no network/daemon):
+    "runtime_gates", "telegram_transport", "telegram_polling",
+    "notification_sender", "outbound_worker",
 ]

@@ -122,3 +122,12 @@ on a temp DB: `bin/telegram_bot_smoke.py`, `bin/render_telegram_messages.py`. En
 ONLY): `TELEGRAM_BOT_TOKEN`, `ADMIN_TELEGRAM_IDS` (fallback alias `TELEGRAM_ADMIN_IDS`). Starting a real bot (gated
 long-poll + NotificationService sender) is a future task; live sends require `ALLOW_LIVE_BOT_SENDS` + explicit flags and
 remain disabled in Phase 5.
+
+## Phase 5 transport — gated, not started (2026-06-16)
+
+The transport foundation exists ([PHASE5_TELEGRAM_TRANSPORT_FOUNDATION.md](PHASE5_TELEGRAM_TRANSPORT_FOUNDATION.md)) but
+**nothing runs**: no polling daemon, no webhook, no Telegram API call, no send, no systemd unit, no public endpoint.
+Dry-run tools (temp DB / mock): `bin/telegram_poll_dry_run.py`, `bin/outbound_worker_dry_run.py`,
+`bin/send_notification_dry_run.py`. Env gate names (values in `.env` on the Master ONLY): `ALLOW_LIVE_BOT_SENDS`,
+`ALLOW_LIVE_BOT_POLLING` (default `0`). Going live requires BOTH the env latch `=1` AND `--live-send`/`--live-poll
+--confirm`, a real network opener, and (for provisioning) the de1 rebuild — all a future, Charles-gated task.
