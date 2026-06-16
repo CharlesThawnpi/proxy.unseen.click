@@ -81,6 +81,7 @@ Do these in order. Each is a gate — if one fails, STOP and report PARTIAL/HOLD
 | 13 | `--no-gui` install auto-configured **only the raw IP + sslip.io** domains; `node-<region>.unseen.click` was **never** a configured domain and the served TLS cert was **IP-only** (`SAN = IP Address:<ip>`). Real-device Hiddify-App import then failed (admin/user QR → HTTP 500 / "connection reset"); bare-root `/` returned **502 — which is Hiddify camouflage, not a fault** (every Hiddify domain 502s on `/`; content lives only at `/<proxy_path>/…`). | **Always set the real node domain + a domain cert before real-device testing** (see §5A). Add it via `hiddifypanel add-domain -d node-<region>.unseen.click -m direct`, then `apply_configs.sh`. Never judge health by the bare-root status — test the `/<proxy_path>/api/v2/…` path. |
 | 14 | `apply_configs.sh` needs a **PTY** (it runs a `cli-progress`/`urwid` progress UI **and** a final whiptail "success" dialog). Run detached with no TTY → it dies with `PermissionError` in asyncio `add_reader`; the panel's own background-apply hook is also broken on v12.3.3 (`TypeError: cmd_in_back() missing 1 required positional argument: 'cmd'`), so a **panel-UI-initiated** apply silently does nothing. | **Apply from the CLI through a PTY, detached:** `setsid script -qfc "TERM=xterm DO_NOT_INSTALL=true bash apply_configs.sh" <log> </dev/null &`. The final whiptail dialog keeps the process alive after the work is done — dismiss with `pkill -f whiptail`. Confirm the cert + `current.json` domains + services afterward. |
 | 15 | First real-device Hiddify-App import failed **before the profile saved**: "Failed to add profile … Connection refused 127.0.0.1:64127". This is the **App's own embedded core / clash-api local port** (client-side; the node never emits 64127 — the sing-box template's clash-api is the standard `127.0.0.1:9090`), refused because the app's core/VPN service wasn't running on a fresh app install. **Not** a protocol-connect failure. | **Don't conflate app-side import errors with node faults.** A `127.0.0.1:<port>` "connection refused" on *add profile* is the client core, not the server. Before blaming the node, **inspect the server subscription output (§5B)**; if it's clean, the fix is app-side (grant VPN permission, update/restart the app, clear cache, re-import). |
+| 16 | Windows Hiddify App rejected the downloaded profile: `[SingboxParser] unmarshal error: outbounds[N].tunnel-per-resolver: json: unknown field "tunnel-per-resolver"`. The field is emitted **only** for the **DNSTT** outbound (`hutils/proxy/shared.py` `if proto==dnstt: tunnel_per_resolver=4`; `singbox.py:add_dnstt` hyphenates it). DNSTT was enabled by default; the installed app's sing-box core doesn't know the field and rejects the **whole** profile. | **Disable transports the target app's core can't parse.** DNSTT is a niche last-resort tunnel, **not** FAST1/FAST2/Secure — turn it off: `hiddifypanel set-setting -k dnstt_enable -v false` + `apply_configs.sh` (`get_proxies()` then strips the DNSTT outbound). Reversible (`-v true` + apply). Generally, **scan generated sing-box output for unknown fields before a real-device test** (§5B). |
 
 ## 4. Future node checklist (copy per node)
 
@@ -166,6 +167,16 @@ sanitizer** — write bodies to a root-only `mktemp`, **`shred -u`** them after,
   sing-box template's clash-api is the standard `127.0.0.1:9090`. If the app-error port is absent server-side and the
   config is clean, a `127.0.0.1:<port>` "connection refused" on *add profile* is **app-side** — fix on the device
   (VPN permission, app update/restart, cache clear, re-import), not on the node.
+- **Client-parser-compatibility scan (REQUIRED — added after the de1 `tunnel-per-resolver` failure):** the Hiddify App
+  rejects the *whole* profile if the generated sing-box JSON contains a field its bundled core doesn't know
+  (`[SingboxParser] unmarshal error: outbounds[N].<field>: json: unknown field`). Before a real-device test, **scan the
+  generated sing-box config for `tunnel-per-resolver` (DNSTT)** and any other exotic field. The HTTP user endpoints
+  serve the HTML portal to unrecognized UAs, so the reliable way to obtain the real sing-box JSON is an **app-context
+  render** on the node (write to a root-only temp, grep counts only, `shred -u`):
+  `python -c "...; base=hutils.proxy.singbox.configs_as_json(**get_common_data(uuid,'new'))..."` inside a
+  `test_request_context` with a client IP set. If `tunnel-per-resolver`>0, **disable DNSTT** (problems #16) — it is not
+  FAST1/FAST2/Secure — and re-render to confirm 0. **Only emit counts/booleans; never dump config/key/UUID values, and
+  sanitize query-param UUIDs (`&user=<uuid>`) too.**
 
 ## 6. Secret safety (applies to every step)
 

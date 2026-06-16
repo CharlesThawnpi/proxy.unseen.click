@@ -37,6 +37,14 @@
 >   core/clash-api port** (the sing-box template's clash-api is the standard `127.0.0.1:9090`; the node emits no such
 >   remote target) — an **app-side** condition, not a node/API fault. Always run the §5B sanitized output inspection
 >   before attributing an import failure to the node.
+> - **Client-parser compatibility (verified 2026-06-16):** a `[SingboxParser] unmarshal error:
+>   outbounds[N].tunnel-per-resolver: json: unknown field` means the generated sing-box config carries a field the app's
+>   bundled core doesn't know, and the app rejects the **entire** profile. `tunnel-per-resolver` comes **only** from the
+>   **DNSTT** outbound (`hutils/proxy/shared.py` + `singbox.py:add_dnstt`). Disable that transport with the supported CLI
+>   `hiddifypanel set-setting -k dnstt_enable -v false` + `apply_configs.sh` (reversible). `get_proxies()` then omits the
+>   DNSTT proxy (`shared.py:154-155`). The full sing-box config is rendered by `hutils.proxy.singbox.configs_as_json(**
+>   get_common_data(uuid,'new'))` (the `/<proxy_path>/<uuid>/singbox/` endpoint) — but that route serves the HTML portal
+>   to unrecognized UAs, so verify via an on-node app-context render (counts only).
 
 > ## ✅ VERIFIED-LIVE on de1 — Hiddify **v12.3.3**, API **"Hiddify API v2.2.0"** (2026-06-16)
 > Source: the panel's own OpenAPI spec (generated in-process via `hiddifypanel`/apiflask — 22 paths) **and** confirmed

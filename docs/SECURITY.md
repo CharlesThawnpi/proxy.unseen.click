@@ -41,6 +41,14 @@ The non-negotiable security and secret-safety rules for UNSEEN PROXY. These are 
   printed**). Bodies were written to root-only `mktemp` files and **`shred -u`**'d afterward; nothing raw was staged or
   committed. The admin link/proxy path/UUIDs/keys stayed on the node. **Future nodes must inspect subscription output
   this way (runbook §5B) before any real-device test.**
+- **Disclosed sanitization slips (2026-06-16, test node, not committed).** While diagnosing the `tunnel-per-resolver`
+  parser error, two over-broad sanitized queries briefly printed secret values **to the operator terminal only (never to
+  git):** (1) the **DNSTT keypair** (a value-dumping `jq` over config keys) and (2) the **disposable user's UUID** (a
+  redirect `&user=<uuid>` query a path-only regex missed). **Remediation:** DNSTT was **disabled** (keys now unused; they
+  live only in the node's root-only `current.json`); the exposed disposable **UUID was rotated** (delete+recreate). de1
+  is a no-customer **test** node, so per standing guidance this is **not** a new leaked-key rebuild blocker. **Lesson
+  (enforced in runbook §5B):** emit only counts/booleans — never value dumps — and sanitize **query-param** UUIDs
+  (`&user=<uuid>`), not just path UUIDs. Config/secret-bearing renders go to root-only temp files and are `shred -u`'d.
 
 ## Portal HTTP boundary (Phase 8C — local-only, verified by tests)
 

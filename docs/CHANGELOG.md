@@ -5,6 +5,32 @@
 
 Chronological record of notable changes to the UNSEEN PROXY project.
 
+## 2026-06-16 — de1: fix Hiddify App parser error (`tunnel-per-resolver`) by disabling DNSTT — PASS
+
+- **Symptom (Windows Hiddify App):** profile downloaded but the parser rejected it —
+  `[SingboxParser] unmarshal error: outbounds[37].tunnel-per-resolver: json: unknown field "tunnel-per-resolver"`.
+  This proves the download succeeded (separate from the earlier mobile `127.0.0.1:64127` app-core symptom) — a
+  **generator↔parser schema mismatch**.
+- **Root cause = C (a specific Hiddify feature):** `tunnel-per-resolver` is emitted **only** for the **DNSTT** (DNS-tunnel)
+  outbound — `hutils/proxy/shared.py` sets `tunnel_per_resolver=4` inside `if proto==dnstt`, and `singbox.py:add_dnstt`
+  renders it hyphenated into the sing-box config. DNSTT was enabled (`dnstt_enable=true`). The installed app's sing-box
+  core doesn't know the field, so it rejects the whole profile. DNSTT is a niche last-resort transport — **not**
+  FAST1/FAST2/Secure.
+- **Fix (Option 2, supported + reversible):** `hiddifypanel set-setting -k dnstt_enable -v false` → `apply_configs.sh`
+  (PTY method). `current.json` backed up on-node first. `get_proxies()` strips DNSTT proxies when `dnstt_enable` is
+  false (`shared.py:154`), so no DNSTT outbound is generated. **Rollback:** `set-setting -k dnstt_enable -v true` +
+  apply.
+- **Verified (sanitized, no raw output):** before = field present (app error + code path); after = app-context render of
+  the disposable user's sing-box config shows **`tunnel-per-resolver`=0, dnstt=0** (FAST1/Secure outbounds intact).
+  `dnstt_enable=false` in DB + `current.json`; all 10 services active; node-de TLS still valid (`ssl_verify=0`). No
+  cert/firewall/port change.
+- **Disposable user:** deleted + recreated one `disposable-test-realdevice` (1 GB/1 day, enabled) so its links are
+  freshly generated DNSTT-free (and to rotate a UUID inadvertently surfaced during diagnosis — see SECURITY.md).
+- **Secondary (deferred per task):** sing-box output is still multi-domain (node-de + raw-IP + sslip); raw-IP/sslip
+  outbounds won't connect (no cert) but don't block parsing. Domain pruning is a separate manual panel action.
+- de1 stays **`status=test`**. Docs + runbook add a **client-parser-compatibility check** (scan generated sing-box for
+  unknown fields like `tunnel-per-resolver`) before any real-device test. SOURCE_OF_TRUTH regenerated. No secrets committed.
+
 ## 2026-06-16 — de1: diagnose Hiddify App import failure (`127.0.0.1:64127`) — PARTIAL (server output clean; app-side)
 
 - **Symptom:** importing the `disposable-test-realdevice` subscription into the Hiddify App failed **before the profile

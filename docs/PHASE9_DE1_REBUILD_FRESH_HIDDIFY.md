@@ -232,6 +232,39 @@ add profile / Unexpected error / Error connecting: SocketException / Connection 
   has VPN permission and the core can start (update the app to latest; restart app/device; clear app cache if needed);
   then re-import the **node-de** subscription from the panel (never the admin/terminal QR, never a raw-IP/sslip link).
 
+## Addendum (2026-06-16) — Hiddify App parser error `tunnel-per-resolver` fixed (DNSTT disabled)
+
+The Windows Hiddify App downloaded the profile but its sing-box parser rejected it:
+`[SingboxParser] unmarshal error: outbounds[37].tunnel-per-resolver: json: unknown field "tunnel-per-resolver"`.
+This is a **generator↔parser schema mismatch** — distinct from the earlier mobile `127.0.0.1:64127` app-core symptom.
+
+- **Root cause (C):** `tunnel-per-resolver` is emitted **only** for the **DNSTT** (DNS-tunnel) outbound —
+  `hutils/proxy/shared.py` sets `tunnel_per_resolver=4` inside `if base["proto"]==ProxyProto.dnstt`, and
+  `singbox.py:add_dnstt` writes it hyphenated into the sing-box config. DNSTT was enabled (`dnstt_enable=true`); the
+  installed app's sing-box core doesn't recognize the field and rejects the whole profile. **DNSTT is not one of
+  FAST1/FAST2/Secure** (it's a niche last-resort DNS tunnel).
+- **Fix (supported, reversible):** `hiddifypanel set-setting -k dnstt_enable -v false` → `apply_configs.sh` (PTY method;
+  `current.json` backed up to `/root/disk-rollback/` first). `get_proxies()` strips DNSTT proxies when `dnstt_enable` is
+  false (`shared.py:154-155`), so no DNSTT outbound is generated. **Rollback:** set it back to `true` + apply.
+- **Verified (sanitized; bodies rendered to a root-only temp and shredded):** an app-context render of the disposable
+  user's sing-box config now shows **`tunnel-per-resolver`=0, `dnstt`=0**, FAST1(Hysteria2)/Secure(VLESS) outbounds
+  intact. `dnstt_enable=false` in DB (`bool_config`) + `current.json` (`hconfig=False`); all 10 services active; node-de
+  TLS still valid. **No cert/firewall/port change; no node secret edited.**
+- **Disposable user:** recreated one `disposable-test-realdevice` (1 GB/1 day, enabled) so links are freshly generated
+  DNSTT-free (also rotated a UUID inadvertently surfaced during diagnosis — see Secret-safety addendum).
+- **Secondary (deferred — Step 6 of this task forbids domain deletion here):** the sing-box output is still
+  multi-domain — node-de **plus** raw-IP + sslip outbounds. The raw-IP/sslip ones have no matching cert and won't
+  connect, but they don't block parsing. Pruning is a manual panel action (Settings → Domains) + admin-link regenerate.
+
+### Secret-safety addendum (honest disclosure)
+During diagnosis, two over-broad sanitized queries briefly surfaced secret values **to the operator terminal only**
+(never to git): (1) the **DNSTT keypair** (a value-dumping `jq`), and (2) the **disposable user's UUID** (a redirect
+`&user=<uuid>` query my regex missed). Remediation: DNSTT is now **disabled** (its keys are unused and live only in the
+node's root-only `current.json`); the exposed disposable **UUID was rotated** by delete+recreate. de1 is a
+no-customer **test** node; per the project's standing guidance this is **not** recorded as a new leaked-key rebuild
+blocker. Lesson captured in the runbook: only ever emit counts/booleans, never value dumps, and sanitize query-param
+UUIDs too.
+
 ## Exact next recommended task
 
 **Charles records the real-device FAST1/FAST2/Secure connect PASS** (clears `realdevice_protocol_test_pending`). After

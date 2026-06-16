@@ -1,6 +1,6 @@
 # UNSEEN PROXY — SOURCE OF TRUTH (consolidated, auto-generated)
 
-> **Generated:** 2026-06-16T14:33:13Z — by `scripts/build_source_of_truth.sh`.
+> **Generated:** 2026-06-16T15:18:22Z — by `scripts/build_source_of_truth.sh`.
 > **This is the live project state for external readers (e.g. the Custom GPT).** It is DERIVED from the
 > canonical docs below and regenerated each task. Upload THIS file to the GPT (not IMPLEMENTATION_PLAN.md,
 > which is the static v1.9 plan). Re-download after updates.
@@ -44,7 +44,7 @@ Where the UNSEEN PROXY build stands across the §34 deployment phases.
 | 0 | Clean-VPS verification (gate before any build) | DONE (gate passed) |
 | 1 | Documentation, repo & architecture planning | DONE (pushed to origin/main, 25e5ddc) |
 | 2 | Hiddify test node setup | **RE-SCOPED to a separate DE VPS** (`de1`, `5.249.160.59`, Ubuntu 22.04, planned/test). Master-co-location preflight done then RETIRED. Forward plan: PHASE2_3_DE_NODE_PLAN.md |
-| 3 | Hiddify API & subscription compatibility audit | **DONE (PASS) — Hiddify v12.3.3 on de1; API v2 contract VERIFIED-LIVE; disposable test user create→sub→delete confirmed.** Phase 4 API layer UNBLOCKED. **Re-verified after a fresh de1 rebuild + clean reinstall (2026-06-16, PHASE9_DE1_REBUILD_FRESH_HIDDIFY.md): contract re-confirmed (bounded `marshmallow==3.26.1` venv pin needed), disposable-user lifecycle PASS, FAST1/FAST2/Secure present, SSH hardened. `leaked_key_rebuild_pending` CLEARED.** **Node domain `node-de.unseen.click` now SET with a valid Let's Encrypt cert (2026-06-16): added via `hiddifypanel add-domain` + `apply_configs.sh`; API/all-configs verified-live over the public node-de path with valid TLS; subscription output now references `node-de.unseen.click` (resolves Phase 9 blocker #4).** **Real-device import attempt (2026-06-16) failed app-side with `127.0.0.1:64127` (Hiddify App's own local core port) BEFORE the profile saved — server subscription output verified CLEAN (no `127.0.0.1`/`localhost`/`64127`); this is import/app-state readiness, NOT protocol connectivity. Secondary: sub output still lists raw-IP/sslip endpoints (no safe auto-removal; manual panel prune). Real-device retest is HOLD until Charles clears the app-side core (see #TASK).** Remaining: real-device FAST1/FAST2/Secure connect PASS + RAM lock. See HIDDIFY_API_CONTRACT.md + PHASE3_DE1_HIDDIFY_LIVE_VERIFY.md + PHASE9_DE1_REBUILD_FRESH_HIDDIFY.md |
+| 3 | Hiddify API & subscription compatibility audit | **DONE (PASS) — Hiddify v12.3.3 on de1; API v2 contract VERIFIED-LIVE; disposable test user create→sub→delete confirmed.** Phase 4 API layer UNBLOCKED. **Re-verified after a fresh de1 rebuild + clean reinstall (2026-06-16, PHASE9_DE1_REBUILD_FRESH_HIDDIFY.md): contract re-confirmed (bounded `marshmallow==3.26.1` venv pin needed), disposable-user lifecycle PASS, FAST1/FAST2/Secure present, SSH hardened. `leaked_key_rebuild_pending` CLEARED.** **Node domain `node-de.unseen.click` now SET with a valid Let's Encrypt cert (2026-06-16): added via `hiddifypanel add-domain` + `apply_configs.sh`; API/all-configs verified-live over the public node-de path with valid TLS; subscription output now references `node-de.unseen.click` (resolves Phase 9 blocker #4).** **Real-device import (2026-06-16): two issues found+addressed. (1) Mobile `127.0.0.1:64127` = app-side core (server output clean). (2) Windows `[SingboxParser] ... outbounds[37].tunnel-per-resolver: json: unknown field` = generator↔parser mismatch from the DNSTT outbound — FIXED by disabling DNSTT (`set-setting dnstt_enable=false` + apply; DNSTT is not FAST1/FAST2/Secure). After-render confirms `tunnel-per-resolver`=0/dnstt=0; FAST1/Secure outbounds intact. Disposable user recreated DNSTT-free. Secondary (deferred): sub output still multi-domain (raw-IP/sslip won't connect; manual panel prune). Real-device retest can proceed once Charles re-imports the fresh node-de subscription on an updated app.** Remaining: real-device FAST1/FAST2/Secure connect PASS + RAM lock. See HIDDIFY_API_CONTRACT.md + PHASE3_DE1_HIDDIFY_LIVE_VERIFY.md + PHASE9_DE1_REBUILD_FRESH_HIDDIFY.md |
 | 4 | Database & backend clone design | **Phase 4A + 4B + 4C DONE (dry-run/test-safe).** 4A: migrations + schema + seed + Hiddify client + provisioner CLI. 4B: AccountService + account-link codes + NotificationService (queue-first) + idempotency + WAL-safe online backup (`0002`). 4C: dry-run provisioning orchestration — payment-approval boundary → subscription snapshots → access-profile placeholder → provisioning plan (entitlements + live blockers + sanitized Hiddify intent) → delivery enqueue → audit + forward-only compensation; **live hard-refused**; additive migration `0003`. **70 tests PASS**. No live mutations/sends/real customers. See PHASE4A/4B/4C docs. |
 | 5 | Telegram bot implementation (Burmese-primary) | **Foundation + transport DONE (dry-run, gated).** Foundation: adapter + Burmese catalogue + router + AccountService identity + env-driven admin. Transport: Bot API boundary (token redacted; injectable opener), offset-tracked polling runner, NotificationService sender consuming `outbound_messages` (queued→sent/requeue/dead), fail-closed double gate. **No polling daemon/webhook/API/send; no systemd.** See PHASE5_TELEGRAM_BOT_FOUNDATION.md + PHASE5_TELEGRAM_TRANSPORT_FOUNDATION.md. Live bring-up = next, Charles-gated. |
 | 6 | Hiddify subscription delivery integration | **Foundation DONE (dry-run): delivery payload model (safe refs only) + branded link rule (`sub.unseen.click/s/<token>`, hash stored) + deep-link/copy-link priority + QR planned + mocked Hiddify-output normalizer + NotificationService/Telegram render integration. No raw links persisted/logged; no network.** See PHASE6_SUBSCRIPTION_DELIVERY_FOUNDATION.md. Sidecar + live = next, gated. |
@@ -548,6 +548,14 @@ MMT timestamps explicitly.
 >   core/clash-api port** (the sing-box template's clash-api is the standard `127.0.0.1:9090`; the node emits no such
 >   remote target) — an **app-side** condition, not a node/API fault. Always run the §5B sanitized output inspection
 >   before attributing an import failure to the node.
+> - **Client-parser compatibility (verified 2026-06-16):** a `[SingboxParser] unmarshal error:
+>   outbounds[N].tunnel-per-resolver: json: unknown field` means the generated sing-box config carries a field the app's
+>   bundled core doesn't know, and the app rejects the **entire** profile. `tunnel-per-resolver` comes **only** from the
+>   **DNSTT** outbound (`hutils/proxy/shared.py` + `singbox.py:add_dnstt`). Disable that transport with the supported CLI
+>   `hiddifypanel set-setting -k dnstt_enable -v false` + `apply_configs.sh` (reversible). `get_proxies()` then omits the
+>   DNSTT proxy (`shared.py:154-155`). The full sing-box config is rendered by `hutils.proxy.singbox.configs_as_json(**
+>   get_common_data(uuid,'new'))` (the `/<proxy_path>/<uuid>/singbox/` endpoint) — but that route serves the HTML portal
+>   to unrecognized UAs, so verify via an on-node app-context render (counts only).
 
 > ## ✅ VERIFIED-LIVE on de1 — Hiddify **v12.3.3**, API **"Hiddify API v2.2.0"** (2026-06-16)
 > Source: the panel's own OpenAPI spec (generated in-process via `hiddifypanel`/apiflask — 22 paths) **and** confirmed
@@ -561,14 +569,6 @@ MMT timestamps explicitly.
 > - **User CRUD (admin):** `GET /admin/user/` (list) · `POST /admin/user/` (create) · `GET|PATCH|DELETE /admin/user/{uuid}/`.
 >   Also: `/admin/user/{uuid}/`, `/admin/me/`, `/admin/server_status/`, `/admin/all-configs/`, `/admin/update_user_usage/`.
 > - **User schema fields** (`UserSchema`/`PostUserSchema`/`PatchUserSchema`): `uuid`, `name`, **`usage_limit_GB`** (number),
->   **`package_days`** (int), **`current_usage_GB`** (number), `start_date` (date), `mode` (reset mode), `comment`,
->   `telegram_id`, `enable` (bool), `is_active` (bool), `lang`, `last_online`, `last_reset_time`, `added_by_uuid`,
->   `ed25519_*`/`wg_*` keys (server-generated), `id` (read-only).
-> - **⚠ UNITS = GB (not GiB):** `usage_limit_GB` / `current_usage_GB` are **gigabytes** (per the schema descriptions).
->   The plan stores `data_limit_gib` → **the orchestrator MUST convert GiB↔GB** when talking to Hiddify.
-> - **Subscription/config output:** `GET …/api/v2/user/all-configs/` and `…/user/me/` (also uuid-in-path variants);
->   admin can fetch via `/admin/all-configs/?uuid=<uuid>` (returned 200, ~14.8 KB for the test user). Output-format
->   suffixes (auto/sub/sub64/singbox/clash) are the user-link formats — confirm exact form when the sidecar is built.
 
 
 ---
@@ -581,6 +581,32 @@ MMT timestamps explicitly.
 > **Status:** Phase 1 skeleton — running log of changes by date
 
 Chronological record of notable changes to the UNSEEN PROXY project.
+
+## 2026-06-16 — de1: fix Hiddify App parser error (`tunnel-per-resolver`) by disabling DNSTT — PASS
+
+- **Symptom (Windows Hiddify App):** profile downloaded but the parser rejected it —
+  `[SingboxParser] unmarshal error: outbounds[37].tunnel-per-resolver: json: unknown field "tunnel-per-resolver"`.
+  This proves the download succeeded (separate from the earlier mobile `127.0.0.1:64127` app-core symptom) — a
+  **generator↔parser schema mismatch**.
+- **Root cause = C (a specific Hiddify feature):** `tunnel-per-resolver` is emitted **only** for the **DNSTT** (DNS-tunnel)
+  outbound — `hutils/proxy/shared.py` sets `tunnel_per_resolver=4` inside `if proto==dnstt`, and `singbox.py:add_dnstt`
+  renders it hyphenated into the sing-box config. DNSTT was enabled (`dnstt_enable=true`). The installed app's sing-box
+  core doesn't know the field, so it rejects the whole profile. DNSTT is a niche last-resort transport — **not**
+  FAST1/FAST2/Secure.
+- **Fix (Option 2, supported + reversible):** `hiddifypanel set-setting -k dnstt_enable -v false` → `apply_configs.sh`
+  (PTY method). `current.json` backed up on-node first. `get_proxies()` strips DNSTT proxies when `dnstt_enable` is
+  false (`shared.py:154`), so no DNSTT outbound is generated. **Rollback:** `set-setting -k dnstt_enable -v true` +
+  apply.
+- **Verified (sanitized, no raw output):** before = field present (app error + code path); after = app-context render of
+  the disposable user's sing-box config shows **`tunnel-per-resolver`=0, dnstt=0** (FAST1/Secure outbounds intact).
+  `dnstt_enable=false` in DB + `current.json`; all 10 services active; node-de TLS still valid (`ssl_verify=0`). No
+  cert/firewall/port change.
+- **Disposable user:** deleted + recreated one `disposable-test-realdevice` (1 GB/1 day, enabled) so its links are
+  freshly generated DNSTT-free (and to rotate a UUID inadvertently surfaced during diagnosis — see SECURITY.md).
+- **Secondary (deferred per task):** sing-box output is still multi-domain (node-de + raw-IP + sslip); raw-IP/sslip
+  outbounds won't connect (no cert) but don't block parsing. Domain pruning is a separate manual panel action.
+- de1 stays **`status=test`**. Docs + runbook add a **client-parser-compatibility check** (scan generated sing-box for
+  unknown fields like `tunnel-per-resolver`) before any real-device test. SOURCE_OF_TRUTH regenerated. No secrets committed.
 
 ## 2026-06-16 — de1: diagnose Hiddify App import failure (`127.0.0.1:64127`) — PARTIAL (server output clean; app-side)
 
@@ -639,32 +665,6 @@ Chronological record of notable changes to the UNSEEN PROXY project.
   all **future Hiddify nodes** (US, SG1, SG2, future regions), distilled from the successful de1 rebuild/install.
   Captures the working order (dedicated VPS → 22.04 → SSH/known_hosts → DNS → 80/443 free → clean scan → disk/LVM grow →
   pinned host install under **umask 022** → admin link `0600` → verify services/API → bounded `marshmallow==3.26.1` pin
-  if needed → disposable user → protocols → SSH hardening → firewall → `status=test`), the problems/lessons table
-  (no co-location, no Docker, preflight OS/network/RAM/disk, umask 022, marshmallow pin, leaked-secret rebuild,
-  firewall-after-Hiddify, real-device test), a per-node checklist, node naming/domain examples, secret-safety, rollback,
-  and PASS criteria.
-- Referenced the runbook from PHASE9, DEPLOYMENT, NODES, SECURITY, ROLLBACK, CURRENT_STATUS; future US/SG installs must
-  follow it and must **not** repeat Master co-location or Docker-on-Master. Docs only — no node access, no install, no
-  Hiddify calls, no service changes; SOURCE_OF_TRUTH regenerated.
-
-## 2026-06-16 — Phase 9: de1 rebuild + fresh Hiddify reinstall + API/protocol verify — PASS
-
-- Verified the freshly rebuilt de1 (Ubuntu 22.04.5), refreshed only its `known_hosts` entry, ran read-only preflight.
-- Disk gate initially failed (5.4 GB free); Charles had upgraded VPS storage (disk → 53.7 GB), so with his approval
-  the root volume was grown online/non-destructively (`growpart`→`pvresize`→`lvextend`→`resize2fs`) to ~48 GB/40 GB
-  free. Partition table backed up on-node first.
-- Clean **Hiddify Manager v12.3.3 host reinstall** via the pinned `download.sh v12.3.3 --no-gui` flow (NOT Docker),
-  under **umask 022** (prior umask-077 cascade lesson applied) — no permission cascade; all services active.
-- **API v2 contract re-verified-live** (Hiddify API v2.2.0): auth header `Hiddify-API-Key`, admin base
-  `/<proxy_path>/api/v2/admin/` (UUID in header), fields incl. `usage_limit_GB`/`current_usage_GB` (**units GB**).
-  Required a **bounded, documented fix**: apiflask 3.0.2 has no marshmallow upper bound and pulled marshmallow 4.3.0
-  (breaks API-v2 registration) → pinned `marshmallow==3.26.1` in the Hiddify venv (uv) + restarted hiddify-panel.
-- Disposable test user (`disposable-test`, 1 GB/1 day, no real data) full lifecycle PASS:
-  create 200 → get 200 → all-configs 200 (~14.8 KB) → patch 200 → delete 200 → re-GET 404; users back to 1.
-- Protocols present: FAST1/Hysteria2 (443/udp), FAST2/Shadowsocks (faketls), Secure/VLESS-Reality (reality config).
-  Real-device connect test deferred → #TASK_for_Charles.
-- SSH re-hardened: password auth disabled (key-only), `PermitRootLogin prohibit-password`, port unchanged; cloud-init
-  override neutralized; fresh key login verified + password refused. Firewall: Hiddify iptables allow 22/80/443
 
 
 ---

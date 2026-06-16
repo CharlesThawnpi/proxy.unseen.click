@@ -56,6 +56,10 @@ once Hiddify is installed. Detail: [PHASE2_DE1_PREFLIGHT.md](PHASE2_DE1_PREFLIGH
 - **Import-readiness note (2026-06-16):** a Hiddify-App import error citing `127.0.0.1:64127` is **client-side** (the
   App's own embedded core/clash-api local port on the phone) — it is **not** in de1's data path and not a de1 listener.
   The node's subscription output was verified clean of loopback references; see runbook §5B + PHASE9 addendum.
+- **DNSTT disabled (2026-06-16):** the DNSTT (DNS-tunnel) transport was turned off on de1 (`dnstt_enable=false`) because
+  its generated sing-box outbound carried a `tunnel-per-resolver` field the installed Hiddify App couldn't parse. DNSTT
+  is a niche last-resort transport, **not** part of FAST1/FAST2/Secure, so the data-plane offering is unchanged; no
+  port/firewall change.
 
 ## Phase 2 preflight — current network state (2026-06-15, read-only) — MASTER
 
