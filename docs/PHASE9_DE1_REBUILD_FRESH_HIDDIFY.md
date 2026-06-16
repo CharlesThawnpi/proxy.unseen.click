@@ -5,6 +5,11 @@
 > disposable-user lifecycle PASS, FAST1/FAST2/Secure inbounds present, SSH hardened, firewall safe.
 > **`leaked_key_rebuild_pending` CLEARED.** de1 stays **`status=test`**; live still gated. No live provisioning,
 > no real customers, no Telegram/portal exposure.
+>
+> **Real-device follow-up (2026-06-16, see addendum below): PARTIAL.** Clean import succeeds on iOS and the node is
+> **server-side READY + reachable for FAST1/FAST2/Secure**, but **real-device per-protocol connect is unconfirmed**
+> (iOS SS upload drops, Windows VPN-mode core failure = client-side, Facebook unreliable). **`realdevice_protocol_test_pending`
+> remains.** No node change made.
 
 ## Scope
 
@@ -299,6 +304,66 @@ profile text, so that test user was rotated.
   `/root/disk-rollback/`; then `apply_configs.sh`.
 - **Not a PASS for protocols** — output is import-clean, but FAST1/FAST2/Secure **connectivity** must be confirmed by
   Charles on a real device. de1 stays **`status=test`**.
+
+## Addendum (2026-06-16) — real-device protocol connectivity diagnosis after clean import — PARTIAL
+
+Charles's fresh pruned import now **succeeds on iOS** (profile shows two auto selectors "lowest"/"balance" +
+VLESS-Reality + Shadowsocks + Hysteria2). Remaining symptoms: iOS SS connects but **Speedtest upload often
+fails/drops**; **Facebook not reliably loaded**; **Windows VPN mode fails** ("Unexpected failure failed to start
+background core"); Windows Proxy mode connects but is **not** full-VPN proof. This addendum is a node-side
+protocol/client-routing diagnosis — **NOT a PASS**.
+
+**Result classification: PARTIAL.** Import-clean ✓ and **server-side READY/reachable for all three protocols** ✓, but
+**real-device per-protocol connect is unconfirmed**. de1 stays **`status=test`**; **`realdevice_protocol_test_pending`
+remains** (not cleared).
+
+- **Clean output (sanitized app-context render, counts only):** **1** `disposable-test-realdevice` user (only
+  customer-type user; 2 non-customer install users `default`/`Test` also present). **7 outbounds (3.7 KB)** = hysteria2×1
+  + shadowsocks×1 + vless-Reality×1 + **2 client selector groups** (`selector`×1 + `urltest`×1) + `direct`×2.
+  `vless_nonreality=0`, raw-IP=0, sslip=0, `dnstt=0`, `tunnel-per-resolver=0`, private-key fields=0; all 3 product
+  outbounds → node-de (Hy2 udp/14430, SS 16753, Reality tcp/443). `loopback_refs=3` = standard sing-box client-local
+  (clash-api `127.0.0.1:9090` + local DNS), not product endpoints, not the App's `64127`.
+- **Selector groups:** "lowest"/"balance"/auto are sing-box **client selector/urltest GROUP outbounds** (Hiddify
+  template), **not extra protocols** and **not** UNSEEN's final labels (UNSEEN naming handled later by backend/portal/
+  delivery: FAST1=Hysteria2, FAST2=Shadowsocks, Secure=VLESS-Reality). Template-generated; no supported `set-setting`
+  removes/renames them; **not changed** (out of scope, not clearly safe).
+- **Node health:** all `hiddify-*`/mariadb/redis active (`ss-faketls` intentionally inactive). **Panel API live over
+  node-de:** `admin/me/`, `admin/user/`, `admin/server_status/` → **200**; no-key `me/` → **403**. **marshmallow 3.26.1**
+  (pin intact). `openapi.json` → **500** = cosmetic apiflask schema-doc artifact (functional CRUD is 200). A controlled
+  **restart cluster ~19:19** (Charles ran `systemctl unmask systemd-resolved` + `restart sshd/ssh` from
+  `/opt/hiddify-manager/common`, pts/1) cycled the stack — reload churn, **not an ongoing crash**; all recovered.
+  haproxy code-143 ALERTs = normal seamless-reload churn. Resources healthy. Minor/benign: `UdpSndbufErrors=742`
+  (historical), RX dropped 13240 (0.23%, 0 errors), conntrack 76 / 2.1M.
+- **External reachability (Master, no payloads):** DNS ✓; TLS @443 **verify=0** ✓; TCP 443/16753/80/22 **OPEN** ✓; UDP
+  14430/443 **open|filtered** ✓.
+- **Per protocol (server-side READY):**
+  - **FAST1/Hysteria2:** udp/14430 listener (`hiddify-core`) + **explicit iptables ACCEPT 14430/udp** (plus port-hop
+    14428/14765/14767/36675/36677); no handshake/timeout errors; UDP `rmem/wmem_max`=64 MB (already tuned).
+  - **FAST2/Shadowsocks:** tcp+udp/16753 (`hiddify-core`, **plain SS**, faketls inactive); reachable; logs clean.
+    **No explicit firewall rule for 16753** → works only via default `INPUT=ACCEPT`. **Phase 10 hardening MUST add an
+    explicit `-A INPUT -p tcp --dport 16753 -j ACCEPT` (and udp) before tightening INPUT to DROP.**
+  - **Secure/VLESS-Reality:** 443 → internal `realityin_tcp_19411` (haproxy SNI-fronts 443); reality inbound present with
+    **decoy SNI `i.pinimg.com`** + dest + serverNames; valid TLS; no handshake failures (xray "non-443 ports" warning is
+    a benign haproxy-fronting artifact).
+- **Tuning decision = HOLD.** No server-side fault; buffers already tuned; all reachable. No node change made.
+- **Windows VPN-mode diagnosis:** "failed to start background core" is **client-side** (TUN/Wintun driver,
+  Administrator/privilege, or app-version) — node logs show no failed connection attempts implicating the server, and
+  the node is healthy + reachable. Windows **Proxy mode is not full-device VPN proof** (only proxies system-proxy-aware
+  apps; a Facebook/browser test under Proxy mode is inconclusive).
+- **iOS/mobile diagnosis:** import passes; green VPN = tunnel active. **SS Speedtest upload drop alone is not proof** —
+  mobile carriers shape UDP/upload; check VPN permission, Low Power Mode, background refresh, app version. Test each
+  protocol with an external-IP check + a blocked site + 3–5 min browsing stability, repeated on Wi-Fi and mobile data.
+- **Facebook** is useful field evidence, **not** formal proof alone.
+
+### #TASK_for_Charles (this addendum)
+
+- **Windows (VPN-mode core failure):** run Hiddify App **as Administrator** → switch to **VPN mode**; if it prompts,
+  **install/repair the Wintun/TUN driver**; **update Hiddify App to latest stable (non-dev)**; if it still fails,
+  capture **only the first 5 sanitized log lines** around "failed to start background core" (no profile links/configs).
+- **iOS/per-protocol:** for **each** of Secure(VLESS-Reality), FAST2(Shadowsocks), FAST1(Hysteria2) individually:
+  external-IP check → open a blocked site/app → browse 3–5 min for stability; repeat on **Wi-Fi** and **mobile data**.
+  Report per-protocol PASS/FAIL (no links/secrets). Do **not** use third-party config validators or paste configs.
+- This is what clears `realdevice_protocol_test_pending` — only on confirmed per-protocol connect PASS.
 
 ## Exact next recommended task
 

@@ -66,6 +66,14 @@ once Hiddify is installed. Detail: [PHASE2_DE1_PREFLIGHT.md](PHASE2_DE1_PREFLIGH
   protocols/transports disabled. Customer→node path therefore uses **node-de only**. INPUT policy is ACCEPT so the
   non-443 product ports are reachable; **no firewall change made** (default-DROP tightening remains a future hardening
   task).
+- **Reachability re-verified (2026-06-16 real-device diagnosis, from Master, no payloads):** DNS `node-de.unseen.click
+  → 5.249.160.59` ✓; **TLS @443 verify=0** (valid LE, CN/SAN node-de) ✓; **TCP 443/16753/80/22 OPEN** ✓; **UDP
+  14430/443 open|filtered** (not refused) ✓. Server-side all three protocols are READY and reachable (Reality 443 →
+  internal `realityin_tcp_19411` via haproxy SNI; Hysteria2 udp/14430 with explicit fw ACCEPT; SS tcp+udp/16753).
+  ⚠ SS `16753` has **no explicit firewall rule** — reachable only via default `INPUT=ACCEPT`; the future default-DROP
+  tightening **must** add an explicit `16753` allow. **Real-device per-protocol CONNECT remains unconfirmed** (iOS SS
+  upload drops, Windows VPN-mode core failure = client-side, Facebook unreliable) → see
+  [PHASE9_DE1_REBUILD_FRESH_HIDDIFY.md](PHASE9_DE1_REBUILD_FRESH_HIDDIFY.md) addendum. **de1 stays `status=test`.**
 
 ## Phase 2 preflight — current network state (2026-06-15, read-only) — MASTER
 

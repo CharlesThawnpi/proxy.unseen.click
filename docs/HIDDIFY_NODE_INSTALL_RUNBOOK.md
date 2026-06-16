@@ -212,6 +212,43 @@ Proxy rows. Set via `hiddifypanel set-setting -k <key> -v <true|false>` (in `/op
   FAST1/FAST2/Secure — and re-render to confirm 0. **Only emit counts/booleans; never dump config/key/UUID values, and
   sanitize query-param UUIDs (`&user=<uuid>`) too.**
 
+## 5D. Real-device connectivity diagnosis (server-side readiness — when a client "won't connect")
+
+When a client (iOS/Windows Hiddify App) imports cleanly but **traffic fails** (upload drops, Facebook won't load, VPN
+mode won't start), separate **node-side** from **client/network-side** before changing anything. Verified on de1
+(2026-06-16). Emit **only** counts/booleans/HTTP-status/ports — never links/UUIDs/keys.
+
+1. **Re-render the sanitized sing-box output** (§5B/§5C method). The reusable counts-only scanner: from
+   `/opt/hiddify-manager/hiddify-panel/` run the panel venv python, `create_app(app_mode='web')`, look up the disposable
+   user, then inside `app.test_request_context(base_url='https://node-<region>...')` set `g.account`/`g.user` +
+   `g.user_agent = hutils.flask.get_user_agent()` (use a `sing-box <ver>` UA), call
+   `get_common_data(uuid,'new')` → `singbox.configs_as_json(**c)`, and **count outbounds by `type`** + occurrences of
+   `tunnel-per-resolver`/`dnstt`/`private_key`/raw-IP/sslip. Expect: hysteria2 + shadowsocks + vless(reality) only, plus
+   **2 client group outbounds** (`selector` + `urltest`) and a couple of `direct` — those groups are **sing-box client
+   selector groups (the App's "lowest"/"balance"/auto), NOT protocols and NOT final product labels**; they are
+   template-generated and have no supported `set-setting` to remove/rename — leave them.
+2. **Services + API health:** all `hiddify-*` active (`ss-faketls` inactive once plain SS is on = expected). Re-verify
+   the **functional** API over the node domain (status codes only): `admin/me/`, `admin/user/`, `admin/server_status/`
+   should be **200**; no-key `me/` → **403**. Note `openapi.json` may be **500** (cosmetic apiflask schema-doc artifact of
+   the `marshmallow==3.26.1` downgrade) — that does **not** mean the API is broken; 404 on `/api/v2/*` would. Check
+   `systemctl show -p ActiveEnterTimestamp,NRestarts` to spot restarts; a control-process exit during an apply/reload is
+   churn, not a crash. **Always re-verify the API after any restart/apply** (an apply can reinstall marshmallow 4.x).
+3. **External reachability (from the Master, no proxy payloads):** DNS → node IP; `openssl s_client` TLS **verify=0**;
+   TCP connect (`/dev/tcp`) on 443 + the SS port + 80 + 22 = OPEN; `nc -u -z` on the Hysteria2 UDP port = open|filtered
+   (not refused). This proves the path is reachable independent of any client.
+4. **Firewall reality check (IMPORTANT for Phase 10):** Hiddify runs `INPUT` policy **ACCEPT** with **explicit** ACCEPT
+   rules for `443 tcp+udp`, `80/tcp`, `22/tcp`, and the **Hysteria2 UDP port (+ port-hop ports)** — but **NOT** for the
+   Shadowsocks TCP/UDP port, which is reachable only because the default policy is ACCEPT. **Before tightening `INPUT`
+   to DROP, add explicit allows for the SS port (tcp+udp) and every served product port**, or those protocols break.
+5. **UDP/QUIC tuning is usually already done:** Hiddify sets `net.core.rmem_max`/`wmem_max` ≈ 64 MB — the values
+   Hysteria2/QUIC want. If no buffer warning is logged and `UdpRcvbufErrors`≈0, **do not** add sysctl tuning. A few
+   `UdpSndbufErrors` and a sub-1% NIC `RX dropped` are normal background noise, not a fault.
+6. **Attribution:** if (1)–(5) are clean, the failure is **client/app/mobile-network**, not the node — **HOLD on node
+   changes** and give the operator a focused per-protocol manual test (external-IP check + blocked site + 3–5 min
+   browsing, repeated on Wi-Fi and mobile data). Windows "failed to start background core" is **client-side** (TUN/Wintun
+   driver, run-as-Administrator, app version); Windows **Proxy mode is not full-device VPN proof**; a single Speedtest
+   upload drop is **not** proof (carriers shape UDP/upload).
+
 ## 6. Secret safety (applies to every step)
 
 - **Never print or commit:** Hiddify admin links, admin/proxy paths, admin UUID / API key, private keys,

@@ -15,6 +15,15 @@
 > **`marshmallow==3.26.1`** in the Hiddify venv (the installer's own commented workaround) and restart `hiddify-panel`;
 > re-apply after any Hiddify update that reinstalls marshmallow 4.x. See
 > [PHASE9_DE1_REBUILD_FRESH_HIDDIFY.md](PHASE9_DE1_REBUILD_FRESH_HIDDIFY.md).
+> ### ✅ Re-verified after the 2026-06-16 real-device diagnosis (post-restart)
+> A controlled node restart cluster occurred (~19:19; Charles re-applied SSH/DNS) — the contract was **re-confirmed
+> still live afterward**: over `node-de.unseen.click`, `GET /api/v2/admin/me/` → **200**, `/admin/user/` → **200**,
+> `/admin/server_status/` → **200**; no-key `me/` → **403** (route + auth enforced). **marshmallow still pinned 3.26.1.**
+> **Caveat (cosmetic):** `GET /api/v2/openapi.json` over HTTP now returns **500** under the downgraded marshmallow —
+> apiflask's OpenAPI *spec-document generation* fails, but this is **doc/UI only**; the functional admin CRUD endpoints
+> the orchestrator depends on return 200, so the contract is unaffected. (This reconciles the earlier "spec builds fine
+> in-process" note: that predates the marshmallow-4→3.26.1 downgrade now in effect.) **All status codes only — no
+> bodies/links/UUIDs/keys printed; admin link used internally on-node.**
 > ### 🌐 Domain/host: node-de.unseen.click verified-live (2026-06-16)
 > The admin base + user subscription endpoints are now confirmed over the **real node domain with valid TLS** (not just
 > the install's raw-IP/sslip.io defaults): `GET https://node-de.unseen.click/<proxy_path>/api/v2/admin/me/` → 200 and

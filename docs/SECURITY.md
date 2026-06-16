@@ -169,6 +169,22 @@ See [PHASE4_PRELIVE_DE1_TUNING.md](PHASE4_PRELIVE_DE1_TUNING.md).
   compromised; the node must be **rebuilt** before any live/real provisioning (regenerates all server/user secrets).
   Dry-run work may continue on the test node. **No secret value was printed or committed during this task.**
 
+## de1 real-device protocol diagnosis secret-safety (2026-06-16)
+
+The real-device connectivity diagnosis ([PHASE9_DE1_REBUILD_FRESH_HIDDIFY.md](PHASE9_DE1_REBUILD_FRESH_HIDDIFY.md)
+addendum) was **secret-safe by construction**:
+
+- The sanitized sing-box scanner and API-health probe ran **on the node** and emitted **only** counts, booleans, HTTP
+  status codes, byte sizes, and non-secret port numbers — **never** outbound bodies, subscription/proxy links, user or
+  admin UUIDs, Reality/private keys, Hysteria2/SS passwords, or QR payloads. The config was rendered **in-memory** (not
+  written to disk); user display labels were emitted only through an allowlist filter that redacts UUID-shaped values.
+- The **admin link was used internally on-node only** (read from `/root/hiddify-de1-admin.link`, `0600`); its host/
+  proxy_path/UUID were **never printed** — the probe reported status codes alone. All temporary helper scripts on the
+  node were **removed** after use.
+- All log inspection was piped through a **redactor** (strips UUIDs, `/s/<token>`, auth headers, long base64 blobs).
+- **No node change was made** (HOLD decision); de1 stays `status=test`; `realdevice_protocol_test_pending` remains.
+- Repo changes are **docs + SOURCE_OF_TRUTH only**; pre-commit secret scan run before commit.
+
 ## Phase 4C secret-safety (dry-run provisioning — verified by tests)
 
 The Phase 4C orchestration ([PHASE4C_DRY_RUN_PROVISIONING.md](PHASE4C_DRY_RUN_PROVISIONING.md)) keeps rules 1–2 by

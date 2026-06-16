@@ -113,6 +113,25 @@ was verified ([PHASE9_DE1_REBUILD_FRESH_HIDDIFY.md](PHASE9_DE1_REBUILD_FRESH_HID
   `realdevice_protocol_test_pending`. **de1 stays `status=test`**; remaining pre-live: a real-device FAST1/FAST2/Secure
   connect PASS (#TASK_for_Charles) + RAM lock + set `node-de.unseen.click` panel domain/cert.
 
+## de1 real-device protocol diagnosis (2026-06-16) — PARTIAL (server-side READY; client connect unconfirmed)
+
+After Charles's clean import (iOS shows two auto selectors "lowest"/"balance" + VLESS-Reality + Shadowsocks + Hysteria2),
+a node-side diagnosis ([PHASE9_DE1_REBUILD_FRESH_HIDDIFY.md](PHASE9_DE1_REBUILD_FRESH_HIDDIFY.md) addendum) found the
+node **server-side READY and externally reachable for all three protocols**, but **real-device connect is unconfirmed**:
+
+- **Sanitized render still clean:** 1 `disposable-test-realdevice` user; 7 outbounds (hy2 + ss + vless-Reality + 2
+  client selector groups + 2 direct); 0 raw-IP/sslip/dnstt/non-Reality/private-keys; all product → node-de.
+- **Health:** all `hiddify-*` active (`ss-faketls` intentionally inactive); panel API re-verified **200**; **marshmallow
+  3.26.1** pin intact (`openapi.json` 500 is cosmetic). A controlled ~19:19 restart cluster (Charles re-applied SSH/DNS)
+  cycled the stack with full recovery — **no ongoing crash**.
+- **Reachability:** DNS ✓, TLS verify=0 ✓, TCP 443/16753/80/22 OPEN ✓, UDP 14430/443 open|filtered ✓.
+- **Selectors:** "lowest"/"balance"/auto are **client selector/urltest groups, not protocols** and **not UNSEEN's final
+  labels** (backend/portal handle UNSEEN naming).
+- **Decision = HOLD (no node tuning):** UDP buffers already 64 MB, no server errors, all reachable. **Windows VPN-mode
+  "failed to start background core" = client-side**; Windows **Proxy mode is not full-VPN proof**; **iOS SS upload drop**
+  = mobile-network/client. **`realdevice_protocol_test_pending` REMAINS; de1 stays `status=test`; no node change made.**
+- **Phase 10 note:** SS `16753` is reachable only via default `INPUT=ACCEPT`; add an explicit allow before tightening to DROP.
+
 ## Phase 4C — de1 in dry-run provisioning (2026-06-16)
 
 The dry-run provisioning orchestration ([PHASE4C_DRY_RUN_PROVISIONING.md](PHASE4C_DRY_RUN_PROVISIONING.md)) may select

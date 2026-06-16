@@ -60,6 +60,17 @@ After pruning de1 to the UNSEEN product set, the customer profile uses these nod
 compatibility) — expected, not a fault. `80/tcp` stays open for ACME renewal; `443/tcp`+`443/udp` remain. Port numbers
 above are Hiddify-assigned and may differ per node/version — read them from the generated profile, never hardcode.
 
+> **Listener + firewall + reachability re-verified (2026-06-16 real-device diagnosis; sanitized).** Live listeners:
+> **443/tcp** (haproxy → internal `realityin_tcp_19411` for Reality), **443/udp** (haproxy QUIC), **14430/udp**
+> (`hiddify-core`, Hysteria2), **16753 tcp+udp** (`hiddify-core`, plain Shadowsocks incl. UDP relay), **80/tcp**
+> (haproxy/ACME), **22** (sshd). Firewall (`INPUT` policy **ACCEPT**) carries **explicit** `ACCEPT` rules for
+> `14430/udp` (+ Hiddify port-hop `14428/14765/14767/36675/36677 udp`), `443 tcp+udp`, `80/tcp`, `22/tcp`.
+> ⚠ **There is NO explicit rule for Shadowsocks `16753`** — it is reachable today only because the default `INPUT`
+> policy is `ACCEPT`. **Phase 10 hardening (tighten INPUT → DROP) MUST add explicit `16753 tcp` (and `udp`) allows**
+> or Shadowsocks breaks. External reachability from the Master (no payloads): TCP **443/16753/80/22 OPEN**; UDP
+> **14430/443 open|filtered** (not refused); TLS @443 **verify=0** (valid LE cert, CN/SAN node-de). The `8388` loopback
+> `ss-server` is the **inactive faketls backend** (unused) — do not open it.
+
 ## Phase 2 preflight — current live port map (Master, 2026-06-15)
 
 Observed via `ss -tulpn` (read-only). See `PHASE2_MASTER_DE_HIDDIFY_PREFLIGHT.md`.

@@ -1,6 +1,6 @@
 # UNSEEN PROXY — SOURCE OF TRUTH (consolidated, auto-generated)
 
-> **Generated:** 2026-06-16T15:54:11Z — by `scripts/build_source_of_truth.sh`.
+> **Generated:** 2026-06-16T16:43:23Z — by `scripts/build_source_of_truth.sh`.
 > **This is the live project state for external readers (e.g. the Custom GPT).** It is DERIVED from the
 > canonical docs below and regenerated each task. Upload THIS file to the GPT (not IMPLEMENTATION_PLAN.md,
 > which is the static v1.9 plan). Re-download after updates.
@@ -44,7 +44,7 @@ Where the UNSEEN PROXY build stands across the §34 deployment phases.
 | 0 | Clean-VPS verification (gate before any build) | DONE (gate passed) |
 | 1 | Documentation, repo & architecture planning | DONE (pushed to origin/main, 25e5ddc) |
 | 2 | Hiddify test node setup | **RE-SCOPED to a separate DE VPS** (`de1`, `5.249.160.59`, Ubuntu 22.04, planned/test). Master-co-location preflight done then RETIRED. Forward plan: PHASE2_3_DE_NODE_PLAN.md |
-| 3 | Hiddify API & subscription compatibility audit | **DONE (PASS) — Hiddify v12.3.3 on de1; API v2 contract VERIFIED-LIVE; disposable test user create→sub→delete confirmed.** Phase 4 API layer UNBLOCKED. **Re-verified after a fresh de1 rebuild + clean reinstall (2026-06-16, PHASE9_DE1_REBUILD_FRESH_HIDDIFY.md): contract re-confirmed (bounded `marshmallow==3.26.1` venv pin needed), disposable-user lifecycle PASS, FAST1/FAST2/Secure present, SSH hardened. `leaked_key_rebuild_pending` CLEARED.** **Node domain `node-de.unseen.click` now SET with a valid Let's Encrypt cert (2026-06-16): added via `hiddifypanel add-domain` + `apply_configs.sh`; API/all-configs verified-live over the public node-de path with valid TLS; subscription output now references `node-de.unseen.click` (resolves Phase 9 blocker #4).** **Real-device import (2026-06-16): two issues found+addressed. (1) Mobile `127.0.0.1:64127` = app-side core (server output clean). (2) Windows `[SingboxParser] ... outbounds[37].tunnel-per-resolver: json: unknown field` = generator↔parser mismatch from the DNSTT outbound — FIXED by disabling DNSTT (`set-setting dnstt_enable=false` + apply; DNSTT is not FAST1/FAST2/Secure). After-render confirms `tunnel-per-resolver`=0/dnstt=0; FAST1/Secure outbounds intact. Disposable user recreated DNSTT-free. Secondary (deferred): sub output still multi-domain (raw-IP/sslip won't connect; manual panel prune). Real-device retest can proceed once Charles re-imports the fresh node-de subscription on an updated app. (3) Hiddify's default profile was too broad (100 outbounds across raw-IP/sslip, no clean FAST1/FAST2/Secure) — PRUNED to a clean UNSEEN-only profile via supported `set-setting` + `sub_link_only`: now exactly hysteria2(FAST1)+shadowsocks(FAST2)+vless-Reality(Secure), all on node-de (FAST1 udp:14430, FAST2 :16753, Secure tcp:443+decoy SNI), no raw-IP/sslip/vmess/tuic/naive/mieru/ssh/wireguard, no tunnel-per-resolver/dnstt/private-keys (100→9 outbounds). Disposable user rotated (Charles pasted profile text). Protocols NOT yet PASS — awaits real-device connect.** Remaining: real-device FAST1/FAST2/Secure connect PASS + RAM lock. See HIDDIFY_API_CONTRACT.md + PHASE3_DE1_HIDDIFY_LIVE_VERIFY.md + PHASE9_DE1_REBUILD_FRESH_HIDDIFY.md |
+| 3 | Hiddify API & subscription compatibility audit | **DONE (PASS) — Hiddify v12.3.3 on de1; API v2 contract VERIFIED-LIVE; disposable test user create→sub→delete confirmed.** Phase 4 API layer UNBLOCKED. **Re-verified after a fresh de1 rebuild + clean reinstall (2026-06-16, PHASE9_DE1_REBUILD_FRESH_HIDDIFY.md): contract re-confirmed (bounded `marshmallow==3.26.1` venv pin needed), disposable-user lifecycle PASS, FAST1/FAST2/Secure present, SSH hardened. `leaked_key_rebuild_pending` CLEARED.** **Node domain `node-de.unseen.click` now SET with a valid Let's Encrypt cert (2026-06-16): added via `hiddifypanel add-domain` + `apply_configs.sh`; API/all-configs verified-live over the public node-de path with valid TLS; subscription output now references `node-de.unseen.click` (resolves Phase 9 blocker #4).** **Real-device import (2026-06-16): two issues found+addressed. (1) Mobile `127.0.0.1:64127` = app-side core (server output clean). (2) Windows `[SingboxParser] ... outbounds[37].tunnel-per-resolver: json: unknown field` = generator↔parser mismatch from the DNSTT outbound — FIXED by disabling DNSTT (`set-setting dnstt_enable=false` + apply; DNSTT is not FAST1/FAST2/Secure). After-render confirms `tunnel-per-resolver`=0/dnstt=0; FAST1/Secure outbounds intact. Disposable user recreated DNSTT-free. Secondary (deferred): sub output still multi-domain (raw-IP/sslip won't connect; manual panel prune). Real-device retest can proceed once Charles re-imports the fresh node-de subscription on an updated app. (3) Hiddify's default profile was too broad (100 outbounds across raw-IP/sslip, no clean FAST1/FAST2/Secure) — PRUNED to a clean UNSEEN-only profile via supported `set-setting` + `sub_link_only`: now exactly hysteria2(FAST1)+shadowsocks(FAST2)+vless-Reality(Secure), all on node-de (FAST1 udp:14430, FAST2 :16753, Secure tcp:443+decoy SNI), no raw-IP/sslip/vmess/tuic/naive/mieru/ssh/wireguard, no tunnel-per-resolver/dnstt/private-keys (100→9 outbounds). Disposable user rotated (Charles pasted profile text). Protocols NOT yet PASS — awaits real-device connect.** **Real-device diagnosis (2026-06-16): PARTIAL — import succeeds on iOS; node is server-side READY + externally reachable for all three (DNS/TLS verify=0; TCP 443/16753/80/22 OPEN; UDP 14430/443 open|filtered; explicit fw ACCEPT 14430/udp; SS 16753 reachable via default INPUT=ACCEPT — Phase 10 must add an explicit 16753 allow; Reality 443→internal 19411, decoy SNI i.pinimg.com; panel API re-verified 200, marshmallow 3.26.1). But real-device per-protocol CONNECT is unconfirmed: iOS SS Speedtest upload drops, Windows VPN-mode "failed to start background core" (client-side), Facebook unreliable. Decision = HOLD (no node tuning; buffers already 64MB, no server errors). `realdevice_protocol_test_pending` REMAINS.** Remaining: real-device FAST1/FAST2/Secure connect PASS + RAM lock. See HIDDIFY_API_CONTRACT.md + PHASE3_DE1_HIDDIFY_LIVE_VERIFY.md + PHASE9_DE1_REBUILD_FRESH_HIDDIFY.md |
 | 4 | Database & backend clone design | **Phase 4A + 4B + 4C DONE (dry-run/test-safe).** 4A: migrations + schema + seed + Hiddify client + provisioner CLI. 4B: AccountService + account-link codes + NotificationService (queue-first) + idempotency + WAL-safe online backup (`0002`). 4C: dry-run provisioning orchestration — payment-approval boundary → subscription snapshots → access-profile placeholder → provisioning plan (entitlements + live blockers + sanitized Hiddify intent) → delivery enqueue → audit + forward-only compensation; **live hard-refused**; additive migration `0003`. **70 tests PASS**. No live mutations/sends/real customers. See PHASE4A/4B/4C docs. |
 | 5 | Telegram bot implementation (Burmese-primary) | **Foundation + transport DONE (dry-run, gated).** Foundation: adapter + Burmese catalogue + router + AccountService identity + env-driven admin. Transport: Bot API boundary (token redacted; injectable opener), offset-tracked polling runner, NotificationService sender consuming `outbound_messages` (queued→sent/requeue/dead), fail-closed double gate. **No polling daemon/webhook/API/send; no systemd.** See PHASE5_TELEGRAM_BOT_FOUNDATION.md + PHASE5_TELEGRAM_TRANSPORT_FOUNDATION.md. Live bring-up = next, Charles-gated. |
 | 6 | Hiddify subscription delivery integration | **Foundation DONE (dry-run): delivery payload model (safe refs only) + branded link rule (`sub.unseen.click/s/<token>`, hash stored) + deep-link/copy-link priority + QR planned + mocked Hiddify-output normalizer + NotificationService/Telegram render integration. No raw links persisted/logged; no network.** See PHASE6_SUBSCRIPTION_DELIVERY_FOUNDATION.md. Sidecar + live = next, gated. |
@@ -213,6 +213,20 @@ disk/LVM grown first, admin link `0600` outside git, API verified (bounded `mars
 appears), disposable-user lifecycle, protocols present, SSH hardened, firewall verified, `status=test` until
 Charles-gated promotion. Future US/SG installs **must** follow this runbook and must **not** repeat Master co-location
 or Docker-on-Master.
+
+**de1 real-device protocol diagnosis (2026-06-16) — PARTIAL** ([PHASE9_DE1_REBUILD_FRESH_HIDDIFY.md](PHASE9_DE1_REBUILD_FRESH_HIDDIFY.md)
+addendum): after the clean import, the node is **server-side READY + externally reachable for all three protocols** —
+sanitized render still clean (7 outbounds: hy2+ss+vless-Reality + 2 client selector groups "lowest"/"balance"/auto +
+2 direct; 0 raw-IP/sslip/dnstt/nonReality/private-keys; all → node-de), all `hiddify-*` active, **panel API re-verified
+200** (marshmallow 3.26.1 pin intact; `openapi.json` 500 is cosmetic), DNS/TLS verify=0, TCP 443/16753/80/22 OPEN, UDP
+14430/443 open|filtered, explicit fw ACCEPT for 14430/udp, Reality 443→internal 19411 with decoy SNI `i.pinimg.com`.
+**But real-device per-protocol CONNECT is unconfirmed:** iOS SS Speedtest **upload drops**, **Facebook unreliable**,
+**Windows VPN-mode "failed to start background core" = client-side** (TUN/Wintun/Administrator/app-version); Windows
+**Proxy mode is not full-VPN proof**. **Decision = HOLD (no node tuning** — UDP buffers already 64 MB, no server errors).
+The "lowest"/"balance" selectors are **sing-box client groups, not protocols and not UNSEEN's final labels** (backend/
+portal handles UNSEEN naming). **`realdevice_protocol_test_pending` REMAINS; de1 stays `status=test`; no node change made.**
+Phase-10 hardening note: when tightening INPUT to DROP, **add an explicit allow for SS 16753** (today reachable only via
+default `INPUT=ACCEPT`).
 
 **Next: Charles records the real-device FAST1/FAST2/Secure connect PASS** (clears `realdevice_protocol_test_pending`;
 `#TASK_for_Charles` in PHASE9_DE1_REBUILD_FRESH_HIDDIFY.md). Then separately-gated tasks remain (public portal
@@ -526,6 +540,15 @@ MMT timestamps explicitly.
 > **`marshmallow==3.26.1`** in the Hiddify venv (the installer's own commented workaround) and restart `hiddify-panel`;
 > re-apply after any Hiddify update that reinstalls marshmallow 4.x. See
 > [PHASE9_DE1_REBUILD_FRESH_HIDDIFY.md](PHASE9_DE1_REBUILD_FRESH_HIDDIFY.md).
+> ### ✅ Re-verified after the 2026-06-16 real-device diagnosis (post-restart)
+> A controlled node restart cluster occurred (~19:19; Charles re-applied SSH/DNS) — the contract was **re-confirmed
+> still live afterward**: over `node-de.unseen.click`, `GET /api/v2/admin/me/` → **200**, `/admin/user/` → **200**,
+> `/admin/server_status/` → **200**; no-key `me/` → **403** (route + auth enforced). **marshmallow still pinned 3.26.1.**
+> **Caveat (cosmetic):** `GET /api/v2/openapi.json` over HTTP now returns **500** under the downgraded marshmallow —
+> apiflask's OpenAPI *spec-document generation* fails, but this is **doc/UI only**; the functional admin CRUD endpoints
+> the orchestrator depends on return 200, so the contract is unaffected. (This reconciles the earlier "spec builds fine
+> in-process" note: that predates the marshmallow-4→3.26.1 downgrade now in effect.) **All status codes only — no
+> bodies/links/UUIDs/keys printed; admin link used internally on-node.**
 > ### 🌐 Domain/host: node-de.unseen.click verified-live (2026-06-16)
 > The admin base + user subscription endpoints are now confirmed over the **real node domain with valid TLS** (not just
 > the install's raw-IP/sslip.io defaults): `GET https://node-de.unseen.click/<proxy_path>/api/v2/admin/me/` → 200 and
@@ -560,15 +583,6 @@ MMT timestamps explicitly.
 > The customer profile composition is governed by `hutils/proxy/shared.py:get_proxies()` (each `*_enable` hconfig strips
 > matching Proxy rows) and `panel/user/user.py:362` (customer-sub domains = `Domain.sub_link_only != True`). Set protocol
 > flags with `hiddifypanel set-setting -k <key> -v <bool>` (supported CLI). To deliver only **Hysteria2 (FAST1) +
-> Shadowsocks (FAST2) + VLESS-Reality (Secure)**: enable `hysteria_enable`, `shadowsocks2022_enable`, `reality_enable`,
-> `tcp_enable`; disable `vmess/tuic/naive/mieru/ssh_server/wireguard/trojan/dnstt/grpc/xhttp/httpupgrade/h2/ws/kcp/
-> ssfaketls/shadowtls`; and set **`vless_enable=false`** (keeps **only** Reality vless). Exclude raw-IP/sslip from
-> customer subs by setting `sub_link_only=1` on those Domain rows (no `remove-domain` CLI exists). Full recipe:
-> [HIDDIFY_NODE_INSTALL_RUNBOOK.md](HIDDIFY_NODE_INSTALL_RUNBOOK.md) §5C.
-
-> ## ✅ VERIFIED-LIVE on de1 — Hiddify **v12.3.3**, API **"Hiddify API v2.2.0"** (2026-06-16)
-> Source: the panel's own OpenAPI spec (generated in-process via `hiddifypanel`/apiflask — 22 paths) **and** confirmed
-> by live HTTP calls (create/get/delete a disposable user, 200s). The earlier OpenAPI HTTP failures were **routing/
 
 
 ---
@@ -581,6 +595,56 @@ MMT timestamps explicitly.
 > **Status:** Phase 1 skeleton — running log of changes by date
 
 Chronological record of notable changes to the UNSEEN PROXY project.
+
+## 2026-06-16 — de1: diagnose real-device protocol connectivity after clean import — PARTIAL (server-side READY; client connect unconfirmed)
+
+- **Why:** Charles's fresh pruned import now **succeeds on iOS** (profile shows two auto selectors "lowest"/"balance"
+  + VLESS-Reality + Shadowsocks + Hysteria2 entries). But: iOS Shadowsocks connects yet **Speedtest upload often
+  fails/drops**; **Facebook still not reliably loaded**; **Windows VPN mode fails** with "Unexpected failure failed to
+  start background core" (Windows Proxy mode connects but is **not** full-device VPN proof). This task diagnoses
+  node-side protocol/client-routing readiness — **not** treated as PASS.
+- **Clean output re-verified (sanitized app-context sing-box render; counts only, no links/UUIDs/keys):** **1**
+  `disposable-test-realdevice` user (the only customer-type user; 2 non-customer install users `default`/`Test` also
+  present — not real customers). **7 outbounds (3.7 KB):** hysteria2×1 (FAST1) + shadowsocks×1 (FAST2) + vless-Reality×1
+  (Secure) + **2 client selector groups** (1 `selector` + 1 `urltest`) + 2 `direct`. `vless_nonreality=0`, raw-IP=0,
+  sslip=0, `dnstt=0`, `tunnel-per-resolver=0`, private-key fields=0; all 3 product outbounds → **node-de** (Hy2
+  udp/14430, SS 16753, Reality tcp/443). The 3 `loopback_refs` are standard sing-box client-local refs (clash-api
+  `127.0.0.1:9090` + local DNS), **not** product endpoints and **not** the App's `64127` core port.
+- **Selector groups explained:** the **"lowest"/"balance"/auto** entries Charles sees are sing-box **client selector/
+  urltest GROUP outbounds** generated by Hiddify's template — **not extra proxy protocols**. They are **not** UNSEEN's
+  final labels; UNSEEN naming (FAST1=Hysteria2, FAST2=Shadowsocks, Secure=VLESS-Reality) is handled by backend/portal/
+  delivery later. They are template-generated (no supported `set-setting` removes/renames them); **not changed** here
+  (changing selector behavior is not clearly safe and out of scope).
+- **Node health (sanitized):** all `hiddify-*`/mariadb/redis **active** (`hiddify-ss-faketls` intentionally inactive —
+  plain SS). **Panel API re-verified live over node-de:** `admin/me/`, `admin/user/`, `admin/server_status/` → **200**;
+  `me/` with no key → **403** (route+auth OK). **marshmallow pinned 3.26.1** (API pin intact). `openapi.json` → 500 is a
+  **cosmetic** apiflask schema-doc artifact of the marshmallow downgrade — the functional CRUD API the orchestrator uses
+  is 200. A **controlled restart cluster ~19:19** (Charles, pts/1 in `/opt/hiddify-manager/common`, ran `systemctl
+  unmask --now systemd-resolved` + `restart sshd/ssh`) cycled nginx/haproxy/panel/xray; the panel control-process
+  exit-code + auto-restart is **reload churn, not an ongoing crash** — all recovered to active. haproxy code-143 ALERTs =
+  normal seamless-reload worker churn. Resources healthy (load ~0, ~2.9 GiB mem free, disk 17%). Minor: `UdpSndbufErrors=742`
+  (historical), RX dropped 13240 (0.23%, 0 errors), conntrack 76 / 2.1M.
+- **External reachability from Master (no proxy payloads):** DNS `node-de.unseen.click → 5.249.160.59` ✓; TLS @443
+  **verify=0** (Let's Encrypt, CN/SAN=node-de, valid to Sep 14) ✓; TCP **443/16753/80/22 OPEN** ✓; UDP **14430/443
+  open|filtered** (not refused) ✓.
+- **Per-protocol server readiness — all READY:** **FAST1/Hysteria2** udp/14430 listener + **explicit iptables ACCEPT
+  14430/udp** (+ port-hop 14428/14765/14767/36675/36677), no handshake/timeout errors, UDP `rmem/wmem_max`=64 MB
+  (already tuned). **FAST2/Shadowsocks** tcp+udp/16753 (plain SS, faketls inactive), reachable, logs clean — **no
+  explicit firewall rule for 16753** (works via default INPUT=ACCEPT; **Phase 10 hardening MUST add an explicit allow**
+  before tightening INPUT to DROP). **Secure/VLESS-Reality** 443→internal `realityin_tcp_19411`, reality inbound present
+  with **decoy SNI i.pinimg.com** + dest + serverNames, valid TLS, no handshake failures (the xray "non-443 ports"
+  warning is a benign haproxy-fronting artifact).
+- **Decision = HOLD (no node-side tuning).** Buffers already tuned, no server errors, all protocols reachable — **no
+  evidence supports a server change.** Symptoms (SS upload drop, Facebook, Windows core fail) point **client/app/mobile-
+  network** side. **Windows "failed to start background core" = client-side** (TUN/Wintun driver, Administrator/privilege,
+  or app-version) — server logs show the node healthy and reachable, with no failed connection attempts implicating it.
+  **iOS SS upload drop** = mobile-carrier UDP/upload shaping and/or client (background refresh, Low Power Mode, VPN
+  permission, app version); not a final proof. **Facebook** is field evidence, not formal proof alone. **Windows Proxy
+  mode** is **not** accepted as full-device VPN proof.
+- **No node change made.** de1 stays **`status=test`**; **`realdevice_protocol_test_pending` NOT cleared** (awaits
+  Charles's per-protocol real-device connect PASS). **Secret-safety:** only counts/booleans/HTTP-status/ports emitted;
+  admin link used internally on-node only (never printed); all temp scanner scripts removed; logs redacted. Docs +
+  SOURCE_OF_TRUTH regenerated. See [PHASE9_DE1_REBUILD_FRESH_HIDDIFY.md](PHASE9_DE1_REBUILD_FRESH_HIDDIFY.md).
 
 ## 2026-06-16 — de1: prune Hiddify output to a clean UNSEEN-only profile (FAST1/FAST2/Secure, node-de only) — PASS
 
@@ -615,56 +679,6 @@ Chronological record of notable changes to the UNSEEN PROXY project.
 
 - **Symptom (Windows Hiddify App):** profile downloaded but the parser rejected it —
   `[SingboxParser] unmarshal error: outbounds[37].tunnel-per-resolver: json: unknown field "tunnel-per-resolver"`.
-  This proves the download succeeded (separate from the earlier mobile `127.0.0.1:64127` app-core symptom) — a
-  **generator↔parser schema mismatch**.
-- **Root cause = C (a specific Hiddify feature):** `tunnel-per-resolver` is emitted **only** for the **DNSTT** (DNS-tunnel)
-  outbound — `hutils/proxy/shared.py` sets `tunnel_per_resolver=4` inside `if proto==dnstt`, and `singbox.py:add_dnstt`
-  renders it hyphenated into the sing-box config. DNSTT was enabled (`dnstt_enable=true`). The installed app's sing-box
-  core doesn't know the field, so it rejects the whole profile. DNSTT is a niche last-resort transport — **not**
-  FAST1/FAST2/Secure.
-- **Fix (Option 2, supported + reversible):** `hiddifypanel set-setting -k dnstt_enable -v false` → `apply_configs.sh`
-  (PTY method). `current.json` backed up on-node first. `get_proxies()` strips DNSTT proxies when `dnstt_enable` is
-  false (`shared.py:154`), so no DNSTT outbound is generated. **Rollback:** `set-setting -k dnstt_enable -v true` +
-  apply.
-- **Verified (sanitized, no raw output):** before = field present (app error + code path); after = app-context render of
-  the disposable user's sing-box config shows **`tunnel-per-resolver`=0, dnstt=0** (FAST1/Secure outbounds intact).
-  `dnstt_enable=false` in DB + `current.json`; all 10 services active; node-de TLS still valid (`ssl_verify=0`). No
-  cert/firewall/port change.
-- **Disposable user:** deleted + recreated one `disposable-test-realdevice` (1 GB/1 day, enabled) so its links are
-  freshly generated DNSTT-free (and to rotate a UUID inadvertently surfaced during diagnosis — see SECURITY.md).
-- **Secondary (deferred per task):** sing-box output is still multi-domain (node-de + raw-IP + sslip); raw-IP/sslip
-  outbounds won't connect (no cert) but don't block parsing. Domain pruning is a separate manual panel action.
-- de1 stays **`status=test`**. Docs + runbook add a **client-parser-compatibility check** (scan generated sing-box for
-  unknown fields like `tunnel-per-resolver`) before any real-device test. SOURCE_OF_TRUTH regenerated. No secrets committed.
-
-## 2026-06-16 — de1: diagnose Hiddify App import failure (`127.0.0.1:64127`) — PARTIAL (server output clean; app-side)
-
-- **Symptom:** importing the `disposable-test-realdevice` subscription into the Hiddify App failed **before the profile
-  saved** — "Failed to add profile / Unexpected error / Error connecting: SocketException / Connection refused /
-  127.0.0.1:64127".
-- **Diagnosis (sanitized, no links/configs printed):** scanned the user subscription across formats (auto/singbox/clash/
-  sub/sub64) **and** the admin `all-configs` with a counts-only sanitizer (temp files shredded). The real config (admin
-  `all-configs`, ~16.4 KB, 322 lines) is **clean**: `127.0.0.1`=0, `localhost`=0, `64127`=0; protocols present
-  (hy2/ss/vless+reality). On-disk search: **`64127` exists in NO Hiddify config/template** (only an unrelated `jqvmap`
-  USA-map JS asset). The client sing-box template's clash-api `external_controller` is the standard **`127.0.0.1:9090`**,
-  not 64127.
-- **Root cause = B (app-side):** `127.0.0.1:64127` is the **Hiddify App's own embedded core/clash-api local control
-  port** (dynamically chosen), refused because the app's core/VPN service was not running/reachable when adding the
-  profile. The server never emits it. Not a protocol-connectivity failure.
-- **Secondary = C (multi-domain output, not the blocker):** the subscription legitimately lists **node-de (valid TLS) +
-  raw-IP + sslip.io** endpoints. The raw-IP/sslip ones have no matching cert and won't connect; they don't cause the
-  64127 error (import fails before connect). **No safe automated cleanup exists** — `hiddifypanel` has `add-domain` only
-  (no remove/set-default), no per-domain sub toggle, and removing the raw-IP domain would break the IP-based admin link
-  → **HOLD**: pruning is a manual panel action (Settings → Domains), documented for Charles.
-- **No node change made** (none safe or needed for an app-side error); de1 stays **`status=test`**; one
-  `disposable-test-realdevice` user kept (its output is import-clean and includes node-de). Docs + runbook updated with a
-  **mandatory sanitized subscription-output inspection before any real-device test**; SOURCE_OF_TRUTH regenerated. No
-  secrets printed or committed.
-
-## 2026-06-16 — de1: set node domain `node-de.unseen.click` + valid TLS for real-device import — PASS
-
-- **Root cause (real-device Hiddify-App import failing):** the `--no-gui` fresh install auto-configured **only** the
-  raw-IP domain (`5.249.160.59`) + the sslip.io auto-domain (`5.249.160.59.sslip.io`); `node-de.unseen.click` was
 
 
 ---
