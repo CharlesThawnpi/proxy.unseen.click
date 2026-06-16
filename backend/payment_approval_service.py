@@ -44,7 +44,8 @@ def approve_order_dry_run(conn: sqlite3.Connection, order_id: int,
     """Idempotently approve `order_id` (dry-run) and create one subscription + access profile.
 
     Re-running with the same order_id replays the prior result (duplicate=True) and creates no
-    second subscription.
+    second subscription. `now`, when supplied, should be a Myanmar Time business timestamp; the
+    fallback `datetime('now')` path is legacy SQLite behavior to replace before live launch.
     """
     begin = _idem.begin_idempotent(conn, _SCOPE, _key(order_id))
     if begin.state == _idem.STATE_ALREADY_COMPLETED:

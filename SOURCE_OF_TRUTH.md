@@ -1,6 +1,6 @@
 # UNSEEN PROXY — SOURCE OF TRUTH (consolidated, auto-generated)
 
-> **Generated:** 2026-06-16T07:18:21Z — by `scripts/build_source_of_truth.sh`.
+> **Generated:** 2026-06-16T07:30:09Z — by `scripts/build_source_of_truth.sh`.
 > **This is the live project state for external readers (e.g. the Custom GPT).** It is DERIVED from the
 > canonical docs below and regenerated each task. Upload THIS file to the GPT (not IMPLEMENTATION_PLAN.md,
 > which is the static v1.9 plan). Re-download after updates.
@@ -9,6 +9,7 @@
 - `IMPLEMENTATION_PLAN.md` — static v1.9 **plan/intent** (not updated as work proceeds).
 - `docs/DECISIONS.md` — **ADRs that SUPERSEDE the plan** where they differ (authoritative).
 - `docs/CURRENT_STATUS.md` — **live phase tracker + next task**.
+- `docs/TIMEZONE_POLICY.md` — **project-wide business/customer timezone rule**.
 - `docs/CHANGELOG.md` — chronological record of what changed.
 - `docs/HIDDIFY_API_CONTRACT.md` — verified Hiddify API v2 contract.
 - Other `docs/*.md` — architecture, security, nodes, regions, protocols, etc.
@@ -22,6 +23,7 @@
 - **Dry-run first; live actions double-gated** (env latch + `--live --confirm`). Never fabricate a PASS.
 - **Hiddify uses GB**; UNSEEN stores GiB — convert GiB↔GB at the orchestrator.
 - **Burmese-primary frontend** (~90% Burmese / English terms); invoices/receipts in English; no email/password.
+- **Business/customer dates use Myanmar Time:** MMT, UTC+06:30, `Asia/Yangon`; external UTC converts at the boundary.
 
 
 ---
@@ -54,6 +56,11 @@ Where the UNSEEN PROXY build stands across the §34 deployment phases.
 | 12 | Controlled public soft launch | PENDING |
 
 ## Next up
+
+**Timezone policy accepted (2026-06-16 MMT)** ([TIMEZONE_POLICY.md](TIMEZONE_POLICY.md), [DECISIONS.md](DECISIONS.md)
+ADR-004): all business/customer/project dates use Myanmar Time (**MMT**, UTC+06:30, `Asia/Yangon`). External UTC must
+be converted before customer/business use; technical UTC fields must be explicitly labeled. Helper module:
+`backend/timezone.py`. Legacy SQLite `datetime('now')` defaults are documented follow-ups before live launch.
 
 **Architecture (current):** the **Master is control-plane only** — co-location is **retired**
 ([DECISIONS.md](DECISIONS.md) ADR-001). The Master was tested as a co-located DE node via Hiddify's experimental
@@ -189,6 +196,84 @@ warning is expected.) Reports: [PHASE2_DE1_OS_UPGRADE.md](PHASE2_DE1_OS_UPGRADE.
 **supported host install**, live Swagger/API-contract verification, one disposable test user, and FAST1/FAST2/Secure
 inbound checks. **No connection to the node yet** — that's the next authorized task. **Phase 4 stays blocked** until
 the DE node yields a verified-live API contract.
+
+
+---
+
+# TIMEZONE POLICY (docs/TIMEZONE_POLICY.md)
+
+# TIMEZONE POLICY
+
+> **Decision date:** 2026-06-16 MMT
+> **Status:** ACCEPTED — project-wide business/customer time rule.
+
+## Myanmar Time Rule
+
+All project, system, and product business dates/times use **Myanmar Time**.
+
+- **Project timezone:** Myanmar Time
+- **Abbreviation:** MMT
+- **Offset:** UTC+06:30
+- **IANA timezone:** `Asia/Yangon`
+
+## Business / Customer Dates
+
+Customer-visible dates and times must be shown in MMT. This includes portal, bot, support, admin, reports, and status
+surfaces unless the value is explicitly a technical/external UTC timestamp.
+
+## Subscription Lifecycle
+
+Subscription start/end dates use MMT.
+
+Example:
+
+- Start: `2026-06-16 09:00:00 MMT`
+- End for a 30-day Plan: `2026-07-16 09:00:00 MMT`
+
+If a node/API expects a different timezone or UTC-derived value later, convert at the integration boundary and keep the
+business source value in MMT.
+
+## Payments / Invoices
+
+Payment/order approval timestamps, invoice dates, and receipt dates use MMT. Financial documents remain English, but
+their dates are Myanmar Time dates.
+
+## Bot / Portal / Admin Displays
+
+Telegram bot copy, customer portal pages, future admin pages, support summaries, and report examples must label or
+otherwise clearly imply MMT for customer/business dates.
+
+## External UTC Conversion Rule
+
+If an external API returns UTC, convert it to MMT before customer/business use. Do not store or display an external UTC
+timestamp as a subscription/payment/customer-facing date without conversion.
+
+## Technical Log Exception
+
+Technical logs may use UTC later when that is operationally useful, but those fields must be explicitly labeled as UTC
+and must not be confused with business dates. Customer-facing and product lifecycle dates remain MMT.
+
+## Implementation Helpers
+
+`backend/timezone.py` provides:
+
+- `now_mmt()`
+- `to_mmt(dt)`
+- `format_mmt(dt)`
+- `today_mmt()`
+- `parse_mmt(value)`
+- `storage_mmt(dt)`
+
+New code should use timezone-aware datetimes and reject/avoid naive datetimes.
+
+## Known Follow-Ups Before Live Launch
+
+- Replace app-created subscription start/end writes that still fall back to SQLite `datetime('now')` with
+  `backend.timezone` helper output.
+- Replace payment/order approval fallback timestamps that still use SQLite `datetime('now')`.
+- Review invoices/receipts before launch so every generated financial date is MMT.
+- Review bot/portal/admin display paths and add explicit MMT labels wherever ambiguity remains.
+- Decide whether purely technical logs should remain UTC; if so, label them clearly as UTC.
 
 
 ---
@@ -331,6 +416,37 @@ dependency. Update docs + commit/push afterward.
 Docker **29.5.3** is installed and **idle** (no Hiddify; `/opt/hiddify-manager` already removed; 80/443 free) — it is
 the primary cleanup candidate. Left installed for now per ADR-001; removal deferred to the audited cleanup task above.
 
+---
+
+## ADR-004 — Myanmar Time is the project business timezone
+
+- **Date:** 2026-06-16 MMT
+- **Status:** ACCEPTED (Charles)
+- **Supersedes/refines:** Any prior assumption that customer/product/business dates are UTC by default.
+
+### Decision
+
+All UNSEEN PROXY business, customer, product, and report dates/times use **Myanmar Time**:
+
+- Abbreviation: **MMT**
+- Offset: **UTC+06:30**
+- IANA timezone: **`Asia/Yangon`**
+
+Customer-visible dates, subscription start/end dates, payment/order approval timestamps, invoice/receipt dates, bot
+messages, portal pages, admin displays, and business reports must use MMT. External UTC timestamps must be converted to
+MMT at the boundary before customer/business use.
+
+### Technical exception
+
+Technical logs may use UTC later only when explicitly labeled as UTC. UTC log fields must not be used as ambiguous
+business dates.
+
+### Implementation
+
+`backend/timezone.py` is the central helper module for MMT conversion/formatting. Existing SQLite schema defaults using
+`datetime('now')` are documented as legacy pre-live behavior; before live launch, app-created business timestamps should
+be moved through the MMT helper rather than relying on SQLite defaults.
+
 
 ---
 
@@ -409,6 +525,18 @@ The verified Hiddify Manager **API v2** contract — endpoints, fields, units, a
 
 Chronological record of notable changes to the UNSEEN PROXY project.
 
+## 2026-06-16 — Myanmar Time project-wide timezone policy — PASS
+
+- Charles accepted **Myanmar Time** as the project-wide business/customer timezone: **MMT**, UTC+06:30,
+  `Asia/Yangon`. Customer-visible dates, subscription lifecycle, payment/order approvals, invoices/receipts,
+  bot/portal/admin displays, and business reports use MMT.
+- Added [TIMEZONE_POLICY.md](TIMEZONE_POLICY.md) and ADR-004 in [DECISIONS.md](DECISIONS.md).
+- Added `backend/timezone.py` helpers: `now_mmt`, `to_mmt`, `format_mmt`, `today_mmt`, `parse_mmt`, `storage_mmt`.
+- Added tests for offset, aware datetimes, UTC→MMT conversion, formatting labels, subscription-style examples, and
+  rejection of naive external datetimes.
+- Documented legacy SQLite `datetime('now')` behavior as a pre-live follow-up; no production DB data or migrations were
+  changed in this task.
+
 ## 2026-06-16 — Phase 8B: portal auth/session foundation (render-only, dry-run) — PASS
 
 - **Hash-only portal auth/session primitives:** additive migration `0006_phase8b.sql` creates `portal_access_tokens`
@@ -480,18 +608,6 @@ Chronological record of notable changes to the UNSEEN PROXY project.
 
 ## 2026-06-16 — Phase 7: entitlement + node-resilience foundation (dry-run) — PASS
 
-- **DB-driven, dry-run only** (stdlib): no node marked live, no live Hiddify, no de1 metrics fetched, no Telegram send;
-  de1 stays `status=test`. See [PHASE7_ENTITLEMENT_NODE_RESILIENCE.md](PHASE7_ENTITLEMENT_NODE_RESILIENCE.md).
-- **Additive migration** `0005_phase7.sql`: `proxy_node_protocols` (node-specific protocol availability; absent =
-  available) + `node_live_blockers` (data-driven per-node live blockers; de1 seeded `leaked_key_rebuild_pending`).
-  Idempotent re-run verified.
-- **`entitlements`** — plan→region/protocol from DB rows only (FAST display rule; DE default; SG premium-only PRO/MAX;
-  unknown/disabled plan → safe error). **`node_resilience`** — status × health (open `node_alerts`) → per-node
-  readiness + sanitized reason vocabulary (`node_status_test`/`node_down`/`leaked_key_rebuild_pending`/…); graceful
-  degradation (down node dropped); node-protocol availability. **`availability`** — entitlement × resilience →
-  per-region/protocol availability (dry_run/live); honest unavailable reasons; no silent region/protocol substitution.
-- **Integration:** `provisioning_plan.build_plan` now uses the resolver — adds `entitled/available/unavailable_regions`,
-  `entitled_protocols`, `node_readiness` to the sanitized summary; existing `live_blockers` unchanged. Burmese
 
 
 ---

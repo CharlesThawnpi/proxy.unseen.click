@@ -44,8 +44,11 @@ def create_from_order(conn: sqlite3.Connection, order_id: int,
                       now: Optional[str] = None) -> SubscriptionResult:
     """Create a subscription from an **approved** order, copying plan snapshots.
 
-    `now` (a 'YYYY-MM-DD HH:MM:SS' string) makes start/expiry deterministic for tests; if None,
-    SQLite `datetime('now')` is used. expiry = start + plan.duration_days. Runs in one transaction.
+    `now` should be a Myanmar Time business timestamp string ('YYYY-MM-DD HH:MM:SS') and
+    makes start/expiry deterministic for tests. If None, the current legacy SQLite
+    `datetime('now')` path is used; before live launch, app-created subscription
+    start/expiry writes should be moved to backend.timezone helpers. expiry = start + plan.duration_days.
+    Runs in one transaction.
     """
     order = conn.execute("SELECT * FROM payment_orders WHERE id=?", (order_id,)).fetchone()
     if order is None:

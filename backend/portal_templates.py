@@ -114,7 +114,7 @@ def render_dashboard(data: dict) -> str:
     subs = []
     for sub in data["subscriptions"]:
         subs.append(f"""<li class="row">
-  <div class="row-main"><strong>{h(sub["plan_name"])}</strong><div class="meta">{h(sub["code"])} - {h(sub["data_limit"])} - expires {h(sub["expiry_date"])}</div></div>
+  <div class="row-main"><strong>{h(sub["plan_name"])}</strong><div class="meta">{h(sub["code"])} - {h(sub["data_limit"])} - expires {h(sub["expiry_date"])} MMT</div></div>
   <div class="pillset">{badge(sub["status"]["label"], sub["status"]["tone"])}<a class="button" href="/subscriptions/{h(sub["id"])}">ကြည့်ရန်</a></div>
 </li>""")
     sub_html = "".join(subs) if subs else '<li class="row"><span class="muted">Subscription မရှိသေးပါ။</span></li>'
@@ -147,7 +147,7 @@ def render_subscription(data: dict) -> str:
     body += f"""<section class="status-strip" aria-label="Subscription quick status">
   <div class="kpi"><span class="meta">Plan</span><span class="value">{h(data["plan_name"])}</span></div>
   <div class="kpi"><span class="meta">Data</span><span class="value">{h(data["data_limit"])}</span></div>
-  <div class="kpi"><span class="meta">Expiry</span><span class="value">{h(data["expiry_date"])}</span></div>
+  <div class="kpi"><span class="meta">Expiry (MMT)</span><span class="value">{h(data["expiry_date"])}</span></div>
   <div class="kpi"><span class="meta">Provision</span><span class="value">{h(data["provision_status"]["label"])}</span></div>
 </section>
 <section class="grid two">
@@ -159,8 +159,8 @@ def render_subscription(data: dict) -> str:
       <li class="row"><span>Data</span><strong>{h(data["data_limit"])}</strong></li>
       <li class="row"><span>Duration</span><strong>{h(data["duration"])}</strong></li>
       <li class="row"><span>Price</span><strong>{h(data["price"])}</strong></li>
-      <li class="row"><span>Start</span><strong>{h(data["start_date"])}</strong></li>
-      <li class="row"><span>Expiry</span><strong>{h(data["expiry_date"])}</strong></li>
+      <li class="row"><span>Start (MMT)</span><strong>{h(data["start_date"])}</strong></li>
+      <li class="row"><span>Expiry (MMT)</span><strong>{h(data["expiry_date"])}</strong></li>
       <li class="row"><span>Provision</span>{badge(data["provision_status"]["label"], data["provision_status"]["tone"])}</li>
     </ul>
   </article>

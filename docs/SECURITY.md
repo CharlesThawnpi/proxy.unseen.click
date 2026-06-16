@@ -25,6 +25,9 @@ The non-negotiable security and secret-safety rules for UNSEEN PROXY. These are 
 - **No third-party exfiltration** of subscription URLs or tokens (rule 3).
 - **Least-privilege node API keys** (rule 8); admin paths/ports stay non-public.
 - **Never fabricate a PASS** (rule 10) — fail closed and report honestly when blocked.
+- **Timezone clarity is a safety rule.** Business/customer dates use Myanmar Time (MMT, UTC+06:30, `Asia/Yangon`);
+  technical UTC fields, if introduced later, must be explicitly labeled so they cannot be mistaken for subscription,
+  payment, invoice, bot, portal, or admin business dates.
 
 ## Phase 4B secret-safety (service boundaries — verified by tests)
 

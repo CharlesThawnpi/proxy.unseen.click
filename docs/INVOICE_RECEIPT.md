@@ -9,6 +9,8 @@ PDF invoice and receipt generation for customer orders, downloadable from "My Ac
 
 - **Invoice** and **receipt** PDFs are produced as part of the payment/activation flow and exposed via "My Account" (subscription/QR re-show, invoice/receipt download — §3.1).
 - Documents reflect the **order-time snapshot** (price/cap/duration frozen at sale time), so a later plan edit never changes a past document.
+- Invoice and receipt dates use **Myanmar Time** (MMT, UTC+06:30, `Asia/Yangon`) per
+  [TIMEZONE_POLICY.md](TIMEZONE_POLICY.md).
 - **Currency is MMK only** (no multi-currency, no cash-credit).
 
 ## Language

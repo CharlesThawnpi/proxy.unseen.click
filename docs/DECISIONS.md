@@ -133,3 +133,34 @@ dependency. Update docs + commit/push afterward.
 
 Docker **29.5.3** is installed and **idle** (no Hiddify; `/opt/hiddify-manager` already removed; 80/443 free) — it is
 the primary cleanup candidate. Left installed for now per ADR-001; removal deferred to the audited cleanup task above.
+
+---
+
+## ADR-004 — Myanmar Time is the project business timezone
+
+- **Date:** 2026-06-16 MMT
+- **Status:** ACCEPTED (Charles)
+- **Supersedes/refines:** Any prior assumption that customer/product/business dates are UTC by default.
+
+### Decision
+
+All UNSEEN PROXY business, customer, product, and report dates/times use **Myanmar Time**:
+
+- Abbreviation: **MMT**
+- Offset: **UTC+06:30**
+- IANA timezone: **`Asia/Yangon`**
+
+Customer-visible dates, subscription start/end dates, payment/order approval timestamps, invoice/receipt dates, bot
+messages, portal pages, admin displays, and business reports must use MMT. External UTC timestamps must be converted to
+MMT at the boundary before customer/business use.
+
+### Technical exception
+
+Technical logs may use UTC later only when explicitly labeled as UTC. UTC log fields must not be used as ambiguous
+business dates.
+
+### Implementation
+
+`backend/timezone.py` is the central helper module for MMT conversion/formatting. Existing SQLite schema defaults using
+`datetime('now')` are documented as legacy pre-live behavior; before live launch, app-created business timestamps should
+be moved through the MMT helper rather than relying on SQLite defaults.

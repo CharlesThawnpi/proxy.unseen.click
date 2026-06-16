@@ -11,6 +11,11 @@ How every front-end platform resolves to one customer, how outbound messages are
 - **Platform identities:** one `platform_accounts` table maps `(platform_name, platform_user_id) → customer_id` for `telegram`, `messenger`, `viber`, `whatsapp`, `web`.
 - A customer can have several platform accounts; all point at one `customer_id` (linking: see [ACCOUNT_LINKING.md](ACCOUNT_LINKING.md)).
 
+## Timezone
+
+Bot-visible subscription expiry, renewal reminders, payment status, invoice/receipt dates, and support summaries use
+Myanmar Time (**MMT**, UTC+06:30, `Asia/Yangon`). External UTC timestamps must be converted before bot/customer use.
+
 ## Web portal foundation (Phase 8)
 
 The Phase 8 portal ([PORTAL.md](PORTAL.md)) uses the same unified identity model but does **not** implement real login

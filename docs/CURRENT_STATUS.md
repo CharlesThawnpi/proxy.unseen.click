@@ -25,6 +25,11 @@ Where the UNSEEN PROXY build stands across the §34 deployment phases.
 
 ## Next up
 
+**Timezone policy accepted (2026-06-16 MMT)** ([TIMEZONE_POLICY.md](TIMEZONE_POLICY.md), [DECISIONS.md](DECISIONS.md)
+ADR-004): all business/customer/project dates use Myanmar Time (**MMT**, UTC+06:30, `Asia/Yangon`). External UTC must
+be converted before customer/business use; technical UTC fields must be explicitly labeled. Helper module:
+`backend/timezone.py`. Legacy SQLite `datetime('now')` defaults are documented follow-ups before live launch.
+
 **Architecture (current):** the **Master is control-plane only** — co-location is **retired**
 ([DECISIONS.md](DECISIONS.md) ADR-001). The Master was tested as a co-located DE node via Hiddify's experimental
 Docker (v12.3.3); the panel was non-functional (compose `$REDIS_PASSWORD` bug + DB migration errors), so it was torn

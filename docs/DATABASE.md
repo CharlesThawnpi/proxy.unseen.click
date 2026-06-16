@@ -5,6 +5,17 @@
 
 The data model for UNSEEN PROXY: a SQLite (WAL) database where **all business values are rows, not constants**, with a documented path to Postgres.
 
+## Timezone Policy
+
+Business/customer timestamps are **Myanmar Time (MMT, UTC+06:30, `Asia/Yangon`)**. Subscription start/end,
+payment/order approval, invoice/receipt dates, and bot/portal/admin display dates must use MMT. See
+[TIMEZONE_POLICY.md](TIMEZONE_POLICY.md).
+
+Current migrations still include legacy SQLite `datetime('now')` defaults for several technical `created_at` fields and
+some dry-run fallback paths. Do not destructively rewrite historical migrations. Before live launch, app-created
+business timestamps must be routed through `backend.timezone` helpers and any remaining UTC technical log fields must
+be explicitly labeled UTC.
+
 > **Built in Phase 4A** (see [PHASE4A_DB_BACKEND_FOUNDATION.md](PHASE4A_DB_BACKEND_FOUNDATION.md)):
 > - Schema: `backend/migrations/0001_initial.sql` (FK-enforced; all required tables incl. the `proxy_nodes`
 >   provenance split est_/det_/conf_; order-time snapshots on `subscriptions`; idempotency_keys; outbound_messages).

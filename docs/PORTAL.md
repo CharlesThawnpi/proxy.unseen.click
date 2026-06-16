@@ -5,6 +5,12 @@
 The customer portal foundation is a stdlib-only HTML renderer under `backend/portal_*`.
 It is not a running service and has no real login yet.
 
+## Timezone
+
+Portal-visible subscription start/end, payment/order, invoice/receipt, and support dates use Myanmar Time (**MMT**,
+UTC+06:30, `Asia/Yangon`). Current dry-run sample pages label subscription dates as MMT; future live rendering should
+format app-created timestamps through `backend.timezone`.
+
 ## Boundary
 
 - `backend/portal_app.py` exposes `render(conn, path, session_context=None)`.

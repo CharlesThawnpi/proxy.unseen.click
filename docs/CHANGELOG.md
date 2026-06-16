@@ -5,6 +5,18 @@
 
 Chronological record of notable changes to the UNSEEN PROXY project.
 
+## 2026-06-16 — Myanmar Time project-wide timezone policy — PASS
+
+- Charles accepted **Myanmar Time** as the project-wide business/customer timezone: **MMT**, UTC+06:30,
+  `Asia/Yangon`. Customer-visible dates, subscription lifecycle, payment/order approvals, invoices/receipts,
+  bot/portal/admin displays, and business reports use MMT.
+- Added [TIMEZONE_POLICY.md](TIMEZONE_POLICY.md) and ADR-004 in [DECISIONS.md](DECISIONS.md).
+- Added `backend/timezone.py` helpers: `now_mmt`, `to_mmt`, `format_mmt`, `today_mmt`, `parse_mmt`, `storage_mmt`.
+- Added tests for offset, aware datetimes, UTC→MMT conversion, formatting labels, subscription-style examples, and
+  rejection of naive external datetimes.
+- Documented legacy SQLite `datetime('now')` behavior as a pre-live follow-up; no production DB data or migrations were
+  changed in this task.
+
 ## 2026-06-16 — Phase 8B: portal auth/session foundation (render-only, dry-run) — PASS
 
 - **Hash-only portal auth/session primitives:** additive migration `0006_phase8b.sql` creates `portal_access_tokens`

@@ -8,6 +8,13 @@
 
 How UNSEEN PROXY is deployed: a manual **pull onto the Master**, never a push-to-server. Secrets and data stay on the Master; git delivers code only.
 
+## Timezone
+
+The project business timezone is **Myanmar Time (MMT, UTC+06:30, `Asia/Yangon`)**. Deployment, portal, bot, payment,
+invoice, subscription, and report examples should use MMT unless a value is explicitly a technical UTC log timestamp.
+Before live launch, review any app-created DB timestamp fallback still using SQLite `datetime('now')` and move business
+timestamps through `backend.timezone`.
+
 ## Deploy key on the Master
 
 - The Master holds a deploy key for the private repo; its **private half stays on the Master and never enters the
