@@ -144,3 +144,18 @@ rules 1, 9 & 10 by construction:
   is dry-run/no-network. Even when gated open, tests inject a **mock** transport — no real network in the suite.
 - **Queue stores references only.** The sender renders from `outbound_messages.payload_ref` (a template key) — no raw
   body, link, token, or QR is ever stored or sent. Admin ids remain env-driven and unlogged.
+
+## Phase 6 secret-safety (subscription delivery — verified by tests)
+
+The Phase 6 delivery foundation ([PHASE6_SUBSCRIPTION_DELIVERY_FOUNDATION.md](PHASE6_SUBSCRIPTION_DELIVERY_FOUNDATION.md))
+upholds rules 1 & 2:
+
+- **No raw links/tokens/QR persisted or logged.** `subscription_deliveries` has **no column** for a raw
+  subscription/proxy link, deep-link payload, or QR payload (test-asserted). Only safe refs/flags + the branded token
+  **SHA-256 handle** are stored. Audit details and the notification `payload_ref` are sanitized references only.
+- **Branded link is in-memory only.** `https://sub.unseen.click/s/<token>` is assembled at send time and never
+  persisted/logged; `link_renderer.redact_link` produces a safe label, and `subscription_delivery._guard_no_raw_link`
+  refuses to persist/log anything matching a raw proxy/subscription link shape.
+- **Hiddify output is mocked + discarded.** `hiddify_subscription_output.normalize` extracts non-secret facts
+  (counts/engine names/booleans) and drops the raw output — never logged or returned.
+- **QR is honestly reported as planned** (not generated) — no QR payload exists to leak.

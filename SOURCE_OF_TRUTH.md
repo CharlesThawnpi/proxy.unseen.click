@@ -1,6 +1,6 @@
 # UNSEEN PROXY — SOURCE OF TRUTH (consolidated, auto-generated)
 
-> **Generated:** 2026-06-16T04:43:32Z — by `scripts/build_source_of_truth.sh`.
+> **Generated:** 2026-06-16T04:56:58Z — by `scripts/build_source_of_truth.sh`.
 > **This is the live project state for external readers (e.g. the Custom GPT).** It is DERIVED from the
 > canonical docs below and regenerated each task. Upload THIS file to the GPT (not IMPLEMENTATION_PLAN.md,
 > which is the static v1.9 plan). Re-download after updates.
@@ -45,7 +45,7 @@ Where the UNSEEN PROXY build stands across the §34 deployment phases.
 | 3 | Hiddify API & subscription compatibility audit | **DONE (PASS w/ follow-ups) — Hiddify v12.3.3 on de1; API v2 contract VERIFIED-LIVE; disposable test user create→sub→delete confirmed.** Phase 4 API layer UNBLOCKED. Node-tuning follow-ups: SS:8388/UDP reachability, RAM lock, SSH hardening, regenerate leaked default-user keys. See HIDDIFY_API_CONTRACT.md + PHASE3_DE1_HIDDIFY_LIVE_VERIFY.md |
 | 4 | Database & backend clone design | **Phase 4A + 4B + 4C DONE (dry-run/test-safe).** 4A: migrations + schema + seed + Hiddify client + provisioner CLI. 4B: AccountService + account-link codes + NotificationService (queue-first) + idempotency + WAL-safe online backup (`0002`). 4C: dry-run provisioning orchestration — payment-approval boundary → subscription snapshots → access-profile placeholder → provisioning plan (entitlements + live blockers + sanitized Hiddify intent) → delivery enqueue → audit + forward-only compensation; **live hard-refused**; additive migration `0003`. **70 tests PASS**. No live mutations/sends/real customers. See PHASE4A/4B/4C docs. |
 | 5 | Telegram bot implementation (Burmese-primary) | **Foundation + transport DONE (dry-run, gated).** Foundation: adapter + Burmese catalogue + router + AccountService identity + env-driven admin. Transport: Bot API boundary (token redacted; injectable opener), offset-tracked polling runner, NotificationService sender consuming `outbound_messages` (queued→sent/requeue/dead), fail-closed double gate. **No polling daemon/webhook/API/send; no systemd.** See PHASE5_TELEGRAM_BOT_FOUNDATION.md + PHASE5_TELEGRAM_TRANSPORT_FOUNDATION.md. Live bring-up = next, Charles-gated. |
-| 6 | Hiddify subscription delivery integration | PENDING |
+| 6 | Hiddify subscription delivery integration | **Foundation DONE (dry-run): delivery payload model (safe refs only) + branded link rule (`sub.unseen.click/s/<token>`, hash stored) + deep-link/copy-link priority + QR planned + mocked Hiddify-output normalizer + NotificationService/Telegram render integration. No raw links persisted/logged; no network.** See PHASE6_SUBSCRIPTION_DELIVERY_FOUNDATION.md. Sidecar + live = next, gated. |
 | 7 | Plan-based region/protocol entitlement + node resilience | PENDING |
 | 8 | Web app / customer portal | PENDING |
 | 9 | Messenger and Viber bot integration | PENDING |
@@ -135,10 +135,16 @@ gated Bot API transport boundary (token redacted; injectable opener; dry-run def
 dead), and a centralized fail-closed double gate (`ALLOW_LIVE_BOT_SENDS`/`ALLOW_LIVE_BOT_POLLING` + `--live-* --confirm`).
 107 tests PASS. **No network/send/poll daemon/systemd.**
 
-**Next: Phase 6 (subscription delivery) or the gated live bot bring-up.** **Before de1 goes live:** rebuild the node
-(clears `leaked_key_rebuild_pending`) + a real-device FAST1/FAST2/Secure test (`#TASK_for_Charles` in
-PHASE4_PRELIVE_DE1_TUNING.md), then a separately-gated task to flip the env latches + wire a real opener. Live
-promotion stays Charles-gated.
+**Phase 6 delivery foundation complete (2026-06-16)** ([PHASE6_SUBSCRIPTION_DELIVERY_FOUNDATION.md](PHASE6_SUBSCRIPTION_DELIVERY_FOUNDATION.md)):
+subscription delivery foundation — `DeliveryPayload` (safe refs only) + branded link rule (`sub.unseen.click/s/<token>`,
+assembled in memory, token **hash** stored) + deep-link→copy-link→QR priority (QR **planned**) + mocked Hiddify-output
+normalizer + NotificationService/Telegram render integration. Additive migration `0004` (`subscription_deliveries`,
+no raw-link column). 122 tests PASS. **No raw links persisted/logged; no network/send.**
+
+**Next: Phase 6 sidecar (gated) or Phase 7 (entitlement/region resilience).** **Before de1 goes live:** rebuild the
+node (clears `leaked_key_rebuild_pending`) + a real-device FAST1/FAST2/Secure test (`#TASK_for_Charles` in
+PHASE4_PRELIVE_DE1_TUNING.md), then separately-gated tasks to flip the bot env latches + wire a real opener + build the
+`sub.unseen.click` sidecar. Live promotion stays Charles-gated.
 
 **OS path decided (2026-06-15):** in-place `do-release-upgrade` was considered, but since `de1` is **empty** the
 safer, same-outcome choice is a **clean provider reinstall to Ubuntu 22.04** (Charles). A read-only pre-upgrade gate
@@ -373,6 +379,25 @@ The verified Hiddify Manager **API v2** contract — endpoints, fields, units, a
 
 Chronological record of notable changes to the UNSEEN PROXY project.
 
+## 2026-06-16 — Phase 6: subscription delivery foundation (dry-run) — PASS
+
+- **Dry-run only** (stdlib): no live Hiddify call, no real subscription fetch from de1, no Telegram send, and **no raw
+  subscription/proxy link or QR payload persisted/logged**. de1 stays `status=test`. See
+  [PHASE6_SUBSCRIPTION_DELIVERY_FOUNDATION.md](PHASE6_SUBSCRIPTION_DELIVERY_FOUNDATION.md).
+- **Additive migration** `0004_phase6.sql`: new `subscription_deliveries` (safe refs/flags + branded token **hash**
+  only; **no raw-link/QR column** by design). Idempotent re-run verified.
+- **`link_renderer`** — branded link `https://sub.unseen.click/s/<token>` assembled in memory only; token **hash**
+  stored; raw-proxy-link detection (`hiddify://`/`vless://`/`ss://`/`hy2://`/`/api/v2/`/`all-configs`) + redaction.
+- **`hiddify_subscription_output`** — normalizes a **mocked** output to a sanitized summary (counts + engine names +
+  booleans); raw output discarded, never logged. **`qr_renderer`** — QR honestly **planned**, not generated (stdlib;
+  no risky dep). **`delivery_payloads`/`subscription_delivery`** — `DeliveryPayload` (refs/flags only; mode priority
+  deep-link → copy-link → QR); `prepare_delivery` persists safe refs + audit + enqueues a notification (`payload_ref`
+  only); `_guard_no_raw_link` refuses to persist/log raw links.
+- `telegram_messages.delivery_preview` — safe Burmese-primary preview (no link/token/QR). New CLIs:
+  `bin/subscription_delivery_smoke.py`, `bin/render_delivery_dry_run.py` (temp DB / mocked output).
+- **Tests: 122 PASS** (107 + 15 new, incl. no-network-call guard + no-raw-link-in-DB/audit). Updated
+  DATABASE/BOT_FLOWS/SECURITY/DEPLOYMENT/CURRENT_STATUS; new PHASE6 doc.
+
 ## 2026-06-16 — Phase 5: gated Telegram transport foundation (dry-run) — PASS
 
 - **Dry-run only, gated** (stdlib): no Telegram API call, no send, no polling daemon, no webhook, no systemd service;
@@ -437,25 +462,6 @@ Chronological record of notable changes to the UNSEEN PROXY project.
   ufw's chains in `INPUT`, so required ports (22/80/443 tcp, 443 udp, 55573, dynamic Hiddify inbounds) are open while
   ufw default-denies the rest. Verified from the Master: 22/80/443 tcp OPEN (443 TLS→200), 55573 OPEN; **8388 filtered
   by design** (`ss-server` is loopback-only; Shadowsocks fronts via 443/faketls). SSH allowed throughout.
-- **SSH hardened — PASS.** Found `50-cloud-init.conf` set `PasswordAuthentication yes`; since sshd uses the first
-  keyword value, a `99-` drop-in alone would lose — so neutralized the cloud-init line (backed up on node) + added
-  `/etc/cloud/cloud.cfg.d/99-unseen-ssh.cfg` (`ssh_pwauth: false`) + created
-  `/etc/ssh/sshd_config.d/99-unseen-proxy-hardening.conf` (`PasswordAuthentication no`, `KbdInteractiveAuthentication
-  no`, `PubkeyAuthentication yes`). Root key login kept. Validated with `sshd -t`/`sshd -T` and a held-open
-  ControlMaster revert path; graceful `reload`; fresh key login verified; password-only attempt **refused**.
-- **Leaked-key handling — `REBUILD_REQUIRED_BEFORE_LIVE`.** No Hiddify-supported safe surgical regen of the leaked
-  default-user/server keys exists (`reset-owner-password` = admin password only; reinstall = destructive). Did not
-  improvise. Dry-run work may continue on the test node; first live/real provisioning is blocked until rebuild.
-- **Host key pinned** in the Master `known_hosts` (`ED25519 SHA256:lsD6hjAKLOdH/jqQZ28Ps0/1NLW5fW6/aV+nuwxn3gg`).
-- No node files committed; docs only. Updated PHASE3_DE1_HIDDIFY_LIVE_VERIFY/NODES/PORTS/NETWORK/SECURITY/DEPLOYMENT/
-  ROLLBACK/CURRENT_STATUS; new PHASE4_PRELIVE_DE1_TUNING.md.
-
-## 2026-06-16 — Phase 4B: account/notification/idempotency + WAL-safe backup foundations — PASS
-
-- **Backend-foundation / dry-run only** (stdlib). No platform sends, no real customers, no live Hiddify mutations, no
-  services started; de1 stays `status=test`. See [PHASE4B_ACCOUNT_NOTIFICATION_BACKUP.md](PHASE4B_ACCOUNT_NOTIFICATION_BACKUP.md).
-- **Additive migration** `0002_phase4b.sql`: `idempotency_keys` += `status`/`updated_at`; `outbound_messages` +=
-  `payload_ref`/`last_error`/`next_attempt_at`/`max_attempts`; two indexes. No drops/rewrites; integrity + FK verified.
 
 
 ---

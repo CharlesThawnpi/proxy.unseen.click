@@ -5,6 +5,25 @@
 
 Chronological record of notable changes to the UNSEEN PROXY project.
 
+## 2026-06-16 — Phase 6: subscription delivery foundation (dry-run) — PASS
+
+- **Dry-run only** (stdlib): no live Hiddify call, no real subscription fetch from de1, no Telegram send, and **no raw
+  subscription/proxy link or QR payload persisted/logged**. de1 stays `status=test`. See
+  [PHASE6_SUBSCRIPTION_DELIVERY_FOUNDATION.md](PHASE6_SUBSCRIPTION_DELIVERY_FOUNDATION.md).
+- **Additive migration** `0004_phase6.sql`: new `subscription_deliveries` (safe refs/flags + branded token **hash**
+  only; **no raw-link/QR column** by design). Idempotent re-run verified.
+- **`link_renderer`** — branded link `https://sub.unseen.click/s/<token>` assembled in memory only; token **hash**
+  stored; raw-proxy-link detection (`hiddify://`/`vless://`/`ss://`/`hy2://`/`/api/v2/`/`all-configs`) + redaction.
+- **`hiddify_subscription_output`** — normalizes a **mocked** output to a sanitized summary (counts + engine names +
+  booleans); raw output discarded, never logged. **`qr_renderer`** — QR honestly **planned**, not generated (stdlib;
+  no risky dep). **`delivery_payloads`/`subscription_delivery`** — `DeliveryPayload` (refs/flags only; mode priority
+  deep-link → copy-link → QR); `prepare_delivery` persists safe refs + audit + enqueues a notification (`payload_ref`
+  only); `_guard_no_raw_link` refuses to persist/log raw links.
+- `telegram_messages.delivery_preview` — safe Burmese-primary preview (no link/token/QR). New CLIs:
+  `bin/subscription_delivery_smoke.py`, `bin/render_delivery_dry_run.py` (temp DB / mocked output).
+- **Tests: 122 PASS** (107 + 15 new, incl. no-network-call guard + no-raw-link-in-DB/audit). Updated
+  DATABASE/BOT_FLOWS/SECURITY/DEPLOYMENT/CURRENT_STATUS; new PHASE6 doc.
+
 ## 2026-06-16 — Phase 5: gated Telegram transport foundation (dry-run) — PASS
 
 - **Dry-run only, gated** (stdlib): no Telegram API call, no send, no polling daemon, no webhook, no systemd service;

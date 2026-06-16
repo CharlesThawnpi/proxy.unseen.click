@@ -112,3 +112,19 @@ The fields below are summarized; **Appendix A of the plan is the authoritative d
   `provisioning_service` (idempotent `payment_approval`/`provision_subscription` scopes; exactly-once),
   `provisioning_plan` (entitlement resolution + sanitized Hiddify mutation intent + live blockers), `compensation`
   (forward-only, non-destructive), `audit` (sanitized `audit_logs`). Reuses `idempotency_keys` + `outbound_messages`.
+
+## Phase 6 additions (IMPLEMENTED — subscription delivery foundation, dry-run)
+
+> Built in Phase 6 (see [PHASE6_SUBSCRIPTION_DELIVERY_FOUNDATION.md](PHASE6_SUBSCRIPTION_DELIVERY_FOUNDATION.md));
+> **dry-run only** — no raw links persisted/logged.
+
+- **Migration `0004_phase6.sql` (additive):** new **`subscription_deliveries`** (FK→customers/subscriptions/
+  access_profiles) holding **only safe references/metadata** — `channel`, `template_key` (payload_ref),
+  `primary_mode`, `deep_link_available`/`copy_link_available`/`qr_available`, `branded_token_sha256` (**hash/handle
+  only**), `status`. There is **deliberately no column** for a raw subscription/proxy link, deep-link payload, or QR
+  payload (a test asserts this).
+- **Services:** `link_renderer` (branded `https://sub.unseen.click/s/<token>` assembled in memory only; token **hash**
+  stored; raw-proxy-link detection + redaction), `hiddify_subscription_output` (normalize **mocked** output →
+  sanitized summary, raw discarded), `qr_renderer` (QR **planned**, not generated), `delivery_payloads` +
+  `subscription_delivery` (prepare → persist safe refs + audit + enqueue notification, `payload_ref` only). Reuses
+  `outbound_messages` + `audit_logs`.

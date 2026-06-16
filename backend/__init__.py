@@ -19,4 +19,7 @@ __all__ = [
     # Phase 5 transport foundation (gated; dry-run default; no network/daemon):
     "runtime_gates", "telegram_transport", "telegram_polling",
     "notification_sender", "outbound_worker",
+    # Phase 6 subscription delivery foundation (dry-run; no raw links persisted/logged):
+    "link_renderer", "qr_renderer", "hiddify_subscription_output",
+    "delivery_payloads", "subscription_delivery",
 ]

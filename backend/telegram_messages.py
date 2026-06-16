@@ -90,6 +90,21 @@ DELIVERY_PREP = (
 GENERIC_TRANSACTIONAL = "🔔 အသိပေးချက် — {brand}".format(brand=BRAND)
 
 
+def delivery_preview(deep_link_available: bool, copy_link_available: bool,
+                     qr_available: bool) -> str:
+    """Safe Burmese-primary delivery preview — describes which delivery modes are available.
+    Contains NO link/token/QR; the actual branded link is attached in memory only at send time."""
+    lines = ["📦 သင့်ဝန်ဆောင်မှု Subscription ပြင်ဆင်ပြီးပါပြီ — ချိတ်ဆက်ရန် နည်းလမ်းများ:"]
+    if deep_link_available:
+        lines.append("• Hiddify App ဖြင့် တိုက်ရိုက်ဖွင့်ရန် (deep link) — အကြံပြုထားသည်")
+    if copy_link_available:
+        lines.append("• Subscription link ကို ကူးယူ၍ Hiddify App တွင် ထည့်ရန်")
+    lines.append("• QR — မကြာမီ (ယခုအဆင့်တွင် မရသေးပါ)" if not qr_available
+                 else "• QR ကုဒ်ဖြင့် scan ဖတ်၍ ထည့်ရန်")
+    lines.append("🔒 လင့်ခ်ကို သီးသန့်ထားပါ — အများနှင့် မမျှဝေပါနှင့်။")
+    return "\n".join(lines)
+
+
 def render_payload(payload_ref: str) -> str:
     """Resolve a queued notification's payload_ref to Burmese-primary text. The payload_ref is a
     reference/template key (e.g. 'bot:welcome:7', 'delivery:sub:7') — never raw content."""

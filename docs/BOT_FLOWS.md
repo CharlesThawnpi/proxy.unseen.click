@@ -126,3 +126,20 @@ The transport layer now exists ([PHASE5_TELEGRAM_TRANSPORT_FOUNDATION.md](PHASE5
   the concrete NotificationService send path the matrix above anticipated; live send refused without the gate.
 - **`backend/runtime_gates.py`** — fail-closed double gate: live send needs `ALLOW_LIVE_BOT_SENDS=1` + `--live-send
   --confirm`; live poll needs `ALLOW_LIVE_BOT_POLLING=1` + `--live-poll --confirm`.
+
+## Phase 6 — subscription delivery foundation IMPLEMENTED (dry-run, 2026-06-16)
+
+Delivery now has a safe foundation ([PHASE6_SUBSCRIPTION_DELIVERY_FOUNDATION.md](PHASE6_SUBSCRIPTION_DELIVERY_FOUNDATION.md))
+— **dry-run only; no raw subscription/proxy link or QR payload is ever persisted or logged.**
+
+- **`backend/delivery_payloads.py`** — `DeliveryPayload` carries safe refs only (customer/subscription/access_profile
+  ids, channel, `template_key`, mode flags, `primary_mode`, branded-token **hash**); no raw-link field.
+- **`backend/link_renderer.py`** — the customer-facing link is the **branded** `https://sub.unseen.click/s/<token>`,
+  assembled **in memory at send time** and never persisted; only the token's SHA-256 handle is stored. Raw Hiddify
+  links (`hiddify://`/`vless://`/`ss://`/`hy2://`) are internal fallbacks, never the main product link.
+- **Mode priority:** Hiddify App **deep link** → **copy-link** → **QR**. QR is **planned, not generated** in Phase 6.
+- **`backend/hiddify_subscription_output.py`** — normalizes a **mocked** node output to a sanitized summary (counts +
+  engine names + booleans); raw output discarded.
+- **`backend/subscription_delivery.py`** — `prepare_delivery` persists `subscription_deliveries` (safe refs), writes
+  sanitized audit rows, and enqueues a NotificationService message (`payload_ref` only) that the Phase 5 sender renders
+  via `telegram_messages.render_payload`/`delivery_preview`. No live send.

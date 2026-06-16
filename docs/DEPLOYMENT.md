@@ -131,3 +131,12 @@ Dry-run tools (temp DB / mock): `bin/telegram_poll_dry_run.py`, `bin/outbound_wo
 `bin/send_notification_dry_run.py`. Env gate names (values in `.env` on the Master ONLY): `ALLOW_LIVE_BOT_SENDS`,
 `ALLOW_LIVE_BOT_POLLING` (default `0`). Going live requires BOTH the env latch `=1` AND `--live-send`/`--live-poll
 --confirm`, a real network opener, and (for provisioning) the de1 rebuild — all a future, Charles-gated task.
+
+## Phase 6 — subscription delivery foundation (dry-run; not wired to a node, 2026-06-16)
+
+The delivery foundation exists ([PHASE6_SUBSCRIPTION_DELIVERY_FOUNDATION.md](PHASE6_SUBSCRIPTION_DELIVERY_FOUNDATION.md))
+but fetches nothing from de1 and sends nothing: Hiddify output is **mocked** in tests/CLIs. Dry-run tools (temp DB):
+`bin/subscription_delivery_smoke.py`, `bin/render_delivery_dry_run.py`. The branded customer link
+(`https://sub.unseen.click/s/<token>`) and its resolving **sidecar** are a future, gated task — the sidecar will fetch
+the real node subscription **in memory** (`access_log off`) and never persist raw links. Live delivery requires the de1
+rebuild + a real-device protocol PASS + the Phase 5 live send gate — all Charles-gated.
