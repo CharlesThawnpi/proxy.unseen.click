@@ -5,6 +5,24 @@
 
 Chronological record of notable changes to the UNSEEN PROXY project.
 
+## 2026-06-16 — Phase 3-DE: Hiddify v12.3.3 installed & running on de1 — PARTIAL (API contract deferred)
+
+- Charles accepted the low-RAM risk; proceeded. Installed Hiddify Manager **v12.3.3** via the official **host**
+  installer (`download.sh v12.3.3 --no-gui`, non-interactive, NOT Docker, version-pinned).
+- **All services active** (panel/nginx/haproxy/xray/singbox/mariadb); **443 tcp+udp up**; **FAST1(Hysteria2)/
+  FAST2(Shadowsocks, :8388)/Secure(VLESS-Reality) inbounds present**; SSH safe; ufw active (22 allowed); admin link
+  stored at `/root/hiddify-de1-admin.link` (0600, never printed). API title **Hiddify v2.2.0**; auth header
+  `Hiddify-API-Key: <admin-UUID>`.
+- **Permission cascade (transparent):** first install failed to start — root cause was the agent's **`umask 077`** at
+  launch (made installer dirs 700 + poisoned uv's cache with 600 files that uv hardlinks into the venv). Remediated:
+  reinstall under `umask 022` + `chmod -R a+rX /usr/local/share/uv` + `chmod -R a+rX .venv313` → panel active +
+  apply_configs regenerated all services. Lesson: never set a restrictive umask when launching third-party installers.
+- RAM balloon-dynamic: ~1.8 GiB idle → ~3.8 GiB under load, no OOM.
+- **Deferred (blocks Phase 4):** exact API v2 CRUD paths/fields/units + disposable test user — v12.3.3 API path not
+  black-box-discoverable (probes hit Hiddify's decoy site); OpenAPI route errors (likely marshmallow-v4 bug). Capture
+  via browser Swagger or fix the spec route. New `PHASE3_DE1_HIDDIFY_LIVE_VERIFY.md`; updated HIDDIFY_API_CONTRACT/
+  CURRENT_STATUS/NODES/SERVERS/PORTS/NETWORK/SECURITY/DEPLOYMENT/ROLLBACK. Node stays `status=test`.
+
 ## 2026-06-15 — Phase 3-DE: pre-install gate HOLD — RAM still ~1.8 GiB (Hiddify NOT installed)
 
 - Ran the Phase 3-DE pre-install gate on de1. **All gates PASS except RAM.** OS 22.04.5 ✓, disk 23 GB/17 free ✓,

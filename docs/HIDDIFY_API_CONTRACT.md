@@ -4,11 +4,17 @@
 > **Status:** Phase 3 audit (docs) — base/auth **verified from official docs**; CRUD/fields/units **need live Swagger**.
 > Tiers: **[VERIFIED]** official docs · **[LIVE]** confirm on a real install · **[ASSUMPTION]** do not depend yet.
 > See [PHASE3_HIDDIFY_AUDIT_PLAN.md](PHASE3_HIDDIFY_AUDIT_PLAN.md).
-> **[LIVE] fields STILL pending — a Docker install was attempted (v12.3.3) but the panel was non-functional**
-> (Redis AUTH mis-wiring + DB migration errors; 443 never served; CLI hangs), so no live Swagger/contract could be
-> read. See [PHASE3_HIDDIFY_LIVE_VERIFY.md](PHASE3_HIDDIFY_LIVE_VERIFY.md). These fields will be filled from the
-> **dedicated DE node VPS** (`5.249.160.59`, Ubuntu 22.04) supported **host install** — see
-> [PHASE2_3_DE_NODE_PLAN.md](PHASE2_3_DE_NODE_PLAN.md). Phase 4 stays blocked until then.
+> **Live install DONE on de1 (2026-06-16): Hiddify v12.3.3 running.** Partially verified, rest pending the browser Swagger:
+> - **[VERIFIED-LIVE]** Installed **Hiddify Manager v12.3.3**; API title **"Hiddify API v2.2.0"**; auth header
+>   **`Hiddify-API-Key: <admin-UUID>`** (the admin UUID is the credential); admin link form
+>   `https://<node-domain>/<admin_proxy_path>/<admin_uuid>/`.
+> - **[VERIFIED-LIVE]** Inbounds present: **Hysteria2 (FAST1), Shadowsocks (FAST2, :8388), VLESS-Reality (Secure)**.
+> - **[LIVE — STILL PENDING]** exact user create/update/get/list/disable **paths**, field names + **units**, and
+>   subscription output formats. The v12.3.3 API base path was **not black-box-discoverable** (probes hit Hiddify's
+>   decoy site) and the **OpenAPI JSON route errors (HTTP 500/404)** — likely the apiflask/**marshmallow-v4** spec bug
+>   (a `marshmallow<=3.26.1` pin is present-but-commented in Hiddify's installer). **Read these from the panel's browser
+>   Swagger**, or fix the spec route, then fill below. See [PHASE3_DE1_HIDDIFY_LIVE_VERIFY.md](PHASE3_DE1_HIDDIFY_LIVE_VERIFY.md).
+> Phase 4 stays blocked until these `[LIVE]` fields are verified.
 
 The verified Hiddify Manager **API v2** contract — endpoints, fields, units, and link/deep-link formats — pinned per Hiddify version per node.
 

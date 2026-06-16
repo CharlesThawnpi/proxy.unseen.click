@@ -80,6 +80,7 @@ The DB+`.env` backup before migrating is mandatory (see [BACKUPS.md](BACKUPS.md)
   **"Docker not recommended for permanent use"** caveat. **Decision taken (ADR-001): the DE node uses the supported
   host install on Ubuntu 22.04 on a separate VPS** (`5.249.160.59`). See [PHASE3_HIDDIFY_LIVE_VERIFY.md](PHASE3_HIDDIFY_LIVE_VERIFY.md)
   and [PHASE2_3_DE_NODE_PLAN.md](PHASE2_3_DE_NODE_PLAN.md).
-- **Preflight blocker (2026-06-15):** `de1` is currently **Ubuntu 20.04.6**, not 22.04 — it must be **reinstalled to
-  Ubuntu 22.04 LTS** (then re-add the Master key, re-run preflight) **before** the host install. See
-  [PHASE2_DE1_PREFLIGHT.md](PHASE2_DE1_PREFLIGHT.md).
+- **Done (2026-06-16):** `de1` reinstalled to Ubuntu 22.04.5; **Hiddify v12.3.3 host install completed & running**
+  via `download.sh v12.3.3 --no-gui` (version-pinned, non-interactive). Lesson: run installers under the **default
+  umask (022)** — a restrictive umask broke perms and needed remediation. See
+  [PHASE3_DE1_HIDDIFY_LIVE_VERIFY.md](PHASE3_DE1_HIDDIFY_LIVE_VERIFY.md).

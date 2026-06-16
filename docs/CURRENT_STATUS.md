@@ -12,7 +12,7 @@ Where the UNSEEN PROXY build stands across the §34 deployment phases.
 | 0 | Clean-VPS verification (gate before any build) | DONE (gate passed) |
 | 1 | Documentation, repo & architecture planning | DONE (pushed to origin/main, 25e5ddc) |
 | 2 | Hiddify test node setup | **RE-SCOPED to a separate DE VPS** (`de1`, `5.249.160.59`, Ubuntu 22.04, planned/test). Master-co-location preflight done then RETIRED. Forward plan: PHASE2_3_DE_NODE_PLAN.md |
-| 3 | Hiddify API & subscription compatibility audit | **PARTIAL — Docker-on-Master proven non-viable & torn down; API contract still unverified.** Decision (ADR-001): DE → supported host install on a separate Ubuntu-22.04 VPS. Live-verify to be re-done on `de1`. See PHASE3_HIDDIFY_LIVE_VERIFY.md |
+| 3 | Hiddify API & subscription compatibility audit | **PARTIAL — Hiddify v12.3.3 INSTALLED & RUNNING on de1** (all services active, 443 up, FAST1/FAST2/Secure present, admin link secured). **Deferred:** exact API v2 CRUD contract + test user (v12.3.3 API path not black-box-discoverable; OpenAPI route errors) → read from browser Swagger. See PHASE3_DE1_HIDDIFY_LIVE_VERIFY.md |
 | 4 | Database & backend clone design | PENDING |
 | 5 | Telegram bot implementation (Burmese-primary) | PENDING |
 | 6 | Hiddify subscription delivery integration | PENDING |
@@ -50,15 +50,19 @@ networking, and re-added the Master key. Re-verify: **SSH root key works** (host
 **OS 22.04.5 LTS** ✓, node **clean**, **ufw active** (SSH allowed), network **persistent** (static netplan, `ens18`).
 **Resolved:** root LV **23 GB (17 GB free)**; DNS `node-de.unseen.click` added; network persistent across reboot.
 
-**Phase 3-DE attempt (2026-06-15T19:25Z) — HOLD at the gate: RAM still ~1.8 GiB.** After Charles toggled "disable
-ballooning," de1 **still detects ~1.8 GiB** (it hadn't been power-cycled — uptime ~1h31m; a RAM/ballooning change
-needs a full **VM stop→start**, not a soft reboot). Per the gate, **Hiddify was NOT installed** (no node changes). All
-other gates passed (OS 22.04.5, disk, DNS, ufw+SSH, 80/443 free, clean). Detail:
-[PHASE3_DE1_HIDDIFY_LIVE_VERIFY.md](PHASE3_DE1_HIDDIFY_LIVE_VERIFY.md).
+**Phase 3-DE (2026-06-16) — Hiddify v12.3.3 INSTALLED & RUNNING on de1; result PARTIAL.** Charles accepted the RAM
+risk and we proceeded. Installed via the official **host** installer (`v12.3.3 --no-gui`, not Docker). All services
+active (panel/nginx/haproxy/xray/singbox/mariadb); **443 up**; **FAST1(Hysteria2)/FAST2(Shadowsocks)/Secure(VLESS-Reality)
+inbounds present**; admin link secured at `/root/hiddify-de1-admin.link` (0600, never printed); SSH safe; ufw active.
+RAM is balloon-dynamic — idle ~1.8 GiB but **deflated to ~3.8 GiB under load, no OOM**. (Note: the first install hit a
+permission cascade caused by the agent's `umask 077` at launch + uv cache hardlinks — fully remediated; lesson recorded.)
+**Deferred (blocks Phase 4):** exact API v2 CRUD paths/fields/units + disposable test user — the v12.3.3 API path wasn't
+black-box-discoverable (probes hit Hiddify's decoy site) and the OpenAPI route errors (likely the marshmallow-v4 bug).
+Detail: [PHASE3_DE1_HIDDIFY_LIVE_VERIFY.md](PHASE3_DE1_HIDDIFY_LIVE_VERIFY.md).
 
-**Next:** Charles **power-cycles de1** (stop→start) so the 4 GB takes effect → agent re-checks RAM; if ~3.5–4.0 GiB,
-proceed with the **Phase 3-DE Hiddify host install** + live API-contract verification. If still 1.8 GiB → provider
-ticket. Phase 4 stays blocked until the verified contract exists.
+**Next:** capture the **API v2 contract from the panel's browser Swagger** (open the admin link), or fix the OpenAPI 500
+(`marshmallow<=3.26.1`), then fill `HIDDIFY_API_CONTRACT.md` + create/delete one disposable test user. Also verify
+ufw/Hiddify proxy-port reachability and lock 4 GB RAM before live use. **Phase 4 stays blocked** until the contract is verified.
 
 **OS path decided (2026-06-15):** in-place `do-release-upgrade` was considered, but since `de1` is **empty** the
 safer, same-outcome choice is a **clean provider reinstall to Ubuntu 22.04** (Charles). A read-only pre-upgrade gate

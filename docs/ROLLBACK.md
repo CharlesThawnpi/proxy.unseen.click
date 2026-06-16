@@ -58,6 +58,13 @@ take a **provider snapshot** — or at minimum a **git-clean tree + a recorded s
 run removals dry-run/audited, verify no dependency breaks (containers/volumes/deps, 80/443 free, SSH up), and **stop +
 report** on anything unexpected. Rollback = restore the snapshot / re-install the package.
 
+## DE node `de1` rollback (Hiddify installed 2026-06-16)
+
+`de1` is a fresh **test** node with no customer data and the Master has no dependency on it yet (Phase 4 not started).
+Rollback for a bad Hiddify state: `bash /opt/hiddify-manager/uninstall.sh` (official) or a **provider reinstall** of
+Ubuntu 22.04 (then re-add the Master key + re-run preflight + reinstall Hiddify under the default umask). No snapshot
+needed — nothing to preserve. See [PHASE3_DE1_HIDDIFY_LIVE_VERIFY.md](PHASE3_DE1_HIDDIFY_LIVE_VERIFY.md).
+
 ## Restore drill
 
 > Verified in Phase 10

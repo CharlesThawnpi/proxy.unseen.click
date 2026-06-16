@@ -36,6 +36,9 @@ On `5.249.160.59` (root key SSH): interface is now **`ens18`** = `5.249.160.59/2
 reboot. **Only SSH `:22` public** + loopback `:53`; **80/443 free**; no proxy ports. **ufw is ACTIVE** (INPUT DROP,
 SSH allowed) — Phase 3-DE must allow Hiddify's ports while keeping SSH open. Customer→node direct path terminates here
 once Hiddify is installed. Detail: [PHASE2_DE1_PREFLIGHT.md](PHASE2_DE1_PREFLIGHT.md).
+- **Update (2026-06-16): Hiddify v12.3.3 installed** — `de1` now serves 443 (panel/sub + Hysteria2/QUIC) + Shadowsocks
+  (8388) + Reality/other inbounds; the customer→node data path is live here (node `status=test`). ufw active (22
+  allowed); confirm Hiddify's iptables open the proxy ports externally. See [PHASE3_DE1_HIDDIFY_LIVE_VERIFY.md](PHASE3_DE1_HIDDIFY_LIVE_VERIFY.md).
 
 ## Phase 2 preflight — current network state (2026-06-15, read-only) — MASTER
 

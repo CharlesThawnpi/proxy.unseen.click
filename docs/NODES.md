@@ -60,8 +60,9 @@ above applies normally (fresh VPS, host install, least-privilege API key, manage
   **supported Ubuntu-22.04 host install** is the chosen path, and it keeps the protected control plane clean.
 - **Provisioning + live-verify workflow:** see [PHASE2_3_DE_NODE_PLAN.md](PHASE2_3_DE_NODE_PLAN.md). API contract
   remains unverified until that install succeeds; **Phase 4 is blocked** until then.
-- **Preflight (re-verified 2026-06-15 after 22.04 reinstall): PARTIAL.** SSH root key login works; **OS now Ubuntu
-  22.04.5 LTS** ✓; node **clean** (no legacy/proxy artifacts; only SSH:22 public); **ufw active** (SSH allowed);
-  network **persistent** (static netplan, `ens18`; survived a reboot). **Resolved:** root LV extended to **23 GB
-  (17 GB free)**; DNS `node-de.unseen.click` added. **Remaining:** RAM detected **1.8 GiB** (under 4 GB purchased —
-  clarify w/ provider). Detail: [PHASE2_DE1_PREFLIGHT.md](PHASE2_DE1_PREFLIGHT.md).
+- **Hiddify INSTALLED (2026-06-16): v12.3.3, host install on Ubuntu 22.04.5 — running. Result PARTIAL.** All services
+  active; **443 up**; **FAST1(Hysteria2)/FAST2(Shadowsocks)/Secure(VLESS-Reality) inbounds present**; admin link secured
+  (`/root/hiddify-de1-admin.link`, 0600); SSH safe; ufw active. RAM balloon-dynamic (~1.8 idle → ~3.8 under load,
+  accepted risk). **Deferred (blocks Phase 4):** exact API v2 CRUD contract + disposable test user — read from browser
+  Swagger (v12.3.3 API path not black-box-discoverable; OpenAPI route errors). Node stays `status=test`. Detail:
+  [PHASE3_DE1_HIDDIFY_LIVE_VERIFY.md](PHASE3_DE1_HIDDIFY_LIVE_VERIFY.md). (Preflight history: [PHASE2_DE1_PREFLIGHT.md](PHASE2_DE1_PREFLIGHT.md).)
