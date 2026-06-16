@@ -86,3 +86,13 @@ The dry-run provisioning orchestration ([PHASE4C_DRY_RUN_PROVISIONING.md](PHASE4
 provisioning is **hard-refused**: blockers `node_not_live:test`, `leaked_key_rebuild_pending`, and
 `phase4c_live_disabled` are always present, so live refuses even with the env latch + `--live --confirm`. de1 stays
 `status=test`.
+
+## Phase 7 — node status/health resilience (2026-06-16)
+
+`backend/node_resilience.py` ([PHASE7_ENTITLEMENT_NODE_RESILIENCE.md](PHASE7_ENTITLEMENT_NODE_RESILIENCE.md)) resolves
+two axes: **status** (`planned|test|standby|live|retired`) and **health** (from OPEN `node_alerts`:
+healthy|degraded|down). For **live**, only a `live` + not-down node with no data-driven blocker is eligible; for
+**dry-run**, test/standby/live (not down) are candidates (planned/retired excluded). A **down** node is dropped;
+remaining nodes keep serving (graceful degradation). **de1** stays `status=test` and is blocked from live with
+`node_status_test` + `leaked_key_rebuild_pending` — the leaked-key blocker is now a **data-driven** `node_live_blockers`
+row (delete it after the rebuild), not hardcoded.

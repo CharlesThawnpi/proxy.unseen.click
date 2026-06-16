@@ -78,6 +78,18 @@ DE1_NODE = dict(
 )
 
 
+# (node_code, reason, sanitized detail) — Phase 7 data-driven live blockers.
+NODE_LIVE_BLOCKERS = [
+    ("de1", "leaked_key_rebuild_pending",
+     "default-user/server keys exposed in earlier testing; rebuild node before live (no secrets here)"),
+]
+
+
+def _table_exists(conn: sqlite3.Connection, name: str) -> bool:
+    return conn.execute(
+        "SELECT 1 FROM sqlite_master WHERE type='table' AND name=?", (name,)).fetchone() is not None
+
+
 def seed(conn: sqlite3.Connection) -> None:
     cur = conn.cursor()
     cur.executemany(
@@ -117,6 +129,13 @@ def seed(conn: sqlite3.Connection) -> None:
         f"INSERT OR IGNORE INTO proxy_nodes({cols}) VALUES ({qs})",
         tuple(DE1_NODE.values()),
     )
+    # Phase 7: data-driven live blocker for de1 (leaked default-user/server keys → rebuild required
+    # before live; docs/PHASE4_PRELIVE_DE1_TUNING.md). Admin-editable: delete the row once cleared.
+    if _table_exists(conn, "node_live_blockers"):
+        cur.executemany(
+            "INSERT OR IGNORE INTO node_live_blockers(node_code,reason,detail) VALUES (?,?,?)",
+            NODE_LIVE_BLOCKERS,
+        )
     conn.commit()
 
 

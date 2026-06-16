@@ -52,3 +52,12 @@ The dry-run provisioning plan resolves a plan's profiles from `plan_protocol_ent
 display rule** (one fast tier → "Fast"; both → "Fast1"/"Fast2"; Secure always "Secure"). Mapping (from seed):
 **FAST1 = Hysteria2**, **FAST2 = Shadowsocks**, **Secure = VLESS-Reality**. The sanitized Hiddify mutation intent is
 planned but **never sent** in Phase 4C. See [PHASE4C_DRY_RUN_PROVISIONING.md](PHASE4C_DRY_RUN_PROVISIONING.md).
+
+## Phase 7 — node-specific protocol availability (2026-06-16)
+
+Protocol availability is now resolved per node ([PHASE7_ENTITLEMENT_NODE_RESILIENCE.md](PHASE7_ENTITLEMENT_NODE_RESILIENCE.md)):
+the additive `proxy_node_protocols` table records whether FAST1/FAST2/SECURE is up on a given node (**absence = available**
+by default; `is_available=0` = down). `backend/availability.py` reports a protocol as unavailable in a region
+(`protocol_missing`) when no eligible node there has it up — **no silent downgrade**. The FAST display rule (one fast
+tier → "Fast"; both → "Fast1"/"Fast2") and the FAST1=Hysteria2 / FAST2=Shadowsocks / Secure=VLESS-Reality mapping are
+resolved from DB rows, never hardcoded.

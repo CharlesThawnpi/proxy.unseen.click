@@ -159,3 +159,13 @@ upholds rules 1 & 2:
 - **Hiddify output is mocked + discarded.** `hiddify_subscription_output.normalize` extracts non-secret facts
   (counts/engine names/booleans) and drops the raw output — never logged or returned.
 - **QR is honestly reported as planned** (not generated) — no QR payload exists to leak.
+
+## Phase 7 secret-safety (entitlement + node resilience — verified by tests)
+
+The Phase 7 resolvers ([PHASE7_ENTITLEMENT_NODE_RESILIENCE.md](PHASE7_ENTITLEMENT_NODE_RESILIENCE.md)) emit only
+sanitized facts — region/protocol codes, node statuses, health, counts, and reason codes from a fixed vocabulary.
+**No node IP, hostname, API key, admin path, UUID, link, or QR** appears in any resolver output, provisioning-plan
+summary, audit row, or customer-facing message (test-asserted, including the de1 IP). The data-driven
+`node_live_blockers.detail` is a sanitized note. Customer availability copy (Burmese) names only public product facts
+(DE/US/SG, protocol display labels) — never internal inventory. Health is derived from `node_alerts` rows; no real
+node is contacted in this phase.

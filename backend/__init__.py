@@ -22,4 +22,6 @@ __all__ = [
     # Phase 6 subscription delivery foundation (dry-run; no raw links persisted/logged):
     "link_renderer", "qr_renderer", "hiddify_subscription_output",
     "delivery_payloads", "subscription_delivery",
+    # Phase 7 entitlement + node-resilience foundation (DB-driven; dry-run):
+    "entitlements", "node_resilience", "availability",
 ]

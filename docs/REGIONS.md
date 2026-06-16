@@ -50,3 +50,14 @@ resolves a plan's regions **from `plan_region_entitlements` rows** (never hardco
 premium-only** (surfaced in `premium_regions`, present only for PRO/MAX), US as entitled. Candidate nodes are selected
 by region + status; **de1 (`status=test`) is usable for dry-run only**, never live. Tested: SG excluded from
 BASIC/CORE, included for PRO/MAX.
+
+## Phase 7 — entitlement vs availability (2026-06-16)
+
+Phase 7 ([PHASE7_ENTITLEMENT_NODE_RESILIENCE.md](PHASE7_ENTITLEMENT_NODE_RESILIENCE.md)) makes region access honest and
+dynamic, all DB-driven (`backend/entitlements.py` + `backend/availability.py`):
+
+- **Entitlement** (plan is *allowed* the region) vs **availability** (a usable node exists *now*) are distinct.
+- **DE** = default/entry (`proxy_regions.is_default`); **SG** = premium-only PRO/MAX (`is_premium_only`); US on CORE+.
+- A region is **unavailable** if entitled but no eligible node (test/standby/live & not down for dry-run; live-ready
+  for live). Reasons are explicit (`no_candidate_node`, `node_down`, `node_status_test`, …) — **no silent substitution**
+  of another region. SG being absent never affects BASIC/CORE (not entitled). Customer copy is Burmese & secret-free.

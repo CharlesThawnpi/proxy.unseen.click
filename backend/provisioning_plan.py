@@ -13,7 +13,7 @@ import sqlite3
 from dataclasses import dataclass, field, asdict
 from typing import List, Optional
 
-from . import config, display, seed, units
+from . import availability as _avail, config, display, node_resilience as _nr, seed, units
 from .hiddify import HiddifyClient
 
 
@@ -44,6 +44,12 @@ class ProvisioningPlan:
     premium_regions: List[str]    # e.g. sg (premium-only)
     candidate_nodes: List[NodeCandidate] = field(default_factory=list)
     live_blockers: List[str] = field(default_factory=list)
+    # Phase 7 — entitlement × node-resilience (dry-run availability picture):
+    entitled_regions: List[str] = field(default_factory=list)
+    entitled_protocols: List[str] = field(default_factory=list)
+    available_regions: List[str] = field(default_factory=list)
+    unavailable_regions: List[dict] = field(default_factory=list)   # [{region, reasons}]
+    node_readiness: List[dict] = field(default_factory=list)        # sanitized per-node readiness
 
     @property
     def live_allowed(self) -> bool:
@@ -114,12 +120,19 @@ def build_plan(conn: sqlite3.Connection, plan_code: str,
     if target is None:
         target = candidates[0] if candidates else None
 
+    # Phase 7: entitlement × node-resilience availability (dry-run view) + per-node readiness.
+    avail = _avail.resolve(conn, plan_code, mode=_avail.MODE_DRY_RUN)
+    readiness = [r.as_dict() for r in _nr.readiness_for_regions(conn, regions)]
+
     return ProvisioningPlan(
         plan_code=p["plan_code"], display_name=p["display_name_en"],
         quota_gib=int(p["data_limit_gib"]), quota_gb=units.gib_to_gb(p["data_limit_gib"]),
         package_days=int(p["duration_days"]), price_mmk=int(p["price_mmk"]),
         regions=regions, profiles=profiles, profile_labels=labels, premium_regions=premium,
         candidate_nodes=candidates, live_blockers=live_blockers(target),
+        entitled_regions=avail.entitled_regions, entitled_protocols=avail.entitled_protocols,
+        available_regions=avail.available_regions, unavailable_regions=avail.unavailable_regions,
+        node_readiness=readiness,
     )
 
 

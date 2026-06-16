@@ -16,7 +16,7 @@ Where the UNSEEN PROXY build stands across the §34 deployment phases.
 | 4 | Database & backend clone design | **Phase 4A + 4B + 4C DONE (dry-run/test-safe).** 4A: migrations + schema + seed + Hiddify client + provisioner CLI. 4B: AccountService + account-link codes + NotificationService (queue-first) + idempotency + WAL-safe online backup (`0002`). 4C: dry-run provisioning orchestration — payment-approval boundary → subscription snapshots → access-profile placeholder → provisioning plan (entitlements + live blockers + sanitized Hiddify intent) → delivery enqueue → audit + forward-only compensation; **live hard-refused**; additive migration `0003`. **70 tests PASS**. No live mutations/sends/real customers. See PHASE4A/4B/4C docs. |
 | 5 | Telegram bot implementation (Burmese-primary) | **Foundation + transport DONE (dry-run, gated).** Foundation: adapter + Burmese catalogue + router + AccountService identity + env-driven admin. Transport: Bot API boundary (token redacted; injectable opener), offset-tracked polling runner, NotificationService sender consuming `outbound_messages` (queued→sent/requeue/dead), fail-closed double gate. **No polling daemon/webhook/API/send; no systemd.** See PHASE5_TELEGRAM_BOT_FOUNDATION.md + PHASE5_TELEGRAM_TRANSPORT_FOUNDATION.md. Live bring-up = next, Charles-gated. |
 | 6 | Hiddify subscription delivery integration | **Foundation DONE (dry-run): delivery payload model (safe refs only) + branded link rule (`sub.unseen.click/s/<token>`, hash stored) + deep-link/copy-link priority + QR planned + mocked Hiddify-output normalizer + NotificationService/Telegram render integration. No raw links persisted/logged; no network.** See PHASE6_SUBSCRIPTION_DELIVERY_FOUNDATION.md. Sidecar + live = next, gated. |
-| 7 | Plan-based region/protocol entitlement + node resilience | PENDING |
+| 7 | Plan-based region/protocol entitlement + node resilience | **Foundation DONE (dry-run, DB-driven): `entitlements` (plan→region/protocol, FAST rule, safe errors) + `node_resilience` (status×health readiness, reason vocabulary, graceful degradation, data-driven `node_live_blockers`) + `availability` (region/protocol availability) + provisioning-plan integration + Burmese availability copy. Additive migration `0005`. No node live; no metrics fetch.** See PHASE7_ENTITLEMENT_NODE_RESILIENCE.md. Health monitor = next. |
 | 8 | Web app / customer portal | PENDING |
 | 9 | Messenger and Viber bot integration | PENDING |
 | 10 | Monitoring, backup, security, production hardening | PENDING |
@@ -111,10 +111,15 @@ assembled in memory, token **hash** stored) + deep-link→copy-link→QR priorit
 normalizer + NotificationService/Telegram render integration. Additive migration `0004` (`subscription_deliveries`,
 no raw-link column). 122 tests PASS. **No raw links persisted/logged; no network/send.**
 
-**Next: Phase 6 sidecar (gated) or Phase 7 (entitlement/region resilience).** **Before de1 goes live:** rebuild the
-node (clears `leaked_key_rebuild_pending`) + a real-device FAST1/FAST2/Secure test (`#TASK_for_Charles` in
-PHASE4_PRELIVE_DE1_TUNING.md), then separately-gated tasks to flip the bot env latches + wire a real opener + build the
-`sub.unseen.click` sidecar. Live promotion stays Charles-gated.
+**Phase 7 entitlement + node-resilience foundation complete (2026-06-16)** ([PHASE7_ENTITLEMENT_NODE_RESILIENCE.md](PHASE7_ENTITLEMENT_NODE_RESILIENCE.md)):
+DB-driven entitlement resolver + node status/health readiness (graceful degradation; data-driven `node_live_blockers`)
++ availability resolver + provisioning-plan integration + honest Burmese availability copy. Additive migration `0005`
+(`proxy_node_protocols`, `node_live_blockers`). 144 tests PASS. **No node live; no metrics fetch; no send.**
+
+**Next: Phase 7 health monitor (gated) or Phase 8 (web portal).** **Before de1 goes live:** rebuild the node (clears
+`leaked_key_rebuild_pending`) + a real-device FAST1/FAST2/Secure test (`#TASK_for_Charles` in
+PHASE4_PRELIVE_DE1_TUNING.md), then separately-gated tasks (bot live latches + real opener, `sub.unseen.click` sidecar,
+live provisioning). Live promotion stays Charles-gated.
 
 **OS path decided (2026-06-15):** in-place `do-release-upgrade` was considered, but since `de1` is **empty** the
 safer, same-outcome choice is a **clean provider reinstall to Ubuntu 22.04** (Charles). A read-only pre-upgrade gate

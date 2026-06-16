@@ -140,3 +140,12 @@ but fetches nothing from de1 and sends nothing: Hiddify output is **mocked** in 
 (`https://sub.unseen.click/s/<token>`) and its resolving **sidecar** are a future, gated task — the sidecar will fetch
 the real node subscription **in memory** (`access_log off`) and never persist raw links. Live delivery requires the de1
 rebuild + a real-device protocol PASS + the Phase 5 live send gate — all Charles-gated.
+
+## Phase 7 — entitlement + node-resilience resolver (dry-run; no node contacted, 2026-06-16)
+
+The resolver layer ([PHASE7_ENTITLEMENT_NODE_RESILIENCE.md](PHASE7_ENTITLEMENT_NODE_RESILIENCE.md)) is DB-driven and
+read-only: it never contacts a node, fetches metrics, or marks anything live. Dry-run tools (temp DB):
+`bin/entitlement_audit.py`, `bin/availability_preview.py`, `bin/node_resilience_smoke.py` (uses mock alerts).
+Node health is derived from `node_alerts`; populating those from real read-only probes (a health monitor) is a future,
+sanitized task. Live candidate selection (status=live + healthy + no `node_live_blockers`) stays gated behind the de1
+rebuild + the global `phase4c_live_disabled` switch.

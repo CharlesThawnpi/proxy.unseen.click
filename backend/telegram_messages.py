@@ -90,6 +90,31 @@ DELIVERY_PREP = (
 GENERIC_TRANSACTIONAL = "🔔 အသိပေးချက် — {brand}".format(brand=BRAND)
 
 
+# Customer-facing availability copy (Burmese-primary). NO node IP / secret / link ever included —
+# only region codes (DE/US/SG) and protocol display labels, which are public product facts.
+def region_available(region_code: str) -> str:
+    return f"✅ {region_code.upper()} ဒေသကို ယခု အသုံးပြုနိုင်ပါသည်။"
+
+
+def region_unavailable(region_code: str) -> str:
+    return (f"⚠️ {region_code.upper()} ဒေသကို ယခုအချိန် မရရှိနိုင်သေးပါ။ "
+            "ခဏအကြာတွင် ပြန်လည်ကြိုးစားကြည့်ပါ — သို့မဟုတ် သင်ဝယ်ယူထားသော အခြားဒေသကို သုံးပါ။")
+
+
+def region_test_only(region_code: str) -> str:
+    return (f"🧪 {region_code.upper()} ဒေသသည် ယခုအဆင့်တွင် စမ်းသပ်ဆဲ (test) သာ ဖြစ်ပါသည် — "
+            "တရားဝင် ဝန်ဆောင်မှု မဖွင့်ရသေးပါ။")
+
+
+def protocol_unavailable(region_code: str, label: str) -> str:
+    return f"⚠️ {label} protocol ကို {region_code.upper()} ဒေသတွင် ယခုအချိန် မရရှိနိုင်ပါ။"
+
+
+def plan_excludes_region(region_code: str) -> str:
+    return (f"ℹ️ သင့် Plan တွင် {region_code.upper()} ဒေသ မပါဝင်ပါ။ "
+            "Pro/Max Plan များတွင် ပိုမိုသော ဒေသများ ပါဝင်ပါသည်။")
+
+
 def delivery_preview(deep_link_available: bool, copy_link_available: bool,
                      qr_available: bool) -> str:
     """Safe Burmese-primary delivery preview — describes which delivery modes are available.

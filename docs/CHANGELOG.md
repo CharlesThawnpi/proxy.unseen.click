@@ -5,6 +5,25 @@
 
 Chronological record of notable changes to the UNSEEN PROXY project.
 
+## 2026-06-16 — Phase 7: entitlement + node-resilience foundation (dry-run) — PASS
+
+- **DB-driven, dry-run only** (stdlib): no node marked live, no live Hiddify, no de1 metrics fetched, no Telegram send;
+  de1 stays `status=test`. See [PHASE7_ENTITLEMENT_NODE_RESILIENCE.md](PHASE7_ENTITLEMENT_NODE_RESILIENCE.md).
+- **Additive migration** `0005_phase7.sql`: `proxy_node_protocols` (node-specific protocol availability; absent =
+  available) + `node_live_blockers` (data-driven per-node live blockers; de1 seeded `leaked_key_rebuild_pending`).
+  Idempotent re-run verified.
+- **`entitlements`** — plan→region/protocol from DB rows only (FAST display rule; DE default; SG premium-only PRO/MAX;
+  unknown/disabled plan → safe error). **`node_resilience`** — status × health (open `node_alerts`) → per-node
+  readiness + sanitized reason vocabulary (`node_status_test`/`node_down`/`leaked_key_rebuild_pending`/…); graceful
+  degradation (down node dropped); node-protocol availability. **`availability`** — entitlement × resilience →
+  per-region/protocol availability (dry_run/live); honest unavailable reasons; no silent region/protocol substitution.
+- **Integration:** `provisioning_plan.build_plan` now uses the resolver — adds `entitled/available/unavailable_regions`,
+  `entitled_protocols`, `node_readiness` to the sanitized summary; existing `live_blockers` unchanged. Burmese
+  customer-facing availability copy added (no IP/secret). New CLIs: `bin/entitlement_audit.py`,
+  `bin/node_resilience_smoke.py`, `bin/availability_preview.py`.
+- **Tests: 144 PASS** (122 + 22 new). Updated DATABASE/REGIONS/PROTOCOLS/NODES/SECURITY/DEPLOYMENT/CURRENT_STATUS;
+  new PHASE7 doc.
+
 ## 2026-06-16 — Phase 6: subscription delivery foundation (dry-run) — PASS
 
 - **Dry-run only** (stdlib): no live Hiddify call, no real subscription fetch from de1, no Telegram send, and **no raw

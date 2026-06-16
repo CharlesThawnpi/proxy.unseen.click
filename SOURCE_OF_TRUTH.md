@@ -1,6 +1,6 @@
 # UNSEEN PROXY — SOURCE OF TRUTH (consolidated, auto-generated)
 
-> **Generated:** 2026-06-16T04:56:58Z — by `scripts/build_source_of_truth.sh`.
+> **Generated:** 2026-06-16T05:38:45Z — by `scripts/build_source_of_truth.sh`.
 > **This is the live project state for external readers (e.g. the Custom GPT).** It is DERIVED from the
 > canonical docs below and regenerated each task. Upload THIS file to the GPT (not IMPLEMENTATION_PLAN.md,
 > which is the static v1.9 plan). Re-download after updates.
@@ -46,7 +46,7 @@ Where the UNSEEN PROXY build stands across the §34 deployment phases.
 | 4 | Database & backend clone design | **Phase 4A + 4B + 4C DONE (dry-run/test-safe).** 4A: migrations + schema + seed + Hiddify client + provisioner CLI. 4B: AccountService + account-link codes + NotificationService (queue-first) + idempotency + WAL-safe online backup (`0002`). 4C: dry-run provisioning orchestration — payment-approval boundary → subscription snapshots → access-profile placeholder → provisioning plan (entitlements + live blockers + sanitized Hiddify intent) → delivery enqueue → audit + forward-only compensation; **live hard-refused**; additive migration `0003`. **70 tests PASS**. No live mutations/sends/real customers. See PHASE4A/4B/4C docs. |
 | 5 | Telegram bot implementation (Burmese-primary) | **Foundation + transport DONE (dry-run, gated).** Foundation: adapter + Burmese catalogue + router + AccountService identity + env-driven admin. Transport: Bot API boundary (token redacted; injectable opener), offset-tracked polling runner, NotificationService sender consuming `outbound_messages` (queued→sent/requeue/dead), fail-closed double gate. **No polling daemon/webhook/API/send; no systemd.** See PHASE5_TELEGRAM_BOT_FOUNDATION.md + PHASE5_TELEGRAM_TRANSPORT_FOUNDATION.md. Live bring-up = next, Charles-gated. |
 | 6 | Hiddify subscription delivery integration | **Foundation DONE (dry-run): delivery payload model (safe refs only) + branded link rule (`sub.unseen.click/s/<token>`, hash stored) + deep-link/copy-link priority + QR planned + mocked Hiddify-output normalizer + NotificationService/Telegram render integration. No raw links persisted/logged; no network.** See PHASE6_SUBSCRIPTION_DELIVERY_FOUNDATION.md. Sidecar + live = next, gated. |
-| 7 | Plan-based region/protocol entitlement + node resilience | PENDING |
+| 7 | Plan-based region/protocol entitlement + node resilience | **Foundation DONE (dry-run, DB-driven): `entitlements` (plan→region/protocol, FAST rule, safe errors) + `node_resilience` (status×health readiness, reason vocabulary, graceful degradation, data-driven `node_live_blockers`) + `availability` (region/protocol availability) + provisioning-plan integration + Burmese availability copy. Additive migration `0005`. No node live; no metrics fetch.** See PHASE7_ENTITLEMENT_NODE_RESILIENCE.md. Health monitor = next. |
 | 8 | Web app / customer portal | PENDING |
 | 9 | Messenger and Viber bot integration | PENDING |
 | 10 | Monitoring, backup, security, production hardening | PENDING |
@@ -141,10 +141,15 @@ assembled in memory, token **hash** stored) + deep-link→copy-link→QR priorit
 normalizer + NotificationService/Telegram render integration. Additive migration `0004` (`subscription_deliveries`,
 no raw-link column). 122 tests PASS. **No raw links persisted/logged; no network/send.**
 
-**Next: Phase 6 sidecar (gated) or Phase 7 (entitlement/region resilience).** **Before de1 goes live:** rebuild the
-node (clears `leaked_key_rebuild_pending`) + a real-device FAST1/FAST2/Secure test (`#TASK_for_Charles` in
-PHASE4_PRELIVE_DE1_TUNING.md), then separately-gated tasks to flip the bot env latches + wire a real opener + build the
-`sub.unseen.click` sidecar. Live promotion stays Charles-gated.
+**Phase 7 entitlement + node-resilience foundation complete (2026-06-16)** ([PHASE7_ENTITLEMENT_NODE_RESILIENCE.md](PHASE7_ENTITLEMENT_NODE_RESILIENCE.md)):
+DB-driven entitlement resolver + node status/health readiness (graceful degradation; data-driven `node_live_blockers`)
++ availability resolver + provisioning-plan integration + honest Burmese availability copy. Additive migration `0005`
+(`proxy_node_protocols`, `node_live_blockers`). 144 tests PASS. **No node live; no metrics fetch; no send.**
+
+**Next: Phase 7 health monitor (gated) or Phase 8 (web portal).** **Before de1 goes live:** rebuild the node (clears
+`leaked_key_rebuild_pending`) + a real-device FAST1/FAST2/Secure test (`#TASK_for_Charles` in
+PHASE4_PRELIVE_DE1_TUNING.md), then separately-gated tasks (bot live latches + real opener, `sub.unseen.click` sidecar,
+live provisioning). Live promotion stays Charles-gated.
 
 **OS path decided (2026-06-15):** in-place `do-release-upgrade` was considered, but since `de1` is **empty** the
 safer, same-outcome choice is a **clean provider reinstall to Ubuntu 22.04** (Charles). A read-only pre-upgrade gate
@@ -379,6 +384,25 @@ The verified Hiddify Manager **API v2** contract — endpoints, fields, units, a
 
 Chronological record of notable changes to the UNSEEN PROXY project.
 
+## 2026-06-16 — Phase 7: entitlement + node-resilience foundation (dry-run) — PASS
+
+- **DB-driven, dry-run only** (stdlib): no node marked live, no live Hiddify, no de1 metrics fetched, no Telegram send;
+  de1 stays `status=test`. See [PHASE7_ENTITLEMENT_NODE_RESILIENCE.md](PHASE7_ENTITLEMENT_NODE_RESILIENCE.md).
+- **Additive migration** `0005_phase7.sql`: `proxy_node_protocols` (node-specific protocol availability; absent =
+  available) + `node_live_blockers` (data-driven per-node live blockers; de1 seeded `leaked_key_rebuild_pending`).
+  Idempotent re-run verified.
+- **`entitlements`** — plan→region/protocol from DB rows only (FAST display rule; DE default; SG premium-only PRO/MAX;
+  unknown/disabled plan → safe error). **`node_resilience`** — status × health (open `node_alerts`) → per-node
+  readiness + sanitized reason vocabulary (`node_status_test`/`node_down`/`leaked_key_rebuild_pending`/…); graceful
+  degradation (down node dropped); node-protocol availability. **`availability`** — entitlement × resilience →
+  per-region/protocol availability (dry_run/live); honest unavailable reasons; no silent region/protocol substitution.
+- **Integration:** `provisioning_plan.build_plan` now uses the resolver — adds `entitled/available/unavailable_regions`,
+  `entitled_protocols`, `node_readiness` to the sanitized summary; existing `live_blockers` unchanged. Burmese
+  customer-facing availability copy added (no IP/secret). New CLIs: `bin/entitlement_audit.py`,
+  `bin/node_resilience_smoke.py`, `bin/availability_preview.py`.
+- **Tests: 144 PASS** (122 + 22 new). Updated DATABASE/REGIONS/PROTOCOLS/NODES/SECURITY/DEPLOYMENT/CURRENT_STATUS;
+  new PHASE7 doc.
+
 ## 2026-06-16 — Phase 6: subscription delivery foundation (dry-run) — PASS
 
 - **Dry-run only** (stdlib): no live Hiddify call, no real subscription fetch from de1, no Telegram send, and **no raw
@@ -443,25 +467,6 @@ Chronological record of notable changes to the UNSEEN PROXY project.
 - **Additive migration** `0003_phase4c.sql`: `subscriptions.provision_status`, `payment_orders.approved_at`, new
   `provisioning_attempts` (FK-enforced) + indexes. Idempotent re-run verified.
 - **Flow wired:** AccountService → `payment_approval_service` (idempotent dry-run approval) → `subscription_service`
-  (order-time snapshots, deterministic dates) → `access_profile_service` (placeholder hash; no raw token/URL/UUID) →
-  `provisioning_plan` (entitlements from DB rows + candidate nodes + live blockers + sanitized Hiddify mutation intent,
-  GiB→GB) → `provisioning_service` (dry-run; **live hard-refused**) → NotificationService (delivery enqueue,
-  `payload_ref` only) → `audit` (sanitized) with a forward-only `compensation` model.
-- **Exactly-once** across `payment_approval`/`provision_subscription` scopes: duplicate flow creates no duplicate
-  subscription/notification/attempt. **Live refuses even with env latch + `--live --confirm`** (blockers:
-  `phase4c_live_disabled`, `leaked_key_rebuild_pending`, `node_not_live:test`).
-- New CLIs: `bin/approve_payment_dry_run.py`, `bin/provision_subscription_dry_run.py`,
-  `bin/provisioning_flow_smoke.py`. **Tests: 70 PASS** (48 + 22 new; incl. a no-network-call guard). Updated
-  DATABASE/CURRENT_STATUS + REGIONS/PROTOCOLS/NODES/SECURITY/DEPLOYMENT notes; new PHASE4C doc.
-
-## 2026-06-16 — Phase 4: de1 pre-live tuning & security hardening (test-safe) — PARTIAL
-
-- **No customers/subscriptions/live provisioning; de1 stays `status=test`.** See
-  [PHASE4_PRELIVE_DE1_TUNING.md](PHASE4_PRELIVE_DE1_TUNING.md).
-- **Firewall — no change required.** ufw + Hiddify share one nf_tables ruleset; Hiddify's `ACCEPT` rules precede
-  ufw's chains in `INPUT`, so required ports (22/80/443 tcp, 443 udp, 55573, dynamic Hiddify inbounds) are open while
-  ufw default-denies the rest. Verified from the Master: 22/80/443 tcp OPEN (443 TLS→200), 55573 OPEN; **8388 filtered
-  by design** (`ss-server` is loopback-only; Shadowsocks fronts via 443/faketls). SSH allowed throughout.
 
 
 ---

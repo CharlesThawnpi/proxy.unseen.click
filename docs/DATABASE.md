@@ -128,3 +128,18 @@ The fields below are summarized; **Appendix A of the plan is the authoritative d
   sanitized summary, raw discarded), `qr_renderer` (QR **planned**, not generated), `delivery_payloads` +
   `subscription_delivery` (prepare → persist safe refs + audit + enqueue notification, `payload_ref` only). Reuses
   `outbound_messages` + `audit_logs`.
+
+## Phase 7 additions (IMPLEMENTED — entitlement + node-resilience foundation, dry-run)
+
+> Built in Phase 7 (see [PHASE7_ENTITLEMENT_NODE_RESILIENCE.md](PHASE7_ENTITLEMENT_NODE_RESILIENCE.md)); DB-driven,
+> dry-run only.
+
+- **Migration `0005_phase7.sql` (additive):**
+  - **`proxy_node_protocols`** (FK→proxy_nodes/protocol_profiles; UNIQUE(node,profile)): node-specific protocol
+    availability — **absence of a row = available** (back-compat); `is_available=0` = protocol down on that node.
+  - **`node_live_blockers`** (FK→proxy_nodes; UNIQUE(node,reason)): **data-driven** per-node live blockers; de1 seeded
+    `leaked_key_rebuild_pending` (admin-editable — delete the row once the node is rebuilt).
+- **Resolvers (stdlib, read-only):** `entitlements` (plan→region/protocol from DB rows; FAST rule; safe errors),
+  `node_resilience` (status × health from open `node_alerts` → per-node readiness + reason vocabulary; node-protocol
+  availability), `availability` (entitlement × resilience → per-region/protocol availability, graceful degradation).
+  Health is derived from `node_alerts` (no real-metrics ingestion in this phase).
