@@ -5,6 +5,24 @@
 
 Chronological record of notable changes to the UNSEEN PROXY project.
 
+## 2026-06-16 — Phase 5: Telegram bot foundation (Burmese-primary, dry-run) — PASS
+
+- **Dry-run only** (stdlib): no Telegram API call, no message sent, no polling/webhook, no service started, no live
+  provisioning; de1 stays `status=test`. See [PHASE5_TELEGRAM_BOT_FOUNDATION.md](PHASE5_TELEGRAM_BOT_FOUNDATION.md).
+- **New modules:** `telegram_adapter` (dry-run boundary; token redacted; live sends hard-refused via
+  `config.PHASE5_LIVE_SEND_DISABLED`), `telegram_messages` (Burmese-primary catalogue; English product terms kept),
+  `telegram_commands` (defensive `parse_update`), `bot_flows` (DB-driven plan/status/admin content), `telegram_router`
+  (routes `/start`,`/help`,`/plans`,`/account`,`/link`,`/admin`,fallback), `bot_context` (env-driven admin ids).
+- **Identity:** `/start` resolves via AccountService (telegram platform); the Telegram id is a `platform_accounts`
+  key, never the customer identity; `/start` idempotent. **Plans render from DB rows** (DE default, SG premium-only
+  PRO/MAX, FAST label rule) — not hardcoded.
+- **Admin:** ids from `ADMIN_TELEGRAM_IDS` (fallback `TELEGRAM_ADMIN_IDS`), parsed safely, never logged; `/admin` =
+  DB-only sanitized counts for admins, Burmese denial otherwise. **NotificationService** integration is queue-only
+  (`payload_ref`, no body/secret).
+- `.env.example`: added `ADMIN_TELEGRAM_IDS` placeholder (kept `TELEGRAM_ADMIN_IDS` alias); no real token/id committed.
+- New CLIs: `bin/telegram_bot_smoke.py`, `bin/render_telegram_messages.py` (temp DB). **Tests: 89 PASS** (70 + 19 new,
+  incl. no-network-call guard + token-redaction). Updated BOT_FLOWS/SECURITY/DEPLOYMENT/CURRENT_STATUS; new PHASE5 doc.
+
 ## 2026-06-16 — Phase 4C: dry-run provisioning orchestration — PASS
 
 - **Dry-run orchestration only** (stdlib). No live Hiddify call, no Hiddify user, no real customer/subscription, no

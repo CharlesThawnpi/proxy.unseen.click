@@ -62,3 +62,15 @@ PHASE4C_LIVE_PROVISION_DISABLED = True
 # de1's leaked default-user/server keys mean it must be rebuilt before serving live traffic
 # (docs/PHASE4_PRELIVE_DE1_TUNING.md → REBUILD_REQUIRED_BEFORE_LIVE). Until cleared, live is blocked.
 LEAKED_KEY_REBUILD_PENDING = True
+
+
+# ---- Phase 5 Telegram bot blockers ----------------------------------------------------------
+# Phase 5 is dry-run ONLY: the bot never calls the Telegram API, never sends a message, and
+# never starts polling/webhook. The adapter hard-refuses live sends regardless of env/flags.
+PHASE5_LIVE_SEND_DISABLED = True
+
+# Env var NAMES the bot reads (values live in .env on the Master only — never in git/source).
+TELEGRAM_BOT_TOKEN_ENV = "TELEGRAM_BOT_TOKEN"
+# Primary admin-ids env name (per Phase 5 spec); falls back to the older template name.
+ADMIN_TELEGRAM_IDS_ENV = "ADMIN_TELEGRAM_IDS"
+ADMIN_TELEGRAM_IDS_ENV_FALLBACK = "TELEGRAM_ADMIN_IDS"

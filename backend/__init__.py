@@ -13,4 +13,7 @@ __all__ = [
     # Phase 4C dry-run provisioning orchestration (no live Hiddify, no sends):
     "audit", "provisioning_plan", "subscription_service", "access_profile_service",
     "payment_approval_service", "provisioning_service", "compensation",
+    # Phase 5 Telegram bot foundation (dry-run; no polling/webhook/API/sends):
+    "bot_context", "telegram_adapter", "telegram_messages", "telegram_commands",
+    "bot_flows", "telegram_router",
 ]

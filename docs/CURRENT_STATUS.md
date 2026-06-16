@@ -14,7 +14,7 @@ Where the UNSEEN PROXY build stands across the §34 deployment phases.
 | 2 | Hiddify test node setup | **RE-SCOPED to a separate DE VPS** (`de1`, `5.249.160.59`, Ubuntu 22.04, planned/test). Master-co-location preflight done then RETIRED. Forward plan: PHASE2_3_DE_NODE_PLAN.md |
 | 3 | Hiddify API & subscription compatibility audit | **DONE (PASS w/ follow-ups) — Hiddify v12.3.3 on de1; API v2 contract VERIFIED-LIVE; disposable test user create→sub→delete confirmed.** Phase 4 API layer UNBLOCKED. Node-tuning follow-ups: SS:8388/UDP reachability, RAM lock, SSH hardening, regenerate leaked default-user keys. See HIDDIFY_API_CONTRACT.md + PHASE3_DE1_HIDDIFY_LIVE_VERIFY.md |
 | 4 | Database & backend clone design | **Phase 4A + 4B + 4C DONE (dry-run/test-safe).** 4A: migrations + schema + seed + Hiddify client + provisioner CLI. 4B: AccountService + account-link codes + NotificationService (queue-first) + idempotency + WAL-safe online backup (`0002`). 4C: dry-run provisioning orchestration — payment-approval boundary → subscription snapshots → access-profile placeholder → provisioning plan (entitlements + live blockers + sanitized Hiddify intent) → delivery enqueue → audit + forward-only compensation; **live hard-refused**; additive migration `0003`. **70 tests PASS**. No live mutations/sends/real customers. See PHASE4A/4B/4C docs. |
-| 5 | Telegram bot implementation (Burmese-primary) | PENDING |
+| 5 | Telegram bot implementation (Burmese-primary) | **Foundation DONE (dry-run): adapter + Burmese catalogue + router (/start,/help,/plans,/account,/link,/admin) + AccountService identity + env-driven admin + queue-only NotificationService. No polling/webhook/API/send.** See PHASE5_TELEGRAM_BOT_FOUNDATION.md. Transport/sender = next, gated. |
 | 6 | Hiddify subscription delivery integration | PENDING |
 | 7 | Plan-based region/protocol entitlement + node resilience | PENDING |
 | 8 | Web app / customer portal | PENDING |
@@ -93,10 +93,16 @@ plan → delivery enqueue → audit), exactly-once, with a forward-only compensa
 hard-disabled** and refuses even with the env latch + `--live --confirm` (blockers: `phase4c_live_disabled`,
 `leaked_key_rebuild_pending`, `node_not_live:test`). Additive migration `0003`. 70 tests PASS. de1 stays `status=test`.
 
-**Next: Phase 5 (Burmese-primary Telegram bot foundation)** wired to the Phase 4 services (still dry-run; no live sends
-until channel adapters + policy land). **Before de1 goes live:** rebuild the node (clears `leaked_key_rebuild_pending`)
-+ a real-device FAST1/FAST2/Secure test (`#TASK_for_Charles` in PHASE4_PRELIVE_DE1_TUNING.md), then a separately-gated
-task to enable the live provisioning path. Live promotion stays Charles-gated.
+**Phase 5 foundation complete (2026-06-16)** ([PHASE5_TELEGRAM_BOT_FOUNDATION.md](PHASE5_TELEGRAM_BOT_FOUNDATION.md)):
+Burmese-primary Telegram bot foundation — dry-run adapter (token redacted; live sends hard-refused), message
+catalogue, router (`/start`,`/help`,`/plans`,`/account`,`/link`,`/admin`,fallback), AccountService identity (telegram
+id is a platform key, never the customer identity; `/start` idempotent), DB-driven plan rendering, env-driven admin
+ids, queue-only NotificationService. **No polling/webhook/Telegram API/send; no service started.** 89 tests PASS.
+
+**Next: Phase 5 transport (gated) or Phase 6 (subscription delivery)** — add the NotificationService sender + a gated
+long-poll bot runner consuming `outbound_messages`. **Before de1 goes live:** rebuild the node (clears
+`leaked_key_rebuild_pending`) + a real-device FAST1/FAST2/Secure test (`#TASK_for_Charles` in
+PHASE4_PRELIVE_DE1_TUNING.md), then a separately-gated task to enable live provisioning. Live promotion stays Charles-gated.
 
 **OS path decided (2026-06-15):** in-place `do-release-upgrade` was considered, but since `de1` is **empty** the
 safer, same-outcome choice is a **clean provider reinstall to Ubuntu 22.04** (Charles). A read-only pre-upgrade gate

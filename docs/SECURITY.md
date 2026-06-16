@@ -115,3 +115,17 @@ user UUID, subscription URL, proxy link, or QR payload (relative `/user/` path +
 store a **placeholder token hash** (no raw token/URL/UUID in dry-run). Delivery notifications store a `payload_ref`
 only. Audit details carry internal ids/quotas only. **Live provisioning is hard-disabled** and refuses even with the
 env latch + `--live --confirm` (the leaked-key rebuild blocker is one of the always-present refusal reasons).
+
+## Phase 5 secret-safety (Telegram bot foundation — verified by tests)
+
+The Phase 5 bot foundation ([PHASE5_TELEGRAM_BOT_FOUNDATION.md](PHASE5_TELEGRAM_BOT_FOUNDATION.md)) keeps rules 1 & 9
+by construction:
+
+- **Bot token is read by env NAME only** (`TELEGRAM_BOT_TOKEN`), never stored in a public field, never logged, and
+  **redacted** in `repr`/fingerprint (`tg:<botid>:<redacted>`). It is never committed (real value lives in `.env` on
+  the Master only). The adapter is **dry-run** and **refuses live sends** (`config.PHASE5_LIVE_SEND_DISABLED`).
+- **Admin Telegram ids are env-driven** (`ADMIN_TELEGRAM_IDS`, fallback `TELEGRAM_ADMIN_IDS`) — **no hardcoded id**; the
+  full list is never logged/rendered (only a sanitized `admin_count`); placeholder values are treated as "no admins".
+- **No secrets in bot copy or flows** — messages/plan/status/admin summaries carry no token, UUID, subscription URL,
+  proxy link, QR payload, admin path, or payment ref. Notifications store a `payload_ref` only. Malformed updates and
+  errors yield safe Burmese replies — no stack traces, no secrets.

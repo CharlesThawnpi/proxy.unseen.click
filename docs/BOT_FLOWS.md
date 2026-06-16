@@ -91,3 +91,21 @@ Review lead time (especially Meta/BSP template and app approval) is planned **be
 - **Transport (future):** WhatsApp Business Platform (Cloud API) via Meta, or a BSP.
 - **Adapter:** WhatsApp phone-number id → `customer_id`; all proactive messaging routed through templated sends in NotificationService. No business-logic changes needed (adapter boundary).
 - **Reminders:** templated only outside the window.
+
+## Phase 5 — Telegram bot foundation IMPLEMENTED (dry-run, 2026-06-16)
+
+The Burmese-primary Telegram foundation now exists ([PHASE5_TELEGRAM_BOT_FOUNDATION.md](PHASE5_TELEGRAM_BOT_FOUNDATION.md))
+— **dry-run only: no polling/webhook, no Telegram API, no send, no service started.**
+
+- **`backend/telegram_adapter.py`** — pure boundary; `send_message`/`edit_message`/`answer_callback_query` record intent
+  to an outbox (no network); token is redacted in all output; live sends hard-refused (`config.PHASE5_LIVE_SEND_DISABLED`).
+- **`backend/telegram_router.py`** + **`telegram_commands.py`** — defensive `parse_update` (malformed → safe no-op) and
+  handlers for `/start`, `/help`, `/plans`, `/account`|`/status`, `/link` (stub), `/admin` (env-gated), unknown fallback.
+- **`backend/telegram_messages.py`** — all copy in one place, ~90% Burmese with English product terms kept
+  (Plan/Trial/Basic/Core/Plus/Pro/Max/Fast/Fast1/Fast2/Secure). Invoices stay English; none generated here.
+- **`backend/bot_flows.py`** — plan list, account status, and admin summary built from **DB rows** (DE default, SG
+  premium-only PRO/MAX, FAST display rule) — never hardcoded.
+- **Identity:** `/start` → `AccountService.resolve_customer("telegram", <id>)`; the Telegram id is a `platform_accounts`
+  key, never the customer identity; idempotent.
+- **Admin:** `ADMIN_TELEGRAM_IDS` (fallback `TELEGRAM_ADMIN_IDS`), parsed safely, never logged; `/admin` = DB-only
+  sanitized counts. **NotificationService** integration is queue-only (`payload_ref`, no body/secret).

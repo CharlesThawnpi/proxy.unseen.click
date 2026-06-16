@@ -1,6 +1,6 @@
 # UNSEEN PROXY — SOURCE OF TRUTH (consolidated, auto-generated)
 
-> **Generated:** 2026-06-16T04:09:31Z — by `scripts/build_source_of_truth.sh`.
+> **Generated:** 2026-06-16T04:26:35Z — by `scripts/build_source_of_truth.sh`.
 > **This is the live project state for external readers (e.g. the Custom GPT).** It is DERIVED from the
 > canonical docs below and regenerated each task. Upload THIS file to the GPT (not IMPLEMENTATION_PLAN.md,
 > which is the static v1.9 plan). Re-download after updates.
@@ -44,7 +44,7 @@ Where the UNSEEN PROXY build stands across the §34 deployment phases.
 | 2 | Hiddify test node setup | **RE-SCOPED to a separate DE VPS** (`de1`, `5.249.160.59`, Ubuntu 22.04, planned/test). Master-co-location preflight done then RETIRED. Forward plan: PHASE2_3_DE_NODE_PLAN.md |
 | 3 | Hiddify API & subscription compatibility audit | **DONE (PASS w/ follow-ups) — Hiddify v12.3.3 on de1; API v2 contract VERIFIED-LIVE; disposable test user create→sub→delete confirmed.** Phase 4 API layer UNBLOCKED. Node-tuning follow-ups: SS:8388/UDP reachability, RAM lock, SSH hardening, regenerate leaked default-user keys. See HIDDIFY_API_CONTRACT.md + PHASE3_DE1_HIDDIFY_LIVE_VERIFY.md |
 | 4 | Database & backend clone design | **Phase 4A + 4B + 4C DONE (dry-run/test-safe).** 4A: migrations + schema + seed + Hiddify client + provisioner CLI. 4B: AccountService + account-link codes + NotificationService (queue-first) + idempotency + WAL-safe online backup (`0002`). 4C: dry-run provisioning orchestration — payment-approval boundary → subscription snapshots → access-profile placeholder → provisioning plan (entitlements + live blockers + sanitized Hiddify intent) → delivery enqueue → audit + forward-only compensation; **live hard-refused**; additive migration `0003`. **70 tests PASS**. No live mutations/sends/real customers. See PHASE4A/4B/4C docs. |
-| 5 | Telegram bot implementation (Burmese-primary) | PENDING |
+| 5 | Telegram bot implementation (Burmese-primary) | **Foundation DONE (dry-run): adapter + Burmese catalogue + router (/start,/help,/plans,/account,/link,/admin) + AccountService identity + env-driven admin + queue-only NotificationService. No polling/webhook/API/send.** See PHASE5_TELEGRAM_BOT_FOUNDATION.md. Transport/sender = next, gated. |
 | 6 | Hiddify subscription delivery integration | PENDING |
 | 7 | Plan-based region/protocol entitlement + node resilience | PENDING |
 | 8 | Web app / customer portal | PENDING |
@@ -123,10 +123,16 @@ plan → delivery enqueue → audit), exactly-once, with a forward-only compensa
 hard-disabled** and refuses even with the env latch + `--live --confirm` (blockers: `phase4c_live_disabled`,
 `leaked_key_rebuild_pending`, `node_not_live:test`). Additive migration `0003`. 70 tests PASS. de1 stays `status=test`.
 
-**Next: Phase 5 (Burmese-primary Telegram bot foundation)** wired to the Phase 4 services (still dry-run; no live sends
-until channel adapters + policy land). **Before de1 goes live:** rebuild the node (clears `leaked_key_rebuild_pending`)
-+ a real-device FAST1/FAST2/Secure test (`#TASK_for_Charles` in PHASE4_PRELIVE_DE1_TUNING.md), then a separately-gated
-task to enable the live provisioning path. Live promotion stays Charles-gated.
+**Phase 5 foundation complete (2026-06-16)** ([PHASE5_TELEGRAM_BOT_FOUNDATION.md](PHASE5_TELEGRAM_BOT_FOUNDATION.md)):
+Burmese-primary Telegram bot foundation — dry-run adapter (token redacted; live sends hard-refused), message
+catalogue, router (`/start`,`/help`,`/plans`,`/account`,`/link`,`/admin`,fallback), AccountService identity (telegram
+id is a platform key, never the customer identity; `/start` idempotent), DB-driven plan rendering, env-driven admin
+ids, queue-only NotificationService. **No polling/webhook/Telegram API/send; no service started.** 89 tests PASS.
+
+**Next: Phase 5 transport (gated) or Phase 6 (subscription delivery)** — add the NotificationService sender + a gated
+long-poll bot runner consuming `outbound_messages`. **Before de1 goes live:** rebuild the node (clears
+`leaked_key_rebuild_pending`) + a real-device FAST1/FAST2/Secure test (`#TASK_for_Charles` in
+PHASE4_PRELIVE_DE1_TUNING.md), then a separately-gated task to enable live provisioning. Live promotion stays Charles-gated.
 
 **OS path decided (2026-06-15):** in-place `do-release-upgrade` was considered, but since `de1` is **empty** the
 safer, same-outcome choice is a **clean provider reinstall to Ubuntu 22.04** (Charles). A read-only pre-upgrade gate
@@ -361,6 +367,24 @@ The verified Hiddify Manager **API v2** contract — endpoints, fields, units, a
 
 Chronological record of notable changes to the UNSEEN PROXY project.
 
+## 2026-06-16 — Phase 5: Telegram bot foundation (Burmese-primary, dry-run) — PASS
+
+- **Dry-run only** (stdlib): no Telegram API call, no message sent, no polling/webhook, no service started, no live
+  provisioning; de1 stays `status=test`. See [PHASE5_TELEGRAM_BOT_FOUNDATION.md](PHASE5_TELEGRAM_BOT_FOUNDATION.md).
+- **New modules:** `telegram_adapter` (dry-run boundary; token redacted; live sends hard-refused via
+  `config.PHASE5_LIVE_SEND_DISABLED`), `telegram_messages` (Burmese-primary catalogue; English product terms kept),
+  `telegram_commands` (defensive `parse_update`), `bot_flows` (DB-driven plan/status/admin content), `telegram_router`
+  (routes `/start`,`/help`,`/plans`,`/account`,`/link`,`/admin`,fallback), `bot_context` (env-driven admin ids).
+- **Identity:** `/start` resolves via AccountService (telegram platform); the Telegram id is a `platform_accounts`
+  key, never the customer identity; `/start` idempotent. **Plans render from DB rows** (DE default, SG premium-only
+  PRO/MAX, FAST label rule) — not hardcoded.
+- **Admin:** ids from `ADMIN_TELEGRAM_IDS` (fallback `TELEGRAM_ADMIN_IDS`), parsed safely, never logged; `/admin` =
+  DB-only sanitized counts for admins, Burmese denial otherwise. **NotificationService** integration is queue-only
+  (`payload_ref`, no body/secret).
+- `.env.example`: added `ADMIN_TELEGRAM_IDS` placeholder (kept `TELEGRAM_ADMIN_IDS` alias); no real token/id committed.
+- New CLIs: `bin/telegram_bot_smoke.py`, `bin/render_telegram_messages.py` (temp DB). **Tests: 89 PASS** (70 + 19 new,
+  incl. no-network-call guard + token-redaction). Updated BOT_FLOWS/SECURITY/DEPLOYMENT/CURRENT_STATUS; new PHASE5 doc.
+
 ## 2026-06-16 — Phase 4C: dry-run provisioning orchestration — PASS
 
 - **Dry-run orchestration only** (stdlib). No live Hiddify call, no Hiddify user, no real customer/subscription, no
@@ -426,24 +450,6 @@ Chronological record of notable changes to the UNSEEN PROXY project.
 ## 2026-06-16 — Phase 4A: DB foundation + Hiddify client/provisioner (dry-run) — PASS
 
 - **Stdlib-only** backend foundation (sqlite3/urllib/unittest — no pip on the control plane). No live mutations, no
-  real customers, no services started; de1 stays `status=test`.
-- Schema (`backend/migrations/0001_initial.sql`, FK-enforced): all required tables incl. `proxy_nodes` provenance
-  split (est_/det_/conf_), subscription order-time snapshots, idempotency_keys, outbound_messages, etc.
-  Idempotent runner `backend/migrate.py` + `schema_migrations`. `bin/init_db.py` = migrate+seed.
-- Seed catalogue (admin-editable, not code constants): plans TRIAL/BASIC_1M/CORE_1M/PLUS_3M/PRO_3M/MAX_6M with the
-  authoritative GiB/days/MMK; regions de(default)/us/sg(premium-only); profiles FAST1/FAST2/SECURE; entitlements
-  (SG only on PRO/MAX; Fast-label rule); de1 node `status=test` with detected specs.
-- `backend/hiddify/client.py`: verified API v2 endpoints, `Hiddify-API-Key` header, **GiB→GB at the boundary**,
-  no secret/URL/payload logging, structured results, timeouts/retries, injectable opener (tests mock it).
-- `bin/hiddify_customer_provisioner.py`: audit/status/validate-contract/provision-one/suspend-one/reconcile-usage —
-  **dry-run by default; live double-gated** (env latch + `--live --confirm`); sanitized output.
-- **Tests: 17 PASS** (`python3 -m unittest discover -s tests`). New PHASE4A_DB_BACKEND_FOUNDATION.md, BRAIN_API_DESIGN.md
-  (design-only), updated DATABASE/CURRENT_STATUS.
-
-## 2026-06-16 — Add consolidated SOURCE_OF_TRUTH.md (Custom-GPT upload file) + generator
-
-- New `scripts/build_source_of_truth.sh` assembles `SOURCE_OF_TRUTH.md` (repo root) from the canonical living docs
-  (invariants + CURRENT_STATUS + DECISIONS/ADRs + verified Hiddify contract + recent CHANGELOG + server inventory).
 
 
 ---

@@ -113,3 +113,12 @@ on a temp DB: `bin/approve_payment_dry_run.py`, `bin/provision_subscription_dry_
 `bin/provisioning_flow_smoke.py`. All are dry-run; **live Hiddify provisioning is hard-disabled** (refuses even with
 `UNSEENPROXY_HIDDIFY_PROVISION_LIVE_ENABLED=1 --live --confirm`). Enabling live is a future, separately-gated task
 **after** the de1 rebuild (clears the leaked-key blocker) and a real-device protocol PASS.
+
+## Phase 5 — Telegram bot foundation (dry-run; not started, 2026-06-16)
+
+The bot foundation exists ([PHASE5_TELEGRAM_BOT_FOUNDATION.md](PHASE5_TELEGRAM_BOT_FOUNDATION.md)) but is **not a running
+service**: no polling, no webhook, no Telegram API call, no send, no systemd unit, no public endpoint. Dry-run tools run
+on a temp DB: `bin/telegram_bot_smoke.py`, `bin/render_telegram_messages.py`. Env names (values in `.env` on the Master
+ONLY): `TELEGRAM_BOT_TOKEN`, `ADMIN_TELEGRAM_IDS` (fallback alias `TELEGRAM_ADMIN_IDS`). Starting a real bot (gated
+long-poll + NotificationService sender) is a future task; live sends require `ALLOW_LIVE_BOT_SENDS` + explicit flags and
+remain disabled in Phase 5.
