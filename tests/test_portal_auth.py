@@ -16,6 +16,7 @@ from backend import (
     portal_auth,
     portal_sessions,
     portal_tokens,
+    timezone as tz,
     portal_viewmodels,
 )
 
@@ -49,7 +50,7 @@ class TestPortalTokens(unittest.TestCase):
         self.assertNotIn(issued.raw_token, blob)
 
     def test_token_verify_unknown_expired_revoked(self):
-        now = datetime(2026, 6, 16, 6, 0, 0)
+        now = datetime(2026, 6, 16, 6, 0, 0, tzinfo=tz.MMT)
         issued = portal_access.issue_token(
             self.conn,
             customer_id=self.sample["customer_id"],
@@ -102,7 +103,7 @@ class TestPortalSessions(unittest.TestCase):
         self.conn.close()
 
     def test_session_create_verify_expire_revoke_hash_only(self):
-        now = datetime(2026, 6, 16, 6, 0, 0)
+        now = datetime(2026, 6, 16, 6, 0, 0, tzinfo=tz.MMT)
         created = portal_sessions.create_session(
             self.conn,
             customer_id=self.sample["customer_id"],
@@ -162,7 +163,7 @@ class TestBrandedResolverAndRoutes(unittest.TestCase):
         self.assertEqual(sessions, 1)
 
     def test_route_valid_invalid_and_expired_do_not_leak_token(self):
-        now = datetime(2026, 6, 16, 6, 0, 0)
+        now = datetime(2026, 6, 16, 6, 0, 0, tzinfo=tz.MMT)
         issued = portal_access.issue_token(
             self.conn,
             customer_id=self.sample["customer_id"],

@@ -118,8 +118,8 @@ boundary remains unchanged.
 
 See [PHASE8B_PORTAL_AUTH_SESSION_FOUNDATION.md](PHASE8B_PORTAL_AUTH_SESSION_FOUNDATION.md). Portal access/session
 primitives now exist with hash-only DB storage, constant-time verification, expiry/revocation, a branded `/s/` resolver
-boundary, and route guards for private pages. The portal is still render-only: no server, no public endpoint, no real
-cookie service, and no live subscription resolution.
+boundary, route guards for private pages, and MMT-aware app-created token/session timestamps. The portal is still
+render-only: no server, no public endpoint, no real cookie service, and no live subscription resolution.
 
 ## Secret-Safety Result
 

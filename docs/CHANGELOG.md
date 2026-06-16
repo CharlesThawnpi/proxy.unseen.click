@@ -5,6 +5,20 @@
 
 Chronological record of notable changes to the UNSEEN PROXY project.
 
+## 2026-06-16 — Phase 8B: portal auth/session and MMT timestamp foundation — PASS
+
+- Converted current app-created dry-run business timestamp writes to `backend.timezone` MMT helpers: subscription
+  start/expiry, payment-order approval, outbound message created/sent/retry timestamps, audit logs, idempotency rows,
+  account-link token expiry/consume timestamps, node-alert raise/clear timestamps, and portal access/session
+  created/expiry/verification/revocation fields.
+- Added `bin/timezone_audit.py`, a local sanitized timestamp-risk scanner for code/docs; it prints file/path summaries
+  only and does not read DBs, secrets, or external services.
+- Preserved historical SQLite `datetime('now')` defaults as documented fallback behavior only; no migration rewrite and
+  no production DB mutation.
+- Kept Phase 8B portal auth/session foundation dry-run and render-only: hash-only token/session storage, branded `/s/`
+  resolver boundary, guarded private pages, no server/public endpoint/cookie service/live delivery/Hiddify/Telegram.
+- Tests and smokes: full suite 198 PASS; portal auth/token smokes PASS; timezone audit PASS.
+
 ## 2026-06-16 — Myanmar Time project-wide timezone policy — PASS
 
 - Charles accepted **Myanmar Time** as the project-wide business/customer timezone: **MMT**, UTC+06:30,
@@ -31,7 +45,8 @@ Chronological record of notable changes to the UNSEEN PROXY project.
 - **CLIs:** `bin/portal_auth_smoke.py`, `bin/portal_token_dry_run.py` use temp DBs by default and print only redacted
   token labels/fingerprints and status summaries.
 - **No live surface:** no web server, no nginx/TLS, no public endpoint, no real cookie setting, no production DB auth,
-  no Hiddify call, no Telegram send/poll. **Full suite: 191 PASS.**
+  no Hiddify call, no Telegram send/poll. **Initial Phase 8B suite: 191 PASS; current combined MMT timestamp
+  foundation suite: 198 PASS.**
 
 ## 2026-06-16 — Phase 8A: portal local preview refinement — PASS
 

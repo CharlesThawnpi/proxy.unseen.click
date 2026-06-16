@@ -162,5 +162,7 @@ business dates.
 ### Implementation
 
 `backend/timezone.py` is the central helper module for MMT conversion/formatting. Existing SQLite schema defaults using
-`datetime('now')` are documented as legacy pre-live behavior; before live launch, app-created business timestamps should
-be moved through the MMT helper rather than relying on SQLite defaults.
+`datetime('now')` are documented as legacy pre-live behavior. Current app-created dry-run business timestamps for
+subscriptions, payment approvals, outbound messages, audit/idempotency rows, and portal token/session rows are routed
+through the MMT helper rather than relying on SQLite defaults; account-link token and node-alert service writes also set
+MMT timestamps explicitly.

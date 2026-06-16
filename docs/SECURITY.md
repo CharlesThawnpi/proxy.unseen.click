@@ -211,3 +211,5 @@ keeps the customer web surface dry-run and secret-safe:
   raw portal tokens and raw session ids exist only in memory for immediate dry-run handoff. Verification uses
   constant-time comparison. Private portal pages require a `PortalSessionContext`; invalid/expired/revoked `/s/` tokens
   render safe pages without echoing the token. Audit rows carry sanitized ids/reasons only.
+- **Timestamp audit is local and sanitized.** `bin/timezone_audit.py` scans code/docs for timestamp risk patterns and
+  prints file/path summaries only; it does not read databases, contact services, or emit customer/product data.

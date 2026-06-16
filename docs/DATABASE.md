@@ -12,9 +12,11 @@ payment/order approval, invoice/receipt dates, and bot/portal/admin display date
 [TIMEZONE_POLICY.md](TIMEZONE_POLICY.md).
 
 Current migrations still include legacy SQLite `datetime('now')` defaults for several technical `created_at` fields and
-some dry-run fallback paths. Do not destructively rewrite historical migrations. Before live launch, app-created
-business timestamps must be routed through `backend.timezone` helpers and any remaining UTC technical log fields must
-be explicitly labeled UTC.
+fallback paths. Do not destructively rewrite historical migrations. Current app-created dry-run business timestamp
+writes for subscriptions, payment approvals, outbound messages, audit logs, idempotency rows, and portal
+tokens/sessions now route through `backend.timezone` helpers and store timezone-aware MMT strings. Account-link token
+and node-alert service writes also set MMT timestamps explicitly. Before live launch, continue auditing technical
+timestamp paths and explicitly label any UTC operational log fields.
 
 > **Built in Phase 4A** (see [PHASE4A_DB_BACKEND_FOUNDATION.md](PHASE4A_DB_BACKEND_FOUNDATION.md)):
 > - Schema: `backend/migrations/0001_initial.sql` (FK-enforced; all required tables incl. the `proxy_nodes`
@@ -186,3 +188,6 @@ The fields below are summarized; **Appendix A of the plan is the authoritative d
   `portal_access` (issue/verify/revoke token), `portal_sessions` (create/verify/revoke session + cookie attribute
   helper), `branded_link_resolver` (`/s/<opaque-token>` boundary). Audit rows are sanitized and contain no raw token,
   raw session id, cookie, link, UUID, or private data.
+- **Timezone behavior:** app-created token/session timestamps (`created_at`, `expires_at`, `last_verified_at`,
+  `revoked_at`) are stored through `backend.timezone` as MMT-aware strings; SQLite defaults remain documented legacy
+  fallbacks only.

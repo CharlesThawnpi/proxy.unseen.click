@@ -1,6 +1,6 @@
 # UNSEEN PROXY — SOURCE OF TRUTH (consolidated, auto-generated)
 
-> **Generated:** 2026-06-16T07:30:09Z — by `scripts/build_source_of_truth.sh`.
+> **Generated:** 2026-06-16T07:51:46Z — by `scripts/build_source_of_truth.sh`.
 > **This is the live project state for external readers (e.g. the Custom GPT).** It is DERIVED from the
 > canonical docs below and regenerated each task. Upload THIS file to the GPT (not IMPLEMENTATION_PLAN.md,
 > which is the static v1.9 plan). Re-download after updates.
@@ -60,7 +60,8 @@ Where the UNSEEN PROXY build stands across the §34 deployment phases.
 **Timezone policy accepted (2026-06-16 MMT)** ([TIMEZONE_POLICY.md](TIMEZONE_POLICY.md), [DECISIONS.md](DECISIONS.md)
 ADR-004): all business/customer/project dates use Myanmar Time (**MMT**, UTC+06:30, `Asia/Yangon`). External UTC must
 be converted before customer/business use; technical UTC fields must be explicitly labeled. Helper module:
-`backend/timezone.py`. Legacy SQLite `datetime('now')` defaults are documented follow-ups before live launch.
+`backend/timezone.py`. Current app-created dry-run business timestamp writes now use MMT helpers; legacy SQLite
+`datetime('now')` defaults remain documented fallback behavior and are not destructively rewritten.
 
 **Architecture (current):** the **Master is control-plane only** — co-location is **retired**
 ([DECISIONS.md](DECISIONS.md) ADR-001). The Master was tested as a co-located DE node via Hiddify's experimental
@@ -176,7 +177,9 @@ additive migration `0006` adds hash-only `portal_access_tokens` and `portal_sess
 `portal_access`, `portal_sessions`, and `branded_link_resolver` provide secure random tokens, hash-only storage,
 constant-time verification, expiry/revocation, sanitized audit, dry-run session context, and `/s/<opaque-token>`
 resolver behavior. Private pages require `PortalSessionContext`; public pages stay public. **No server/public endpoint/
-real cookie service/live delivery/Hiddify call/Telegram send.** 191 tests PASS.
+real cookie service/live delivery/Hiddify call/Telegram send.** Portal token/session timestamps and current app-created
+dry-run business timestamps route through MMT helpers. `bin/timezone_audit.py` provides a sanitized local timestamp
+check. 198 tests PASS.
 
 **Next: real portal deployment boundary design (HTTP adapter/cookies/rate limits/access logs), gated monitor scheduler, or Phase 9 channel work.** **Before de1 goes live:** rebuild the node (clears
 `leaked_key_rebuild_pending`) + a real-device FAST1/FAST2/Secure test (`#TASK_for_Charles` in
@@ -266,11 +269,29 @@ and must not be confused with business dates. Customer-facing and product lifecy
 
 New code should use timezone-aware datetimes and reject/avoid naive datetimes.
 
+## Current App-Write Coverage
+
+As of the Phase 8B MMT timestamp foundation, current app-created dry-run business writes route through
+`backend.timezone` helpers instead of SQLite clock fallbacks for:
+
+- Subscription `start_date` / `expiry_date`.
+- Payment-order `approved_at`.
+- Outbound-message `created_at`, `sent_at`, and `next_attempt_at`.
+- Audit-log `created_at`.
+- Idempotency-key `created_at` / `updated_at`.
+- Account-link token `expires_at` / `consumed_at`.
+- Node-alert `raised_at` / `cleared_at`.
+- Portal access-token/session `created_at`, `expires_at`, `last_verified_at`, and `revoked_at`.
+
+Legacy SQLite `datetime('now')` defaults remain in historical migrations as documented fallbacks only; they should not
+be the primary app-created business timestamp path.
+
 ## Known Follow-Ups Before Live Launch
 
-- Replace app-created subscription start/end writes that still fall back to SQLite `datetime('now')` with
-  `backend.timezone` helper output.
-- Replace payment/order approval fallback timestamps that still use SQLite `datetime('now')`.
+- Keep auditing legacy SQLite defaults and technical timestamp paths; do not destructively rewrite historical
+  migrations.
+- Review backup, health-monitor, and other purely technical timestamp paths and explicitly label or convert them before
+  they reach customer/business surfaces.
 - Review invoices/receipts before launch so every generated financial date is MMT.
 - Review bot/portal/admin display paths and add explicit MMT labels wherever ambiguity remains.
 - Decide whether purely technical logs should remain UTC; if so, label them clearly as UTC.
@@ -444,8 +465,10 @@ business dates.
 ### Implementation
 
 `backend/timezone.py` is the central helper module for MMT conversion/formatting. Existing SQLite schema defaults using
-`datetime('now')` are documented as legacy pre-live behavior; before live launch, app-created business timestamps should
-be moved through the MMT helper rather than relying on SQLite defaults.
+`datetime('now')` are documented as legacy pre-live behavior. Current app-created dry-run business timestamps for
+subscriptions, payment approvals, outbound messages, audit/idempotency rows, and portal token/session rows are routed
+through the MMT helper rather than relying on SQLite defaults; account-link token and node-alert service writes also set
+MMT timestamps explicitly.
 
 
 ---
@@ -525,6 +548,20 @@ The verified Hiddify Manager **API v2** contract — endpoints, fields, units, a
 
 Chronological record of notable changes to the UNSEEN PROXY project.
 
+## 2026-06-16 — Phase 8B: portal auth/session and MMT timestamp foundation — PASS
+
+- Converted current app-created dry-run business timestamp writes to `backend.timezone` MMT helpers: subscription
+  start/expiry, payment-order approval, outbound message created/sent/retry timestamps, audit logs, idempotency rows,
+  account-link token expiry/consume timestamps, node-alert raise/clear timestamps, and portal access/session
+  created/expiry/verification/revocation fields.
+- Added `bin/timezone_audit.py`, a local sanitized timestamp-risk scanner for code/docs; it prints file/path summaries
+  only and does not read DBs, secrets, or external services.
+- Preserved historical SQLite `datetime('now')` defaults as documented fallback behavior only; no migration rewrite and
+  no production DB mutation.
+- Kept Phase 8B portal auth/session foundation dry-run and render-only: hash-only token/session storage, branded `/s/`
+  resolver boundary, guarded private pages, no server/public endpoint/cookie service/live delivery/Hiddify/Telegram.
+- Tests and smokes: full suite 198 PASS; portal auth/token smokes PASS; timezone audit PASS.
+
 ## 2026-06-16 — Myanmar Time project-wide timezone policy — PASS
 
 - Charles accepted **Myanmar Time** as the project-wide business/customer timezone: **MMT**, UTC+06:30,
@@ -551,7 +588,8 @@ Chronological record of notable changes to the UNSEEN PROXY project.
 - **CLIs:** `bin/portal_auth_smoke.py`, `bin/portal_token_dry_run.py` use temp DBs by default and print only redacted
   token labels/fingerprints and status summaries.
 - **No live surface:** no web server, no nginx/TLS, no public endpoint, no real cookie setting, no production DB auth,
-  no Hiddify call, no Telegram send/poll. **Full suite: 191 PASS.**
+  no Hiddify call, no Telegram send/poll. **Initial Phase 8B suite: 191 PASS; current combined MMT timestamp
+  foundation suite: 198 PASS.**
 
 ## 2026-06-16 — Phase 8A: portal local preview refinement — PASS
 
@@ -593,21 +631,6 @@ Chronological record of notable changes to the UNSEEN PROXY project.
   fetched, no Telegram send; de1 stays `status=test`. See [PHASE7_HEALTH_MONITOR_FOUNDATION.md](PHASE7_HEALTH_MONITOR_FOUNDATION.md).
   **No schema change** (existing `node_metrics`/`node_alerts`/`settings` suffice).
 - **`node_probe`** — sanitized `ProbeResult` + `MockProber` (default; no network) + opt-in `PublicTcpProber`
-  (read-only public TCP 22/80/443; no payload, no admin path). **`probe_sanitizer`** — raw errors → reason codes
-  (`probe_timeout`/`probe_error_sanitized`), never host/URL/IP.
-- **`alerting`** — thresholds from `settings` (warn≈75/critical≈90); idempotent WARN/CRITICAL/DOWN reconcile (one open
-  alert per node+metric; level-change clears+raises; resolved clears). **`metric_writer`** — append-only `node_metrics`.
-  **`health_monitor.monitor_once`** — single pass; dry-run default writes nothing; `--write-metrics` writes only to the
-  explicit `--db`. No daemon/scheduler.
-- **Resilience integration:** `node_resilience.node_health` refined — reachability **DOWN → down** (dropped); resource
-  **CRITICAL/WARN → degraded** (dry-run candidate, not live-ready). Degraded policy documented + tested. de1 still
-  blocks live (`node_status_test` + `leaked_key_rebuild_pending`).
-- New CLIs: `bin/node_health_probe_dry_run.py`, `bin/node_health_monitor_once.py`, `bin/node_alerts_preview.py`.
-  **Tests: 163 PASS** (144 + 19 new, incl. no-network guard + sanitization). Updated DATABASE/NODES/SECURITY/
-  DEPLOYMENT/CURRENT_STATUS; new health-monitor doc.
-
-## 2026-06-16 — Phase 7: entitlement + node-resilience foundation (dry-run) — PASS
-
 
 
 ---

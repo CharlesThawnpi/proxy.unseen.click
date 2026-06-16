@@ -62,11 +62,29 @@ and must not be confused with business dates. Customer-facing and product lifecy
 
 New code should use timezone-aware datetimes and reject/avoid naive datetimes.
 
+## Current App-Write Coverage
+
+As of the Phase 8B MMT timestamp foundation, current app-created dry-run business writes route through
+`backend.timezone` helpers instead of SQLite clock fallbacks for:
+
+- Subscription `start_date` / `expiry_date`.
+- Payment-order `approved_at`.
+- Outbound-message `created_at`, `sent_at`, and `next_attempt_at`.
+- Audit-log `created_at`.
+- Idempotency-key `created_at` / `updated_at`.
+- Account-link token `expires_at` / `consumed_at`.
+- Node-alert `raised_at` / `cleared_at`.
+- Portal access-token/session `created_at`, `expires_at`, `last_verified_at`, and `revoked_at`.
+
+Legacy SQLite `datetime('now')` defaults remain in historical migrations as documented fallbacks only; they should not
+be the primary app-created business timestamp path.
+
 ## Known Follow-Ups Before Live Launch
 
-- Replace app-created subscription start/end writes that still fall back to SQLite `datetime('now')` with
-  `backend.timezone` helper output.
-- Replace payment/order approval fallback timestamps that still use SQLite `datetime('now')`.
+- Keep auditing legacy SQLite defaults and technical timestamp paths; do not destructively rewrite historical
+  migrations.
+- Review backup, health-monitor, and other purely technical timestamp paths and explicitly label or convert them before
+  they reach customer/business surfaces.
 - Review invoices/receipts before launch so every generated financial date is MMT.
 - Review bot/portal/admin display paths and add explicit MMT labels wherever ambiguity remains.
 - Decide whether purely technical logs should remain UTC; if so, label them clearly as UTC.

@@ -1,4 +1,5 @@
 import unittest
+import subprocess
 from datetime import datetime, timezone, timedelta
 
 from _helper import REPO_ROOT  # noqa: F401
@@ -42,6 +43,18 @@ class TestMyanmarTimePolicy(unittest.TestCase):
     def test_naive_external_datetime_rejected(self):
         with self.assertRaises(ValueError):
             tz.to_mmt(datetime(2026, 6, 16, 9, 0))
+
+    def test_timezone_audit_cli_sanitized_summary(self):
+        result = subprocess.run(
+            ["python3", "bin/timezone_audit.py", "backend", "docs/TIMEZONE_POLICY.md"],
+            cwd=REPO_ROOT,
+            check=True,
+            text=True,
+            capture_output=True,
+        )
+        self.assertIn("timestamp_audit", result.stdout)
+        self.assertIn("files_with_hits=", result.stdout)
+        self.assertNotIn("://", result.stdout)
 
 
 if __name__ == "__main__":

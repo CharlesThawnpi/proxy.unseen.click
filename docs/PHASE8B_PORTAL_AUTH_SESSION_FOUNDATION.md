@@ -1,6 +1,7 @@
 # PHASE 8B — PORTAL AUTH / SESSION FOUNDATION
 
 > **Date/time UTC:** 2026-06-16T07:13:43Z  
+> **Date/time MMT:** 2026-06-16 14:10:37 MMT
 > **Result:** PASS — hash-only portal token/session foundation; render-only, no server.
 
 ## Scope
@@ -8,7 +9,8 @@
 Built the customer-safe portal access/session foundation for future portal deployment. This phase adds secure opaque
 portal tokens, hash-only session helpers, a branded `/s/<opaque-token>` resolver boundary, route guards for private
 portal pages, sanitized auth audit rows, tests, and dry-run CLIs. It does not expose a public endpoint or enable real
-customer login.
+customer login. This follow-up also moves current app-created dry-run business timestamp writes through the Myanmar
+Time helpers (`backend.timezone`) while preserving legacy SQLite defaults as documented fallbacks.
 
 ## Files Created / Changed
 
@@ -19,11 +21,14 @@ customer login.
 - Created `backend/branded_link_resolver.py`
 - Created `bin/portal_auth_smoke.py`
 - Created `bin/portal_token_dry_run.py`
+- Created `bin/timezone_audit.py`
 - Created `tests/test_portal_auth.py`
 - Updated `backend/portal_auth.py`
 - Updated `backend/portal_routes.py`
 - Updated `backend/portal_app.py`
 - Updated `backend/portal_viewmodels.py`
+- Updated service timestamp writes in `audit`, `idempotency`, `subscription_service`, `payment_approval_service`,
+  `notification_service`, `portal_access`, and `portal_sessions`.
 - Updated portal dry-run CLIs to pass synthetic session context.
 - Updated docs and regenerated `SOURCE_OF_TRUTH.md`.
 
@@ -72,6 +77,23 @@ Additive migration `0006_phase8b.sql` creates:
 Both tables store only hashes/handles plus FK references, purpose/status, created/expiry/revocation timestamps, and
 safe indexes. Migration re-run is idempotent through the existing migration runner and FK integrity is covered by tests.
 
+## MMT Timestamp Behavior
+
+Current app-created dry-run business/service writes now store timezone-aware Myanmar Time strings through
+`backend.timezone`:
+
+- Subscription `start_date` / `expiry_date`.
+- Payment-order `approved_at`.
+- Outbound-message `created_at`, `sent_at`, and `next_attempt_at`.
+- Audit-log `created_at`.
+- Idempotency-key `created_at` / `updated_at`.
+- Account-link token `expires_at` / `consumed_at`.
+- Node-alert `raised_at` / `cleared_at`.
+- Portal access-token/session `created_at`, `expires_at`, `last_verified_at`, and `revoked_at`.
+
+Historical SQLite `datetime('now')` defaults remain in migrations as legacy fallback behavior only; no migration was
+rewritten and no production DB data was mutated.
+
 ## Security / Escaping Result
 
 - Existing portal HTML escaping remains in place.
@@ -97,7 +119,8 @@ safe indexes. Migration re-run is idempotent through the existing migration runn
 - `python3 -m unittest discover -s tests -p 'test_migrations_schema.py'` — 3 PASS.
 - `python3 bin/portal_auth_smoke.py` — PASS.
 - `python3 bin/portal_token_dry_run.py` — PASS.
-- Full suite result after Phase 8B: 191 PASS.
+- `python3 bin/timezone_audit.py backend docs/TIMEZONE_POLICY.md` — PASS (sanitized summary).
+- Full suite result after Phase 8B MMT timestamp foundation: 198 PASS.
 
 ## Secret-Safety Result
 
@@ -113,6 +136,7 @@ private sample ids. No generated preview files or runtime DB files were committe
 - No live Hiddify provisioning.
 - No QR generation.
 - No admin portal.
+- Legacy migration defaults remain as fallback-only timestamp behavior.
 
 ## Live Blockers
 
@@ -128,10 +152,11 @@ private sample ids. No generated preview files or runtime DB files were committe
   production cookie setting.
 - Token issuance must be wired to a trusted channel handoff only after live bot/sidecar gates are approved.
 - Session and token retention/cleanup policy is still future work.
+- Continue auditing technical-only timestamp paths (backups/ops logs and health-monitor stamps) and label or convert
+  them before they reach customer/business surfaces.
 
 ## Exact Next Recommended Task
 
 Design the real portal deployment boundary before any public exposure: HTTP adapter, cookie-setting middleware,
 rate limits, access logging, `/s/` live-resolution sidecar behavior, and operational runbook. Keep live provisioning
 blocked until de1 is rebuilt and real-device FAST1/FAST2/Secure PASS is recorded.
-

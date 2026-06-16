@@ -12,7 +12,7 @@ import sqlite3
 from dataclasses import dataclass
 from typing import Optional
 
-from . import access_profile_service, db as _db, idempotency as _idem, subscription_service
+from . import access_profile_service, db as _db, idempotency as _idem, subscription_service, timezone as _tz
 from .audit import audit_row
 
 
@@ -44,8 +44,8 @@ def approve_order_dry_run(conn: sqlite3.Connection, order_id: int,
     """Idempotently approve `order_id` (dry-run) and create one subscription + access profile.
 
     Re-running with the same order_id replays the prior result (duplicate=True) and creates no
-    second subscription. `now`, when supplied, should be a Myanmar Time business timestamp; the
-    fallback `datetime('now')` path is legacy SQLite behavior to replace before live launch.
+    second subscription. `now`, when supplied, should be a Myanmar Time business timestamp;
+    otherwise `backend.timezone.now_mmt()` is used.
     """
     begin = _idem.begin_idempotent(conn, _SCOPE, _key(order_id))
     if begin.state == _idem.STATE_ALREADY_COMPLETED:
@@ -69,9 +69,10 @@ def approve_order_dry_run(conn: sqlite3.Connection, order_id: int,
         raise OrderNotApprovableError("order is not in an approvable state")
 
     with _db.transaction(conn):
+        approved_at = _tz.storage_mmt(_tz.parse_mmt(now) if now is not None else _tz.now_mmt())
         conn.execute(
-            "UPDATE payment_orders SET status='approved', approved_at=COALESCE(?, datetime('now')) WHERE id=?",
-            (now, order_id),
+            "UPDATE payment_orders SET status='approved', approved_at=? WHERE id=?",
+            (approved_at, order_id),
         )
         audit_row(conn, "payment_approval_dry_run", f"order:{order_id}",
                   f"customer:{order['customer_id']} plan:{order['plan_code']} (dry-run; no gateway/OCR)")

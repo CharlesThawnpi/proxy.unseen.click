@@ -19,7 +19,7 @@ import sqlite3
 from dataclasses import dataclass
 from typing import Optional
 
-from . import db as _db
+from . import db as _db, timezone as _tz
 
 # The operations that use idempotency keys.
 SCOPES = ("payment_approval", "provision_subscription", "referral_grant", "account_link_merge")
@@ -56,9 +56,10 @@ def begin_idempotent(conn: sqlite3.Connection, scope: str, key: str) -> BeginRes
     _validate_scope(scope)
     try:
         with _db.transaction(conn):
+            now = _tz.storage_mmt(_tz.now_mmt())
             conn.execute(
-                "INSERT INTO idempotency_keys(scope, key, status) VALUES (?,?,?)",
-                (scope, key, STATUS_IN_PROGRESS),
+                "INSERT INTO idempotency_keys(scope, key, status, created_at, updated_at) VALUES (?,?,?,?,?)",
+                (scope, key, STATUS_IN_PROGRESS, now, now),
             )
         return BeginResult(state=STATE_STARTED)
     except sqlite3.IntegrityError:
@@ -78,6 +79,7 @@ def complete_idempotent(conn: sqlite3.Connection, scope: str, key: str,
     return the prior result_ref (replays are stable). Returns the effective result_ref."""
     _validate_scope(scope)
     with _db.transaction(conn):
+        now = _tz.storage_mmt(_tz.now_mmt())
         row = conn.execute(
             "SELECT status, result_ref FROM idempotency_keys WHERE scope=? AND key=?",
             (scope, key),
@@ -85,17 +87,17 @@ def complete_idempotent(conn: sqlite3.Connection, scope: str, key: str,
         if row is None:
             # Allow complete without a prior begin (still exactly-once on UNIQUE).
             conn.execute(
-                "INSERT INTO idempotency_keys(scope, key, status, result_ref, updated_at) "
-                "VALUES (?,?,?,?, datetime('now'))",
-                (scope, key, STATUS_COMPLETED, result_ref),
+                "INSERT INTO idempotency_keys(scope, key, status, result_ref, created_at, updated_at) "
+                "VALUES (?,?,?,?,?,?)",
+                (scope, key, STATUS_COMPLETED, result_ref, now, now),
             )
             return result_ref
         if row["status"] == STATUS_COMPLETED:
             return row["result_ref"]
         conn.execute(
-            "UPDATE idempotency_keys SET status=?, result_ref=?, updated_at=datetime('now') "
+            "UPDATE idempotency_keys SET status=?, result_ref=?, updated_at=? "
             "WHERE scope=? AND key=?",
-            (STATUS_COMPLETED, result_ref, scope, key),
+            (STATUS_COMPLETED, result_ref, now, scope, key),
         )
         return result_ref
 

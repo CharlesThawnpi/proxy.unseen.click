@@ -17,7 +17,7 @@ import sqlite3
 from dataclasses import dataclass
 from typing import Dict, List, Optional, Tuple
 
-from . import db as _db
+from . import db as _db, timezone as _tz
 from .node_probe import ProbeResult
 
 # ---- levels ----
@@ -111,27 +111,28 @@ def evaluate(conn: sqlite3.Connection, pr: ProbeResult) -> AlertReconcile:
     cleared: List[str] = []
     kept: List[str] = []
     with _db.transaction(conn):
+        now = _tz.storage_mmt(_tz.now_mmt())
         existing = _open_alerts(conn, pr.node_code)
         # Raise / keep / level-change.
         for metric, (level, value, _reason) in desired.items():
             cur = existing.get(metric)
             if cur is None:
                 conn.execute(
-                    "INSERT INTO node_alerts(node_code, level, metric, value) VALUES (?,?,?,?)",
-                    (pr.node_code, level, metric, value))
+                    "INSERT INTO node_alerts(node_code, level, metric, value, raised_at) VALUES (?,?,?,?,?)",
+                    (pr.node_code, level, metric, value, now))
                 raised.append(f"{metric}:{level}")
             elif cur["level"] == level:
                 kept.append(f"{metric}:{level}")           # no duplicate open alert
             else:
-                conn.execute("UPDATE node_alerts SET cleared_at=datetime('now') WHERE id=?", (cur["id"],))
+                conn.execute("UPDATE node_alerts SET cleared_at=? WHERE id=?", (now, cur["id"]))
                 conn.execute(
-                    "INSERT INTO node_alerts(node_code, level, metric, value) VALUES (?,?,?,?)",
-                    (pr.node_code, level, metric, value))
+                    "INSERT INTO node_alerts(node_code, level, metric, value, raised_at) VALUES (?,?,?,?,?)",
+                    (pr.node_code, level, metric, value, now))
                 raised.append(f"{metric}:{level}")
         # Clear open alerts whose condition resolved.
         for metric, row in existing.items():
             if metric not in desired:
-                conn.execute("UPDATE node_alerts SET cleared_at=datetime('now') WHERE id=?", (row["id"],))
+                conn.execute("UPDATE node_alerts SET cleared_at=? WHERE id=?", (now, row["id"]))
                 cleared.append(f"{metric}:{row['level']}")
     return AlertReconcile(raised=raised, cleared=cleared, kept=kept)
 

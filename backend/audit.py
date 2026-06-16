@@ -12,7 +12,7 @@ from __future__ import annotations
 
 import sqlite3
 
-from . import db as _db
+from . import db as _db, timezone as _tz
 
 DEFAULT_ACTOR = "system:phase4c"
 
@@ -21,8 +21,8 @@ def audit_row(conn: sqlite3.Connection, action: str, target: str,
               detail: str = "", actor: str = DEFAULT_ACTOR) -> int:
     """INSERT one sanitized audit row WITHOUT committing (caller's transaction owns the commit)."""
     cur = conn.execute(
-        "INSERT INTO audit_logs(actor, action, target, detail) VALUES (?,?,?,?)",
-        (actor, action, target, detail),
+        "INSERT INTO audit_logs(actor, action, target, detail, created_at) VALUES (?,?,?,?,?)",
+        (actor, action, target, detail, _tz.storage_mmt(_tz.now_mmt())),
     )
     return int(cur.lastrowid)
 

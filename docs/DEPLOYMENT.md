@@ -12,8 +12,10 @@ How UNSEEN PROXY is deployed: a manual **pull onto the Master**, never a push-to
 
 The project business timezone is **Myanmar Time (MMT, UTC+06:30, `Asia/Yangon`)**. Deployment, portal, bot, payment,
 invoice, subscription, and report examples should use MMT unless a value is explicitly a technical UTC log timestamp.
-Before live launch, review any app-created DB timestamp fallback still using SQLite `datetime('now')` and move business
-timestamps through `backend.timezone`.
+Current app-created dry-run business timestamp writes route through `backend.timezone`; legacy SQLite `datetime('now')`
+defaults remain documented migration fallbacks and should be audited before live launch. Use
+`python3 bin/timezone_audit.py backend docs/TIMEZONE_POLICY.md` as a sanitized local check when touching timestamp
+code or docs.
 
 ## Deploy key on the Master
 
@@ -195,4 +197,5 @@ network calls. Generated preview files are not deployment artifacts and must not
 Phase 8B adds hash-only token/session DB tables and helpers, but **still deploys nothing**. `bin/portal_auth_smoke.py`
 and `bin/portal_token_dry_run.py` use temp DB/sample data by default and print only sanitized summaries. A real portal
 deployment still needs a future HTTP adapter, cookie-setting middleware, rate limits, access logging policy, and `/s/`
-live-resolution sidecar review before any public exposure.
+live-resolution sidecar review before any public exposure. Portal access/session service-created timestamps are stored
+as MMT-aware strings via `backend.timezone`; schema defaults are fallback-only.

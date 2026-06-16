@@ -20,9 +20,10 @@ import hashlib
 import secrets
 import sqlite3
 from dataclasses import dataclass
+from datetime import timedelta
 from typing import Optional, Tuple
 
-from . import db as _db
+from . import db as _db, timezone as _tz
 from .account_service import resolve_customer, _validate_platform
 
 # Unambiguous alphabet: no 0/O/1/I/L — easier to read aloud / type for non-technical users.
@@ -69,12 +70,13 @@ def issue_link_code(conn: sqlite3.Connection, customer_id: int) -> str:
     for _ in range(8):
         raw = _generate_code()
         code_hash = _hash_code(raw)
+        expires_at = _tz.storage_mmt(_tz.now_mmt() + timedelta(seconds=_EXPIRY_SECONDS))
         try:
             with _db.transaction(conn):
                 conn.execute(
                     "INSERT INTO account_link_tokens(customer_id, code_hash, expires_at) "
-                    "VALUES (?,?, datetime('now', ?))",
-                    (customer_id, code_hash, f"+{_EXPIRY_SECONDS} seconds"),
+                    "VALUES (?,?,?)",
+                    (customer_id, code_hash, expires_at),
                 )
             return raw
         except sqlite3.IntegrityError:
@@ -87,11 +89,11 @@ def validate_link_code(conn: sqlite3.Connection, code: str) -> LinkValidation:
     and unconsumed. Every failure path returns the same negative result."""
     code_hash = _hash_code(code)
     row = conn.execute(
-        "SELECT customer_id FROM account_link_tokens "
-        "WHERE code_hash=? AND consumed_at IS NULL AND expires_at > datetime('now')",
+        "SELECT customer_id, expires_at FROM account_link_tokens "
+        "WHERE code_hash=? AND consumed_at IS NULL",
         (code_hash,),
     ).fetchone()
-    if not row:
+    if not row or _tz.parse_mmt(row["expires_at"]) <= _tz.now_mmt():
         return LinkValidation(valid=False)
     return LinkValidation(valid=True, customer_id=int(row[0]))
 
@@ -118,13 +120,14 @@ def consume_link_code(conn: sqlite3.Connection, code: str,
     with _db.transaction(conn):
         # Re-validate inside the transaction (atomic with the consume) to avoid a TOCTOU race.
         row = conn.execute(
-            "SELECT id, customer_id FROM account_link_tokens "
-            "WHERE code_hash=? AND consumed_at IS NULL AND expires_at > datetime('now')",
+            "SELECT id, customer_id, expires_at FROM account_link_tokens "
+            "WHERE code_hash=? AND consumed_at IS NULL",
             (code_hash,),
         ).fetchone()
-        if not row:
+        if not row or _tz.parse_mmt(row["expires_at"]) <= _tz.now_mmt():
             return LinkConsumeResult(status="invalid")
         token_id, issuer_customer_id = int(row[0]), int(row[1])
+        consumed_at = _tz.storage_mmt(_tz.now_mmt())
 
         existing = conn.execute(
             "SELECT customer_id FROM platform_accounts "
@@ -139,8 +142,8 @@ def consume_link_code(conn: sqlite3.Connection, code: str,
                 (platform_name, platform_user_id, issuer_customer_id),
             )
             conn.execute(
-                "UPDATE account_link_tokens SET consumed_at=datetime('now') WHERE id=?",
-                (token_id,),
+                "UPDATE account_link_tokens SET consumed_at=? WHERE id=?",
+                (consumed_at, token_id),
             )
             return LinkConsumeResult(status="linked", customer_id=issuer_customer_id)
 
@@ -148,8 +151,8 @@ def consume_link_code(conn: sqlite3.Connection, code: str,
             # Already the same profile — friendly idempotent no-op. Burn the code anyway
             # (it has served its purpose) so it cannot be reused.
             conn.execute(
-                "UPDATE account_link_tokens SET consumed_at=datetime('now') WHERE id=?",
-                (token_id,),
+                "UPDATE account_link_tokens SET consumed_at=? WHERE id=?",
+                (consumed_at, token_id),
             )
             return LinkConsumeResult(status="already_linked", customer_id=issuer_customer_id)
 

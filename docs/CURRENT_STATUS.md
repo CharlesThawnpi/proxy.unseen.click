@@ -28,7 +28,8 @@ Where the UNSEEN PROXY build stands across the §34 deployment phases.
 **Timezone policy accepted (2026-06-16 MMT)** ([TIMEZONE_POLICY.md](TIMEZONE_POLICY.md), [DECISIONS.md](DECISIONS.md)
 ADR-004): all business/customer/project dates use Myanmar Time (**MMT**, UTC+06:30, `Asia/Yangon`). External UTC must
 be converted before customer/business use; technical UTC fields must be explicitly labeled. Helper module:
-`backend/timezone.py`. Legacy SQLite `datetime('now')` defaults are documented follow-ups before live launch.
+`backend/timezone.py`. Current app-created dry-run business timestamp writes now use MMT helpers; legacy SQLite
+`datetime('now')` defaults remain documented fallback behavior and are not destructively rewritten.
 
 **Architecture (current):** the **Master is control-plane only** — co-location is **retired**
 ([DECISIONS.md](DECISIONS.md) ADR-001). The Master was tested as a co-located DE node via Hiddify's experimental
@@ -144,7 +145,9 @@ additive migration `0006` adds hash-only `portal_access_tokens` and `portal_sess
 `portal_access`, `portal_sessions`, and `branded_link_resolver` provide secure random tokens, hash-only storage,
 constant-time verification, expiry/revocation, sanitized audit, dry-run session context, and `/s/<opaque-token>`
 resolver behavior. Private pages require `PortalSessionContext`; public pages stay public. **No server/public endpoint/
-real cookie service/live delivery/Hiddify call/Telegram send.** 191 tests PASS.
+real cookie service/live delivery/Hiddify call/Telegram send.** Portal token/session timestamps and current app-created
+dry-run business timestamps route through MMT helpers. `bin/timezone_audit.py` provides a sanitized local timestamp
+check. 198 tests PASS.
 
 **Next: real portal deployment boundary design (HTTP adapter/cookies/rate limits/access logs), gated monitor scheduler, or Phase 9 channel work.** **Before de1 goes live:** rebuild the node (clears
 `leaked_key_rebuild_pending`) + a real-device FAST1/FAST2/Secure test (`#TASK_for_Charles` in

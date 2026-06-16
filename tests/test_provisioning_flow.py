@@ -1,14 +1,16 @@
 import os
 import tempfile
 import unittest
+from datetime import timedelta
 
 from _helper import fresh_db
 from backend import (
     account_service, compensation, config, idempotency,
-    payment_approval_service as appr, provisioning_service as prov,
+    payment_approval_service as appr, provisioning_service as prov, timezone as tz,
 )
 
 NOW = "2026-06-16 00:00:00"
+NOW_STORED = "2026-06-16T00:00:00+06:30"
 
 
 def _order(conn, plan_code="PRO_3M", platform_id="buyer-1"):
@@ -36,7 +38,7 @@ class TestApproval(unittest.TestCase):
         # order transitioned to approved with a timestamp
         row = self.conn.execute("SELECT status, approved_at FROM payment_orders WHERE id=?", (oid,)).fetchone()
         self.assertEqual(row["status"], "approved")
-        self.assertIsNotNone(row["approved_at"])
+        self.assertEqual(row["approved_at"], NOW_STORED)
 
     def test_duplicate_approval_replays_same_result(self):
         _, oid = _order(self.conn, "BASIC_1M")
@@ -55,8 +57,8 @@ class TestApproval(unittest.TestCase):
         self.assertEqual(sub["snap_duration_days"], plan["duration_days"])
         self.assertEqual(sub["snap_price_mmk"], plan["price_mmk"])
         # deterministic dates: expiry = start + duration_days
-        self.assertEqual(sub["start_date"], NOW)
-        exp = self.conn.execute("SELECT datetime(?, ?)", (NOW, f"+{plan['duration_days']} days")).fetchone()[0]
+        self.assertEqual(sub["start_date"], NOW_STORED)
+        exp = tz.storage_mmt(tz.parse_mmt(NOW) + timedelta(days=plan["duration_days"]))
         self.assertEqual(sub["expiry_date"], exp)
 
     def test_snapshot_immune_to_later_catalogue_change(self):

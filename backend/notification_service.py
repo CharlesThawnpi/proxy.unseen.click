@@ -11,9 +11,10 @@ from __future__ import annotations
 
 import sqlite3
 from dataclasses import dataclass
+from datetime import timedelta
 from typing import Optional
 
-from . import db as _db
+from . import db as _db, timezone as _tz
 
 # Channels we may enqueue for. (Identity platform `web` is not a notification channel.)
 ALLOWED_CHANNELS = ("telegram", "messenger", "viber", "whatsapp")
@@ -90,10 +91,11 @@ def enqueue_notification(conn: sqlite3.Connection, customer_id: Optional[int], c
     """
     _validate(channel, purpose)
     with _db.transaction(conn):
+        now = _tz.storage_mmt(_tz.now_mmt())
         cur = conn.execute(
-            "INSERT INTO outbound_messages(customer_id, channel, purpose, status, attempts, payload_ref) "
-            "VALUES (?,?,?,?,0,?)",
-            (customer_id, channel, purpose, STATUS_QUEUED, payload_ref),
+            "INSERT INTO outbound_messages(customer_id, channel, purpose, status, attempts, payload_ref, created_at) "
+            "VALUES (?,?,?,?,0,?,?)",
+            (customer_id, channel, purpose, STATUS_QUEUED, payload_ref, now),
         )
         return int(cur.lastrowid)
 
@@ -105,10 +107,11 @@ def get_message(conn: sqlite3.Connection, message_id: int) -> Optional[sqlite3.R
 def mark_sent(conn: sqlite3.Connection, message_id: int) -> None:
     """Terminal success — records sent_at, clears any retry hint."""
     with _db.transaction(conn):
+        now = _tz.storage_mmt(_tz.now_mmt())
         conn.execute(
-            "UPDATE outbound_messages SET status=?, sent_at=datetime('now'), next_attempt_at=NULL "
+            "UPDATE outbound_messages SET status=?, sent_at=?, next_attempt_at=NULL "
             "WHERE id=?",
-            (STATUS_SENT, message_id),
+            (STATUS_SENT, now, message_id),
         )
 
 
@@ -137,11 +140,14 @@ def mark_failed_or_retry(conn: sqlite3.Connection, message_id: int,
         attempts = int(row["attempts"]) + 1
         max_attempts = int(row["max_attempts"])
         new_status = STATUS_DEAD if attempts >= max_attempts else STATUS_QUEUED
+        retry_at = None
+        if new_status == STATUS_QUEUED:
+            retry_at = _tz.storage_mmt(_tz.now_mmt() + timedelta(seconds=300))
         conn.execute(
             "UPDATE outbound_messages SET attempts=?, status=?, last_error=?, "
-            "next_attempt_at=CASE WHEN ?='queued' THEN datetime('now', '+300 seconds') ELSE NULL END "
+            "next_attempt_at=? "
             "WHERE id=?",
-            (attempts, new_status, error_ref or None, new_status, message_id),
+            (attempts, new_status, error_ref or None, retry_at, message_id),
         )
         return new_status
 

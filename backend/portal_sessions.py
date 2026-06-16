@@ -7,27 +7,23 @@ from __future__ import annotations
 
 import sqlite3
 from dataclasses import dataclass
-from datetime import datetime, timedelta, timezone
+from datetime import datetime, timedelta
 from typing import Optional
 
-from . import db as _db, portal_tokens
+from . import db as _db, portal_tokens, timezone as _tz
 from .audit import audit_row
 
 COOKIE_NAME = "unseen_portal_session"
 
 
-def _utc_now() -> datetime:
-    return datetime.now(timezone.utc).replace(tzinfo=None, microsecond=0)
-
-
 def _dt(value: str | None) -> Optional[datetime]:
     if not value:
         return None
-    return datetime.fromisoformat(value.replace("Z", "+00:00")).replace(tzinfo=None)
+    return _tz.parse_mmt(value)
 
 
 def _fmt(value: datetime) -> str:
-    return value.replace(microsecond=0).isoformat(sep=" ")
+    return _tz.storage_mmt(value)
 
 
 @dataclass(frozen=True)
@@ -66,16 +62,16 @@ def create_session(
     expires_at: str | None = None,
     now: datetime | None = None,
 ) -> CreatedPortalSession:
-    now_dt = now or _utc_now()
+    now_dt = _tz.to_mmt(now) if now is not None else _tz.now_mmt()
     expiry = _dt(expires_at) if expires_at else now_dt + timedelta(hours=2)
     raw = portal_tokens.generate_opaque_token()
     handle = portal_tokens.hash_token(raw)
     with _db.transaction(conn):
         cur = conn.execute(
             "INSERT INTO portal_sessions"
-            "(customer_id, source_access_token_id, session_hash, status, expires_at) "
-            "VALUES (?,?,?,'active',?)",
-            (customer_id, source_access_token_id, handle, _fmt(expiry)),
+            "(customer_id, source_access_token_id, session_hash, status, created_at, expires_at) "
+            "VALUES (?,?,?,'active',?,?)",
+            (customer_id, source_access_token_id, handle, _fmt(now_dt), _fmt(expiry)),
         )
         session_id = int(cur.lastrowid)
         audit_row(conn, "portal_session_created", f"portal_session:{session_id}",
@@ -98,19 +94,20 @@ def verify_session(
         return PortalSessionVerification(False, "unknown")
     if row["revoked_at"] or row["status"] != "active":
         return PortalSessionVerification(False, "revoked", session_id=int(row["id"]))
-    now_dt = now or _utc_now()
+    now_dt = _tz.to_mmt(now) if now is not None else _tz.now_mmt()
     if _dt(row["expires_at"]) <= now_dt:
         return PortalSessionVerification(False, "expired", session_id=int(row["id"]))
     with _db.transaction(conn):
-        conn.execute("UPDATE portal_sessions SET last_verified_at=datetime('now') WHERE id=?", (row["id"],))
+        conn.execute("UPDATE portal_sessions SET last_verified_at=? WHERE id=?", (_fmt(now_dt), row["id"]))
     return PortalSessionVerification(True, "valid", session_id=int(row["id"]), customer_id=int(row["customer_id"]))
 
 
 def revoke_session(conn: sqlite3.Connection, session_id: int) -> None:
     with _db.transaction(conn):
+        now = _fmt(_tz.now_mmt())
         conn.execute(
-            "UPDATE portal_sessions SET status='revoked', revoked_at=datetime('now') WHERE id=?",
-            (session_id,),
+            "UPDATE portal_sessions SET status='revoked', revoked_at=? WHERE id=?",
+            (now, session_id),
         )
         audit_row(conn, "portal_session_revoked", f"portal_session:{session_id}",
                   "reason:manual_or_test", actor="system:portal")
