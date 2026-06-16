@@ -5,6 +5,23 @@
 
 Chronological record of notable changes to the UNSEEN PROXY project.
 
+## 2026-06-16 — Phase 4A: DB foundation + Hiddify client/provisioner (dry-run) — PASS
+
+- **Stdlib-only** backend foundation (sqlite3/urllib/unittest — no pip on the control plane). No live mutations, no
+  real customers, no services started; de1 stays `status=test`.
+- Schema (`backend/migrations/0001_initial.sql`, FK-enforced): all required tables incl. `proxy_nodes` provenance
+  split (est_/det_/conf_), subscription order-time snapshots, idempotency_keys, outbound_messages, etc.
+  Idempotent runner `backend/migrate.py` + `schema_migrations`. `bin/init_db.py` = migrate+seed.
+- Seed catalogue (admin-editable, not code constants): plans TRIAL/BASIC_1M/CORE_1M/PLUS_3M/PRO_3M/MAX_6M with the
+  authoritative GiB/days/MMK; regions de(default)/us/sg(premium-only); profiles FAST1/FAST2/SECURE; entitlements
+  (SG only on PRO/MAX; Fast-label rule); de1 node `status=test` with detected specs.
+- `backend/hiddify/client.py`: verified API v2 endpoints, `Hiddify-API-Key` header, **GiB→GB at the boundary**,
+  no secret/URL/payload logging, structured results, timeouts/retries, injectable opener (tests mock it).
+- `bin/hiddify_customer_provisioner.py`: audit/status/validate-contract/provision-one/suspend-one/reconcile-usage —
+  **dry-run by default; live double-gated** (env latch + `--live --confirm`); sanitized output.
+- **Tests: 17 PASS** (`python3 -m unittest discover -s tests`). New PHASE4A_DB_BACKEND_FOUNDATION.md, BRAIN_API_DESIGN.md
+  (design-only), updated DATABASE/CURRENT_STATUS.
+
 ## 2026-06-16 — Add consolidated SOURCE_OF_TRUTH.md (Custom-GPT upload file) + generator
 
 - New `scripts/build_source_of_truth.sh` assembles `SOURCE_OF_TRUTH.md` (repo root) from the canonical living docs

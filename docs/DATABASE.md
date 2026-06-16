@@ -1,11 +1,18 @@
 # DATABASE
 
 > **Source of truth:** [IMPLEMENTATION_PLAN.md](../IMPLEMENTATION_PLAN.md) §30A.1, §30A.2, Appendix A
-> **Status:** Phase 1 skeleton — schema decided in plan; schema + migration runner verified in Phase 4
+> **Status:** **Phase 4A — IMPLEMENTED.** Migration-driven SQLite; foundation built and tested (stdlib only).
 
 The data model for UNSEEN PROXY: a SQLite (WAL) database where **all business values are rows, not constants**, with a documented path to Postgres.
 
-> Verified in Phase 4 — the schema and migration runner are built in Phase 4. Do not depend on table shapes until then.
+> **Built in Phase 4A** (see [PHASE4A_DB_BACKEND_FOUNDATION.md](PHASE4A_DB_BACKEND_FOUNDATION.md)):
+> - Schema: `backend/migrations/0001_initial.sql` (FK-enforced; all required tables incl. the `proxy_nodes`
+>   provenance split est_/det_/conf_; order-time snapshots on `subscriptions`; idempotency_keys; outbound_messages).
+> - Runner: `backend/migrate.py` (ordered, idempotent, `schema_migrations` registry).
+> - **Initialize/update:** `python3 bin/init_db.py --db <path>` (migrate + seed; idempotent).
+> - **Connection:** always via `backend.db.connect()` → `PRAGMA foreign_keys=ON`, WAL, busy_timeout.
+> - **Tests:** `python3 -m unittest discover -s tests -p 'test_*.py'` (migrations/integrity/FK/seed/code/units/client).
+> - **Units:** plans store `data_limit_gib`; convert to Hiddify GB via `backend.units` (Hiddify uses GB).
 
 ## Engine & storage
 

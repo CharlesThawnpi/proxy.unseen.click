@@ -1,7 +1,7 @@
 # REGIONS
 
 > **Source of truth:** [IMPLEMENTATION_PLAN.md](../IMPLEMENTATION_PLAN.md) §7, §6.2
-> **Status:** Phase 1 skeleton — decided from plan
+> **Status:** decided from plan; **seeded in DB (Phase 4A)** — `proxy_regions`: de(default,test)/us(planned)/sg(premium-only,planned); `plan_region_entitlements` enforce SG only on PRO/MAX. Admin-editable rows, not constants.
 
 How regions are modeled, offered, and commercially tiered.
 

@@ -1,6 +1,6 @@
 # UNSEEN PROXY — SOURCE OF TRUTH (consolidated, auto-generated)
 
-> **Generated:** 2026-06-16T02:54:04Z — by `scripts/build_source_of_truth.sh`.
+> **Generated:** 2026-06-16T03:09:39Z — by `scripts/build_source_of_truth.sh`.
 > **This is the live project state for external readers (e.g. the Custom GPT).** It is DERIVED from the
 > canonical docs below and regenerated each task. Upload THIS file to the GPT (not IMPLEMENTATION_PLAN.md,
 > which is the static v1.9 plan). Re-download after updates.
@@ -43,7 +43,7 @@ Where the UNSEEN PROXY build stands across the §34 deployment phases.
 | 1 | Documentation, repo & architecture planning | DONE (pushed to origin/main, 25e5ddc) |
 | 2 | Hiddify test node setup | **RE-SCOPED to a separate DE VPS** (`de1`, `5.249.160.59`, Ubuntu 22.04, planned/test). Master-co-location preflight done then RETIRED. Forward plan: PHASE2_3_DE_NODE_PLAN.md |
 | 3 | Hiddify API & subscription compatibility audit | **DONE (PASS w/ follow-ups) — Hiddify v12.3.3 on de1; API v2 contract VERIFIED-LIVE; disposable test user create→sub→delete confirmed.** Phase 4 API layer UNBLOCKED. Node-tuning follow-ups: SS:8388/UDP reachability, RAM lock, SSH hardening, regenerate leaked default-user keys. See HIDDIFY_API_CONTRACT.md + PHASE3_DE1_HIDDIFY_LIVE_VERIFY.md |
-| 4 | Database & backend clone design | **NEXT — now unblocked** (build against the verified contract; remember GiB↔GB) |
+| 4 | Database & backend clone design | **Phase 4A DONE (dry-run/test-safe): migrations + schema + seed + Hiddify client + provisioner CLI + 17 tests PASS.** No live mutations. See PHASE4A_DB_BACKEND_FOUNDATION.md. Next: Phase 4B (services/idempotency/queue/backup). |
 | 5 | Telegram bot implementation (Burmese-primary) | PENDING |
 | 6 | Hiddify subscription delivery integration | PENDING |
 | 7 | Plan-based region/protocol entitlement + node resilience | PENDING |
@@ -95,9 +95,17 @@ fine in-process (the earlier HTTP failures were a wrong-proxy_path decoy, not th
 change**). Full contract captured in `HIDDIFY_API_CONTRACT.md` (endpoints, fields, **units = GB**, sub endpoints); a
 disposable-test user was created→verified→sub-checked→deleted (re-GET 404). **Phase 4 API layer is UNBLOCKED.**
 
-**Next: Phase 4** (DB/backend + orchestrator) against the verified contract — convert **GiB↔GB**. Node-tuning before
-live (non-blocking): proxy-port reachability (SS:8388/UDP via ufw), real-device connect test, lock 4 GB RAM, disable
-SSH password login, regenerate the leaked default-user/server keys. Node stays `status=test`.
+**Phase 4A complete (2026-06-16):** stdlib backend foundation — `backend/` (db/migrate/seed/units/customer_code/
+display/config + `hiddify/client.py`), `bin/init_db.py` + `bin/hiddify_customer_provisioner.py` (dry-run; live
+double-gated), `tests/` (17 PASS). Seeded plans/regions/protocols/entitlements + de1 (`status=test`). No live Hiddify
+calls, no real customers, no services started.
+
+**GPT tooling:** `SOURCE_OF_TRUTH.md` is the file to upload to the Custom GPT (auto-generated). **Brain API** =
+design-only ([BRAIN_API_DESIGN.md](BRAIN_API_DESIGN.md)); build is a separate gated task.
+
+**Next: Phase 4B** — AccountService/NotificationService boundaries, idempotency on payment-approval/provision, the
+outbound-notification queue, and a WAL-safe online-backup script (still dry-run for Hiddify). **de1 pre-live tuning**
+(SS:8388/UDP ports, RAM lock, SSH hardening, regenerate leaked default-user keys) remains before any live provisioning.
 
 **OS path decided (2026-06-15):** in-place `do-release-upgrade` was considered, but since `de1` is **empty** the
 safer, same-outcome choice is a **clean provider reinstall to Ubuntu 22.04** (Charles). A read-only pre-upgrade gate
@@ -332,6 +340,31 @@ The verified Hiddify Manager **API v2** contract — endpoints, fields, units, a
 
 Chronological record of notable changes to the UNSEEN PROXY project.
 
+## 2026-06-16 — Phase 4A: DB foundation + Hiddify client/provisioner (dry-run) — PASS
+
+- **Stdlib-only** backend foundation (sqlite3/urllib/unittest — no pip on the control plane). No live mutations, no
+  real customers, no services started; de1 stays `status=test`.
+- Schema (`backend/migrations/0001_initial.sql`, FK-enforced): all required tables incl. `proxy_nodes` provenance
+  split (est_/det_/conf_), subscription order-time snapshots, idempotency_keys, outbound_messages, etc.
+  Idempotent runner `backend/migrate.py` + `schema_migrations`. `bin/init_db.py` = migrate+seed.
+- Seed catalogue (admin-editable, not code constants): plans TRIAL/BASIC_1M/CORE_1M/PLUS_3M/PRO_3M/MAX_6M with the
+  authoritative GiB/days/MMK; regions de(default)/us/sg(premium-only); profiles FAST1/FAST2/SECURE; entitlements
+  (SG only on PRO/MAX; Fast-label rule); de1 node `status=test` with detected specs.
+- `backend/hiddify/client.py`: verified API v2 endpoints, `Hiddify-API-Key` header, **GiB→GB at the boundary**,
+  no secret/URL/payload logging, structured results, timeouts/retries, injectable opener (tests mock it).
+- `bin/hiddify_customer_provisioner.py`: audit/status/validate-contract/provision-one/suspend-one/reconcile-usage —
+  **dry-run by default; live double-gated** (env latch + `--live --confirm`); sanitized output.
+- **Tests: 17 PASS** (`python3 -m unittest discover -s tests`). New PHASE4A_DB_BACKEND_FOUNDATION.md, BRAIN_API_DESIGN.md
+  (design-only), updated DATABASE/CURRENT_STATUS.
+
+## 2026-06-16 — Add consolidated SOURCE_OF_TRUTH.md (Custom-GPT upload file) + generator
+
+- New `scripts/build_source_of_truth.sh` assembles `SOURCE_OF_TRUTH.md` (repo root) from the canonical living docs
+  (invariants + CURRENT_STATUS + DECISIONS/ADRs + verified Hiddify contract + recent CHANGELOG + server inventory).
+- **This is the file to upload to the Custom GPT** as its instruction/source-of-truth — NOT `IMPLEMENTATION_PLAN.md`
+  (that's the static v1.9 plan). Regenerate after each task (`bash scripts/build_source_of_truth.sh`), commit, then
+  re-download from GitHub and re-upload to the GPT. Secret-free (derived from already-committed docs).
+
 ## 2026-06-16 — Phase 3-DE follow-up: API v2 contract VERIFIED-LIVE; disposable user OK — PASS (w/ follow-ups)
 
 - **API contract recovered & verified.** The earlier OpenAPI HTTP failures were **routing/decoy** (wrong proxy_path),
@@ -390,31 +423,6 @@ Chronological record of notable changes to the UNSEEN PROXY project.
   default route up automatically).
 - **DNS resolved:** `node-de.unseen.click → 5.249.160.59` A record added (Charles).
 - **Still open:** RAM detected **1.8 GiB** vs 4 GB purchased — pending provider clarification. Updated
-  PHASE2_DE1_PREFLIGHT/PHASE2_3_DE_NODE_PLAN/SERVERS/NODES/CURRENT_STATUS. Docs committed; Hiddify NOT installed.
-
-## 2026-06-15 — Phase 2-DE: de1 re-verified on Ubuntu 22.04.5 — PARTIAL (resource items)
-
-- de1 reinstalled to **Ubuntu 22.04.5 LTS** (Charles); networking fixed; Master key re-added. Host key changed by
-  reinstall → removed only the de1 `known_hosts` entry and re-pinned (expected).
-- Re-ran read-only preflight: **SSH root key works**; **OS 22.04.5** (kernel 5.15) ✓; hostname `de1`; **clean** (no
-  legacy/proxy/nginx/docker); only SSH:22 public, 80/443 free; **ufw ACTIVE** (INPUT DROP, SSH allowed); egress
-  `5.249.160.59` ✓.
-- **Network persistence = PASS:** static `/etc/netplan/01-netcfg.yaml` for `ens18` (dhcp4 off, static IP+route),
-  systemd-networkd-managed, **no manual dhclient**, cloud-init not overriding → survives reboot.
-- **Detected vs estimate:** OS ✓, CPU 4 ✓, IP ✓; **RAM 1.8 GiB** (vs 4 GB purchased *and* prior 3.1 GiB — investigate);
-  **root LV ~12 GB / 5.6 GB free** of 25 GB disk (~11.5 GB unallocated VG → extend before Hiddify).
-- **Result PARTIAL.** Before Phase 3-DE: extend root LV, clarify RAM with provider, add `node-de.unseen.click` A
-  record. Updated PHASE2_DE1_PREFLIGHT (rewritten for 22.04) + OS_UPGRADE/SERVERS/NODES/NETWORK/PORTS/SECURITY/
-  CURRENT_STATUS. Docs only; node changes = none (read-only).
-
-## 2026-06-15 — Phase 2-DE: de1 OFFLINE after custom-ISO attempt — upgrade on HOLD
-
-- Tried to diagnose/fix de1's release-upgrade connectivity (`changelogs.ubuntu.com` unreachable on console after a
-  custom-ISO attempt). From the Master, **de1 is now fully unreachable**: 100% ICMP loss; TCP 22/1022/80/443 all
-  timeout; SSH connect timed out. **Whole node offline**, not a DNS/CA issue.
-- Per the task Step-1 rule, **STOPPED** — cannot SSH in to diagnose/fix; no node changes, no upgrade run.
-- **Recovery = operator/console:** check de1 boot state in the provider panel; **reinstall to Ubuntu 22.04 LTS (EN)**
-  with the Master public key added (recommended; node is empty). Then re-test + re-run preflight. Updated
 
 
 ---

@@ -13,7 +13,7 @@ Where the UNSEEN PROXY build stands across the §34 deployment phases.
 | 1 | Documentation, repo & architecture planning | DONE (pushed to origin/main, 25e5ddc) |
 | 2 | Hiddify test node setup | **RE-SCOPED to a separate DE VPS** (`de1`, `5.249.160.59`, Ubuntu 22.04, planned/test). Master-co-location preflight done then RETIRED. Forward plan: PHASE2_3_DE_NODE_PLAN.md |
 | 3 | Hiddify API & subscription compatibility audit | **DONE (PASS w/ follow-ups) — Hiddify v12.3.3 on de1; API v2 contract VERIFIED-LIVE; disposable test user create→sub→delete confirmed.** Phase 4 API layer UNBLOCKED. Node-tuning follow-ups: SS:8388/UDP reachability, RAM lock, SSH hardening, regenerate leaked default-user keys. See HIDDIFY_API_CONTRACT.md + PHASE3_DE1_HIDDIFY_LIVE_VERIFY.md |
-| 4 | Database & backend clone design | **NEXT — now unblocked** (build against the verified contract; remember GiB↔GB) |
+| 4 | Database & backend clone design | **Phase 4A DONE (dry-run/test-safe): migrations + schema + seed + Hiddify client + provisioner CLI + 17 tests PASS.** No live mutations. See PHASE4A_DB_BACKEND_FOUNDATION.md. Next: Phase 4B (services/idempotency/queue/backup). |
 | 5 | Telegram bot implementation (Burmese-primary) | PENDING |
 | 6 | Hiddify subscription delivery integration | PENDING |
 | 7 | Plan-based region/protocol entitlement + node resilience | PENDING |
@@ -65,9 +65,17 @@ fine in-process (the earlier HTTP failures were a wrong-proxy_path decoy, not th
 change**). Full contract captured in `HIDDIFY_API_CONTRACT.md` (endpoints, fields, **units = GB**, sub endpoints); a
 disposable-test user was created→verified→sub-checked→deleted (re-GET 404). **Phase 4 API layer is UNBLOCKED.**
 
-**Next: Phase 4** (DB/backend + orchestrator) against the verified contract — convert **GiB↔GB**. Node-tuning before
-live (non-blocking): proxy-port reachability (SS:8388/UDP via ufw), real-device connect test, lock 4 GB RAM, disable
-SSH password login, regenerate the leaked default-user/server keys. Node stays `status=test`.
+**Phase 4A complete (2026-06-16):** stdlib backend foundation — `backend/` (db/migrate/seed/units/customer_code/
+display/config + `hiddify/client.py`), `bin/init_db.py` + `bin/hiddify_customer_provisioner.py` (dry-run; live
+double-gated), `tests/` (17 PASS). Seeded plans/regions/protocols/entitlements + de1 (`status=test`). No live Hiddify
+calls, no real customers, no services started.
+
+**GPT tooling:** `SOURCE_OF_TRUTH.md` is the file to upload to the Custom GPT (auto-generated). **Brain API** =
+design-only ([BRAIN_API_DESIGN.md](BRAIN_API_DESIGN.md)); build is a separate gated task.
+
+**Next: Phase 4B** — AccountService/NotificationService boundaries, idempotency on payment-approval/provision, the
+outbound-notification queue, and a WAL-safe online-backup script (still dry-run for Hiddify). **de1 pre-live tuning**
+(SS:8388/UDP ports, RAM lock, SSH hardening, regenerate leaked default-user keys) remains before any live provisioning.
 
 **OS path decided (2026-06-15):** in-place `do-release-upgrade` was considered, but since `de1` is **empty** the
 safer, same-outcome choice is a **clean provider reinstall to Ubuntu 22.04** (Charles). A read-only pre-upgrade gate

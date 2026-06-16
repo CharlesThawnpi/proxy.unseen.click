@@ -1,7 +1,7 @@
 # PROTOCOLS
 
 > **Source of truth:** [IMPLEMENTATION_PLAN.md](../IMPLEMENTATION_PLAN.md) §3.2, §26
-> **Status:** Phase 1 skeleton — decided from plan
+> **Status:** decided from plan; **seeded in DB (Phase 4A)** — `protocol_profiles`: FAST1=hysteria2, FAST2=shadowsocks, SECURE=vless-reality. The Fast-label rule (one tier→"Fast"; both→Fast1/Fast2) is computed in `backend/display.py` (tested), not stored.
 
 The mapping between user-facing profile names and the underlying engine protocols.
 

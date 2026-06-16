@@ -1,0 +1,54 @@
+"""Runtime config from the environment by handle — no hardcoded secrets/values.
+
+Secrets (Hiddify API key, admin proxy path) are read from env var *handles* recorded on
+the node row (`proxy_nodes.api_secret_handle`), never stored in the DB or source. A node's
+public hostname/IP are data (DB), not secrets.
+"""
+from __future__ import annotations
+
+import os
+from dataclasses import dataclass
+
+DEFAULT_DB_PATH = "/opt/unseen-proxy/data/unseenproxy.sqlite3"
+
+
+def db_path() -> str:
+    return os.environ.get("DB_PATH", DEFAULT_DB_PATH)
+
+
+@dataclass(frozen=True)
+class NodeApiConfig:
+    """Connection config for one node's Hiddify API. Built from the node row + env handles."""
+    node_code: str
+    base_host: str                 # node-de.unseen.click  (public, not secret)
+    admin_proxy_path: str          # secret URL segment (from env)
+    api_key: str                   # admin UUID credential (from env)
+
+    @property
+    def admin_api_base(self) -> str:
+        # https://<host>/<proxy_path>/api/v2/admin  — proxy_path is secret; never log this.
+        return f"https://{self.base_host}/{self.admin_proxy_path}/api/v2/admin"
+
+    def fingerprint(self) -> str:
+        """Loggable, non-secret identifier."""
+        return f"node={self.node_code} host={self.base_host} key=***{self.api_key[-0:] and ''}"
+
+
+def load_node_api_config(node_code: str, base_host: str,
+                         path_env: str, key_env: str) -> NodeApiConfig:
+    """Resolve a node's secret proxy path + API key from env var handles.
+
+    Raises KeyError if the handles aren't set — callers in dry-run mode should NOT call this.
+    """
+    proxy_path = os.environ[path_env]
+    api_key = os.environ[key_env]
+    return NodeApiConfig(node_code=node_code, base_host=base_host,
+                         admin_proxy_path=proxy_path, api_key=api_key)
+
+
+# Live-mutation latch (env half of the double gate; the other half is --live --confirm).
+LIVE_ENV_LATCH = "UNSEENPROXY_HIDDIFY_PROVISION_LIVE_ENABLED"
+
+
+def live_latch_enabled() -> bool:
+    return os.environ.get(LIVE_ENV_LATCH) == "1"

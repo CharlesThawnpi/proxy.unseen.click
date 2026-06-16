@@ -1,7 +1,10 @@
 # DEPLOYMENT
 
 > **Source of truth:** [IMPLEMENTATION_PLAN.md](../IMPLEMENTATION_PLAN.md) §31A.5
-> **Status:** Phase 1 skeleton — decided from plan
+> **Status:** decided from plan; **Phase 4A backend foundation present.** DB init/update: `python3 bin/init_db.py
+> --db <path>` (migrate+seed, idempotent). Tests: `python3 -m unittest discover -s tests`. Stdlib-only (no pip).
+> Real `.env` placed on the Master only (from `.env.example`); DB lives under `data/` (git-ignored). Hiddify live
+> provisioning is double-gated (`UNSEENPROXY_HIDDIFY_PROVISION_LIVE_ENABLED=1` + `--live --confirm`) — not used yet.
 
 How UNSEEN PROXY is deployed: a manual **pull onto the Master**, never a push-to-server. Secrets and data stay on the Master; git delivers code only.
 
