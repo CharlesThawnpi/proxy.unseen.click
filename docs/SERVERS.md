@@ -59,8 +59,9 @@ Hiddify's **supported host installer on Ubuntu 22.04** (not Docker, not on the M
 > Hostname `de1`. Node is **clean** (no legacy/proxy artifacts; only SSH:22 public; no nginx/docker); **ufw active**;
 > network **persistent** (static netplan for `ens18`). **Hiddify v12.3.3 installed & running (2026-06-16)** — host
 > install on 22.04.5; all services active, 443 up, FAST1/FAST2/Secure inbounds present. RAM balloon-dynamic (~1.8 idle
-> → ~3.8 under load). **Open:** API v2 CRUD contract (browser Swagger); lock 4 GB RAM before live use. Detail:
-> [PHASE3_DE1_HIDDIFY_LIVE_VERIFY.md](PHASE3_DE1_HIDDIFY_LIVE_VERIFY.md).
+> → ~3.8 under load). **API v2 contract VERIFIED-LIVE (2026-06-16)**; disposable test user verified. **Open (node-tuning
+> before live):** SS:8388/UDP external reachability (ufw), lock 4 GB RAM, SSH hardening, regenerate leaked default-user
+> keys. Detail: [PHASE3_DE1_HIDDIFY_LIVE_VERIFY.md](PHASE3_DE1_HIDDIFY_LIVE_VERIFY.md).
 
 Seed values (SG/US): `ram_mb` = 2048/2048/6144; `disk_gb` = 60/20/100; `bandwidth_budget_gb` = 10000/2000/9800. SG has two nodes — the offering/sidecar logic supports multiple nodes per region, and graceful degradation means if `sg1` is down, `sg2` still serves SG (§6.2).
 

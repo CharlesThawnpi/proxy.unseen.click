@@ -59,6 +59,12 @@ From the verified Hiddify model (see [PHASE3_HIDDIFY_AUDIT_PLAN.md](PHASE3_HIDDI
   [PHASE3_DE1_HIDDIFY_LIVE_VERIFY.md](PHASE3_DE1_HIDDIFY_LIVE_VERIFY.md).
 - **Operational lesson (recorded):** never set a restrictive `umask` (e.g. 077) when launching third-party installers
   — it propagates into created files/dirs (and package caches), producing unusable perms. Use the default 022.
+- **Secret-handling incident (2026-06-16, disclosed):** during de1 API debugging, an **unquoted User-Agent with spaces**
+  mis-aligned `curl` args so a response body printed to the terminal, exposing the Hiddify **default** user's ed25519
+  private key + WireGuard keys + uuid. **Not committed to git** (terminal only); **no-customer `test` node**. Fixes:
+  (1) **always write API response bodies to files** (`-o`), never let them hit stdout; (2) **always quote** UA/headers;
+  (3) before de1 goes live, **regenerate the default-user/server secrets** (or rebuild the node). Recorded so the
+  pattern isn't repeated when the orchestrator handles real per-customer keys.
 - **Master minimalism / attack-surface** ([DECISIONS.md](DECISIONS.md) ADR-003): the Master runs only control-plane
   services; packages installed solely for the retired co-location path (notably the now-unused **Docker engine**) are
   cleanup candidates to be removed in a future audited task — keeping the protected control plane minimal.

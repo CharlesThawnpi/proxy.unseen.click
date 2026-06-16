@@ -39,6 +39,9 @@ once Hiddify is installed. Detail: [PHASE2_DE1_PREFLIGHT.md](PHASE2_DE1_PREFLIGH
 - **Update (2026-06-16): Hiddify v12.3.3 installed** — `de1` now serves 443 (panel/sub + Hysteria2/QUIC) + Shadowsocks
   (8388) + Reality/other inbounds; the customer→node data path is live here (node `status=test`). ufw active (22
   allowed); confirm Hiddify's iptables open the proxy ports externally. See [PHASE3_DE1_HIDDIFY_LIVE_VERIFY.md](PHASE3_DE1_HIDDIFY_LIVE_VERIFY.md).
+- **Reachability check from Master (2026-06-16):** tcp 22/80/443 reachable externally (443 TLS 200); **8388 filtered**;
+  UDP needs a device test → the **API/panel on 443 is reachable (Phase-4 orchestrator path works)**, but some proxy
+  inbounds aren't externally open yet (node-tuning before serving traffic).
 
 ## Phase 2 preflight — current network state (2026-06-15, read-only) — MASTER
 

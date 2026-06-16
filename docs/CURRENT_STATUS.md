@@ -12,8 +12,8 @@ Where the UNSEEN PROXY build stands across the §34 deployment phases.
 | 0 | Clean-VPS verification (gate before any build) | DONE (gate passed) |
 | 1 | Documentation, repo & architecture planning | DONE (pushed to origin/main, 25e5ddc) |
 | 2 | Hiddify test node setup | **RE-SCOPED to a separate DE VPS** (`de1`, `5.249.160.59`, Ubuntu 22.04, planned/test). Master-co-location preflight done then RETIRED. Forward plan: PHASE2_3_DE_NODE_PLAN.md |
-| 3 | Hiddify API & subscription compatibility audit | **PARTIAL — Hiddify v12.3.3 INSTALLED & RUNNING on de1** (all services active, 443 up, FAST1/FAST2/Secure present, admin link secured). **Deferred:** exact API v2 CRUD contract + test user (v12.3.3 API path not black-box-discoverable; OpenAPI route errors) → read from browser Swagger. See PHASE3_DE1_HIDDIFY_LIVE_VERIFY.md |
-| 4 | Database & backend clone design | PENDING |
+| 3 | Hiddify API & subscription compatibility audit | **DONE (PASS w/ follow-ups) — Hiddify v12.3.3 on de1; API v2 contract VERIFIED-LIVE; disposable test user create→sub→delete confirmed.** Phase 4 API layer UNBLOCKED. Node-tuning follow-ups: SS:8388/UDP reachability, RAM lock, SSH hardening, regenerate leaked default-user keys. See HIDDIFY_API_CONTRACT.md + PHASE3_DE1_HIDDIFY_LIVE_VERIFY.md |
+| 4 | Database & backend clone design | **NEXT — now unblocked** (build against the verified contract; remember GiB↔GB) |
 | 5 | Telegram bot implementation (Burmese-primary) | PENDING |
 | 6 | Hiddify subscription delivery integration | PENDING |
 | 7 | Plan-based region/protocol entitlement + node resilience | PENDING |
@@ -60,9 +60,14 @@ permission cascade caused by the agent's `umask 077` at launch + uv cache hardli
 black-box-discoverable (probes hit Hiddify's decoy site) and the OpenAPI route errors (likely the marshmallow-v4 bug).
 Detail: [PHASE3_DE1_HIDDIFY_LIVE_VERIFY.md](PHASE3_DE1_HIDDIFY_LIVE_VERIFY.md).
 
-**Next:** capture the **API v2 contract from the panel's browser Swagger** (open the admin link), or fix the OpenAPI 500
-(`marshmallow<=3.26.1`), then fill `HIDDIFY_API_CONTRACT.md` + create/delete one disposable test user. Also verify
-ufw/Hiddify proxy-port reachability and lock 4 GB RAM before live use. **Phase 4 stays blocked** until the contract is verified.
+**Update (2026-06-16T02:37Z): API contract VERIFIED-LIVE; Phase 3-DE = PASS (w/ follow-ups).** The OpenAPI spec builds
+fine in-process (the earlier HTTP failures were a wrong-proxy_path decoy, not the marshmallow bug → **no package
+change**). Full contract captured in `HIDDIFY_API_CONTRACT.md` (endpoints, fields, **units = GB**, sub endpoints); a
+disposable-test user was created→verified→sub-checked→deleted (re-GET 404). **Phase 4 API layer is UNBLOCKED.**
+
+**Next: Phase 4** (DB/backend + orchestrator) against the verified contract — convert **GiB↔GB**. Node-tuning before
+live (non-blocking): proxy-port reachability (SS:8388/UDP via ufw), real-device connect test, lock 4 GB RAM, disable
+SSH password login, regenerate the leaked default-user/server keys. Node stays `status=test`.
 
 **OS path decided (2026-06-15):** in-place `do-release-upgrade` was considered, but since `de1` is **empty** the
 safer, same-outcome choice is a **clean provider reinstall to Ubuntu 22.04** (Charles). A read-only pre-upgrade gate

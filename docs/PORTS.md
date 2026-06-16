@@ -62,6 +62,10 @@ See [PHASE3_HIDDIFY_AUDIT_PLAN.md](PHASE3_HIDDIFY_AUDIT_PLAN.md) for sources.
   public. **ufw active but explicitly allows only 22/tcp** — Hiddify manages the proxy ports via its own iptables;
   ⚠ confirm proxy-port external reachability (ufw default-deny vs Hiddify's ACCEPT rules). See
   [PHASE3_DE1_HIDDIFY_LIVE_VERIFY.md](PHASE3_DE1_HIDDIFY_LIVE_VERIFY.md).
+- **[Reachability from Master, 2026-06-16]** tcp **22/80/443 OPEN** externally (443 TLS → 200, panel/Reality front);
+  **8388 (Shadowsocks) FILTERED** externally; UDP (Hysteria2 443/udp) not TCP-probeable → real-device test needed.
+  ufw added 4 Hiddify proxy ACCEPT rules but not all inbounds are open — **node-tuning before live**: ensure each
+  served protocol's port is allowed (and confirm SS's actual public port).
 - **[LIVE 2026-06-15]** A test Docker install (v12.3.3) briefly bound host **80 + 443 via `docker-proxy`** (bridge
   mode; redis/mariadb stayed container-internal), then was **torn down — 80/443 are FREE again**. Because the DE node
   now moves to a **separate VPS**, the §B1 80/443 co-location conflict on the Master no longer applies; the Master

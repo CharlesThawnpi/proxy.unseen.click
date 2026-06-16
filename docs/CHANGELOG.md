@@ -5,6 +5,25 @@
 
 Chronological record of notable changes to the UNSEEN PROXY project.
 
+## 2026-06-16 — Phase 3-DE follow-up: API v2 contract VERIFIED-LIVE; disposable user OK — PASS (w/ follow-ups)
+
+- **API contract recovered & verified.** The earlier OpenAPI HTTP failures were **routing/decoy** (wrong proxy_path),
+  **not** the marshmallow-v4 bug — the spec builds fine in-process (22 paths). **No package change made.** Used the
+  authoritative proxy_path (`hiddifypanel admin-path`) to verify live.
+- **VERIFIED-LIVE (`HIDDIFY_API_CONTRACT.md`):** Hiddify v12.3.3, API "Hiddify API v2.2.0"; auth `Hiddify-API-Key:
+  <admin-UUID>` header; user CRUD `GET|POST /admin/user/`, `GET|PATCH|DELETE /admin/user/{uuid}/`; fields incl.
+  `usage_limit_GB`/`current_usage_GB` (**units = GB → orchestrator must convert GiB↔GB**), `package_days`, `start_date`,
+  `enable`, etc.; subscription via `/user/all-configs/`, `/user/me/`.
+- **Disposable test user:** created (`disposable-test`, 1 GB / 1 day) → GET 200 → all-configs 200 (~14.8 KB) → DELETE
+  200 → re-GET 404. Clean. Users back to 1.
+- **Reachability (from Master):** tcp 22/80/443 OPEN (443 TLS 200); **8388 (SS) filtered**, UDP needs device test;
+  ufw active (22 + 4 Hiddify proxy ACCEPT rules). SSH safe throughout.
+- **⚠ Secret-safety incident (disclosed, not committed):** a shell-quoting bug printed an API response to the terminal,
+  exposing the Hiddify **default** user's ed25519/WireGuard keys (no-customer test node; never entered git). Fixed
+  process (bodies→files, UA quoted). Remediation: regenerate default-user/server keys before live (or on rebuild).
+- **Phase 4 API layer UNBLOCKED.** Updated HIDDIFY_API_CONTRACT/PHASE3_DE1/CURRENT_STATUS/NODES/SERVERS/PORTS/NETWORK/
+  SECURITY. Node stays `status=test`; no package/OS changes; no real customers.
+
 ## 2026-06-16 — Phase 3-DE: Hiddify v12.3.3 installed & running on de1 — PARTIAL (API contract deferred)
 
 - Charles accepted the low-RAM risk; proceeded. Installed Hiddify Manager **v12.3.3** via the official **host**

@@ -66,3 +66,7 @@ above applies normally (fresh VPS, host install, least-privilege API key, manage
   accepted risk). **Deferred (blocks Phase 4):** exact API v2 CRUD contract + disposable test user — read from browser
   Swagger (v12.3.3 API path not black-box-discoverable; OpenAPI route errors). Node stays `status=test`. Detail:
   [PHASE3_DE1_HIDDIFY_LIVE_VERIFY.md](PHASE3_DE1_HIDDIFY_LIVE_VERIFY.md). (Preflight history: [PHASE2_DE1_PREFLIGHT.md](PHASE2_DE1_PREFLIGHT.md).)
+- **Update (2026-06-16): API v2 contract VERIFIED-LIVE; Phase 3-DE PASS (w/ follow-ups).** Disposable test user
+  create→sub→delete confirmed; Phase 4 API layer unblocked (contract in [HIDDIFY_API_CONTRACT.md](HIDDIFY_API_CONTRACT.md);
+  **Hiddify uses GB**). Node-tuning before live: SS:8388/UDP reachability, RAM lock, SSH hardening, regenerate the
+  leaked default-user keys. Still `status=test`.

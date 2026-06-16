@@ -1,7 +1,27 @@
 # PHASE 3-DE — Hiddify host install + live verify on de1
 
 > **Source of truth:** [IMPLEMENTATION_PLAN.md](../IMPLEMENTATION_PLAN.md) §14, §34; [DECISIONS.md](DECISIONS.md) ADR-001/002; [PHASE2_DE1_PREFLIGHT.md](PHASE2_DE1_PREFLIGHT.md)
-> **Result:** **PARTIAL.** Hiddify Manager **v12.3.3** is **installed and running** on de1 (all services active; FAST1/FAST2/Secure inbounds present; admin panel reachable on 443). **Deferred:** exact live API v2 CRUD contract + the disposable test user — the v12.3.3 API URL path isn't black-box-discoverable (path guesses hit Hiddify's decoy site) and the OpenAPI route errors. Best read from the **browser Swagger** (#TASK_for_Charles). **Node stays `status=test`.**
+> **Result:** **PASS (with non-blocking follow-ups).** Hiddify Manager **v12.3.3** installed & running on de1; **API v2
+> contract VERIFIED-LIVE**; **disposable test user create→verify→subscription→delete confirmed**; panel/API reachable
+> externally on 443. Follow-up (non-blocking, node-tuning): SS `:8388` + UDP proxy ports not externally reachable
+> (ufw/Hiddify-iptables), and a real-device protocol connect test. **Phase 4 is UNBLOCKED for the API layer.** Node
+> stays `status=test`.
+>
+> ## Follow-up update (2026-06-16T02:37Z) — API contract recovered & verified
+> - The earlier OpenAPI failures were **routing/decoy** (I'd parsed the wrong proxy_path), **not** the marshmallow-v4
+>   bug: the spec **builds fine in-process** (22 paths). **No package change made** (the task's pin condition wasn't met).
+> - Using the authoritative proxy_path (from `hiddifypanel admin-path`), live HTTP calls succeeded: **API contract fully
+>   verified** (see [HIDDIFY_API_CONTRACT.md](HIDDIFY_API_CONTRACT.md)) and a **disposable-test user** was created
+>   (`usage_limit_GB=1, package_days=1`), read back, its subscription `all-configs` returned (200, ~14.8 KB), then
+>   **deleted (re-GET → 404)**. Users back to 1 (default).
+> - **Reachability (from Master):** tcp **22/80/443 OPEN** (443 TLS → 200); **8388 (Shadowsocks) filtered**; UDP
+>   (Hysteria2) not TCP-probeable → real-device test. ufw active (only 22 explicit; Hiddify added 4 proxy ACCEPT rules).
+> - **⚠ Secret-safety incident (disclosed):** during API debugging, a shell-quoting bug (unquoted User-Agent with
+>   spaces) mis-aligned curl args so a response body printed to the terminal, **exposing the Hiddify "default" user's
+>   ed25519 private key + WireGuard keys + uuid**. It was **NOT committed to git** (terminal only), on a **no-customer
+>   `test` node**. Remediation: these are the default-user/server keys on a throwaway test node; **regenerate the node's
+>   default user / server secrets before any live use** (or they're moot once the node is rebuilt for production).
+>   Process fix applied for the rest of the task: all API bodies written to files, never stdout; UA always quoted.
 
 ## Run metadata
 
@@ -99,15 +119,21 @@ Will be created (`disposable-test`, no real data/payment/UNSEEN token) and delet
    (no secrets) so the contract can be recorded — or authorize a follow-up to apply `marshmallow<=3.26.1` and fetch the spec programmatically.
 2. Optionally do a real-device **Hiddify App import** test from the panel to confirm FAST1/FAST2/Secure connect (links never logged here).
 
-## PASS / PARTIAL / FAIL
+> **NOTE:** the "DEFERRED / NOT DONE" sections above are **superseded** by the 2026-06-16T02:37Z follow-up at the top —
+> the API contract was recovered and verified, and the disposable test user lifecycle was completed. Kept for history.
 
-**PARTIAL.** Install + service + protocol-inbound verification = **PASS** (Hiddify v12.3.3 fully running on de1, 443 up,
-FAST1/FAST2/Secure present, admin link secured, SSH safe). **API v2 CRUD contract + disposable test user = deferred**
-(v12.3.3 API path not discoverable black-box + OpenAPI route errors). **Phase 4 remains blocked** until the API contract is verified.
+## PASS / PARTIAL / FAIL — FINAL
+
+**PASS (with non-blocking follow-ups).** Hiddify v12.3.3 running on de1; **API v2 contract VERIFIED-LIVE**; **disposable
+test user create→verify→subscription→delete confirmed**; FAST1/FAST2/Secure inbounds present; panel/API reachable on
+443; SSH safe; admin link secured. **Phase 4 is UNBLOCKED for the API layer.** Non-blocking follow-ups: SS `:8388`/UDP
+proxy-port external reachability (ufw), a real-device connect test, lock 4 GB RAM, harden SSH, regenerate the leaked
+default-user keys before live use.
 
 ## Exact next recommended task
 
-Capture the **verified API v2 contract** from the browser Swagger (or fix the OpenAPI 500 via `marshmallow<=3.26.1`),
-fill [HIDDIFY_API_CONTRACT.md](HIDDIFY_API_CONTRACT.md), then create+delete one disposable test user and (optionally)
-a real-device connect test. After that, **Phase 4** (DB/backend orchestrator) can begin against the verified contract.
-Also: verify ufw/Hiddify proxy-port reachability, and lock 4 GB RAM before any live use.
+1. **Begin Phase 4** (DB/backend + Hiddify orchestrator) against the verified contract in
+   [HIDDIFY_API_CONTRACT.md](HIDDIFY_API_CONTRACT.md) — **remember GiB↔GB conversion** (Hiddify uses GB).
+2. **Node-tuning follow-ups (before live):** open the proxy ports through ufw / verify Hiddify-iptables (SS:8388, UDP),
+   real-device Hiddify-App connect test (#TASK_for_Charles), lock 4 GB RAM, disable SSH password login, and regenerate
+   the default-user/server secrets (the leaked test-node keys). Node remains `status=test` until these are done.
