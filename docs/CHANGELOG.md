@@ -5,6 +5,14 @@
 
 Chronological record of notable changes to the UNSEEN PROXY project.
 
+## 2026-06-16 — Add consolidated SOURCE_OF_TRUTH.md (Custom-GPT upload file) + generator
+
+- New `scripts/build_source_of_truth.sh` assembles `SOURCE_OF_TRUTH.md` (repo root) from the canonical living docs
+  (invariants + CURRENT_STATUS + DECISIONS/ADRs + verified Hiddify contract + recent CHANGELOG + server inventory).
+- **This is the file to upload to the Custom GPT** as its instruction/source-of-truth — NOT `IMPLEMENTATION_PLAN.md`
+  (that's the static v1.9 plan). Regenerate after each task (`bash scripts/build_source_of_truth.sh`), commit, then
+  re-download from GitHub and re-upload to the GPT. Secret-free (derived from already-committed docs).
+
 ## 2026-06-16 — Phase 3-DE follow-up: API v2 contract VERIFIED-LIVE; disposable user OK — PASS (w/ follow-ups)
 
 - **API contract recovered & verified.** The earlier OpenAPI HTTP failures were **routing/decoy** (wrong proxy_path),
