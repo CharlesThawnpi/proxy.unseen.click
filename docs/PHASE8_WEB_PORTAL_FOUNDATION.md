@@ -107,6 +107,13 @@ QR remains planned unless a future implementation explicitly enables it.
 - `python3 bin/portal_smoke.py` — PASS; all route shapes rendered, no server started.
 - Full suite result after Phase 8: 174 PASS.
 
+## Phase 8A Refinement
+
+See [PHASE8A_PORTAL_PREVIEW_REFINEMENT.md](PHASE8A_PORTAL_PREVIEW_REFINEMENT.md). Local preview export now renders all
+review pages under git-ignored `tmp/portal-preview/`; CSS was tightened for denser desktop and stacked mobile table
+layouts; Burmese-primary copy and degraded/unavailable status readability were improved. The render-only/no-server
+boundary remains unchanged.
+
 ## Secret-Safety Result
 
 Portal tests assert rendered HTML does not contain raw proxy schemes, Hiddify admin paths, the de1 public IP/hostname,
@@ -128,4 +135,3 @@ UUID-shaped strings, or sample opaque token values. The branded link is placehol
 - No live subscription resolution.
 - No live Hiddify provisioning.
 - de1 rebuild still required before real provisioning.
-

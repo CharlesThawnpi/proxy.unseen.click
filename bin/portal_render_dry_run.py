@@ -18,18 +18,33 @@ PAGES = {
     "plans": "/plans",
     "dashboard": "/customer/status",
     "subscription": None,
-    "branded": "/s/example-opaque-token",
+    "branded": "/s/<opaque-token>",
     "help": "/help",
     "unavailable": "/unavailable",
+    "degraded": "/degraded",
     "expired": "/expired",
     "not-found": "/not-found",
 }
+
+REPO_ROOT = Path(__file__).resolve().parent.parent
+SAFE_OUT_ROOT = (REPO_ROOT / "tmp").resolve()
 
 
 def _db_path(value: str | None) -> str:
     if value:
         return value
     return os.path.join(tempfile.mkdtemp(prefix="unseen_portal_"), "portal.sqlite3")
+
+
+def _safe_output_path(value: str) -> Path:
+    out = Path(value).expanduser()
+    if not out.is_absolute():
+        out = REPO_ROOT / out
+    out = out.resolve()
+    if not (out == SAFE_OUT_ROOT or SAFE_OUT_ROOT in out.parents):
+        raise SystemExit(f"refusing to write outside git-ignored tmp/: {out}")
+    out.parent.mkdir(parents=True, exist_ok=True)
+    return out
 
 
 def main(argv=None) -> int:
@@ -49,8 +64,9 @@ def main(argv=None) -> int:
     conn.close()
 
     if args.out:
-        Path(args.out).write_text(response.body, encoding="utf-8")
-        print(f"rendered {path} -> {args.out} status={response.status_code}")
+        out = _safe_output_path(args.out)
+        out.write_text(response.body, encoding="utf-8")
+        print(f"{args.page} {out}")
     else:
         print(response.body)
     return 0
@@ -58,4 +74,3 @@ def main(argv=None) -> int:
 
 if __name__ == "__main__":
     raise SystemExit(main())
-

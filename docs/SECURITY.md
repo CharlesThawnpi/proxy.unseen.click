@@ -201,3 +201,6 @@ keeps the customer web surface dry-run and secret-safe:
   value, node IP/hostname, or raw opaque token appears in rendered HTML (test-asserted).
 - **Assets are local.** CSS is embedded from `backend/portal_static.py`; no CDN, external font, image, or script
   reference is used.
+- **Phase 8A preview export stays local and ignored.** `bin/portal_preview_export.py` writes only under the repo's
+  git-ignored `tmp/` directory, refuses outside paths, and scans rendered HTML for forbidden raw Hiddify/proxy URL
+  shapes and UUID-shaped values before writing. Generated previews were additionally scanned and are not staged.

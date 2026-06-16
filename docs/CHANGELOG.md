@@ -5,6 +5,21 @@
 
 Chronological record of notable changes to the UNSEEN PROXY project.
 
+## 2026-06-16 — Phase 8A: portal local preview refinement — PASS
+
+- **Render-only, dry-run only**: no web server, no systemd, no nginx/TLS, no public endpoint, no auth, no Hiddify
+  fetch/call, no Telegram send/poll. See [PHASE8A_PORTAL_PREVIEW_REFINEMENT.md](PHASE8A_PORTAL_PREVIEW_REFINEMENT.md).
+- **Preview export:** new `bin/portal_preview_export.py` renders sanitized static HTML under git-ignored
+  `tmp/portal-preview/` (home, plans, dashboard, subscription, branded placeholder, help, unavailable, degraded,
+  expired, not-found). Export refuses paths outside repo `tmp/`.
+- **UI/copy refinement:** denser compact CSS, stacked mobile plan rows, quick subscription status strip, clearer
+  status badges, improved Burmese-primary copy while keeping Plan/Trial/Basic/Core/Plus/Pro/Max/Fast/Fast1/Fast2/Secure
+  terms in English.
+- **Security:** dynamic HTML escaping preserved; preview export scans for raw Hiddify/proxy shapes and UUID-shaped
+  values; generated previews contain no real tokens, raw opaque tokens, admin paths, proxy links, QR payloads, node
+  hostname, or private customer data. Generated preview files were not committed.
+- **Tests:** portal test file expanded to 16 tests; full suite result after Phase 8A: 179 PASS.
+
 ## 2026-06-16 — Phase 8: web/customer portal foundation (render-only, dry-run) — PASS
 
 - **Render-only, dry-run only** (stdlib): no web server, no systemd, no nginx/TLS, no public endpoint, no real auth,

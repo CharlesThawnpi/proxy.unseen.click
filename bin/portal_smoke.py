@@ -22,25 +22,26 @@ def main(argv=None) -> int:
     conn = dbmod.connect(db_path)
     seed.seed(conn)
     sample = portal_viewmodels.sample_data(conn)
-    paths = [
-        "/",
-        "/plans",
-        "/customer/status",
-        f"/subscriptions/{sample['subscription_id']}",
-        "/s/example-opaque-token",
-        "/help",
-        "/unavailable",
-        "/expired",
-        "/not-found",
+    pages = [
+        ("home", "/"),
+        ("plans", "/plans"),
+        ("dashboard", "/customer/status"),
+        ("subscription", f"/subscriptions/{sample['subscription_id']}"),
+        ("branded-placeholder", "/s/<opaque-token>"),
+        ("help", "/help"),
+        ("unavailable", "/unavailable"),
+        ("degraded", "/degraded"),
+        ("expired", "/expired"),
+        ("not-found", "/not-found"),
     ]
-    for path in paths:
+    for name, path in pages:
         response = portal_app.render(conn, path, customer_id=sample["customer_id"])
         assert "hiddify://" not in response.body
         assert "vless://" not in response.body
         assert "ss://" not in response.body
         assert "hy2://" not in response.body
         assert "/api/v2/" not in response.body
-        print(f"{response.status_code} {path} bytes={len(response.body)}")
+        print(f"{name} status={response.status_code} bytes={len(response.body)}")
     conn.close()
     print("SMOKE_OK: portal rendered sanitized pages; no server started.")
     return 0
@@ -48,4 +49,3 @@ def main(argv=None) -> int:
 
 if __name__ == "__main__":
     raise SystemExit(main())
-

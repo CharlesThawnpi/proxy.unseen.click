@@ -49,9 +49,10 @@ def render_route(conn: sqlite3.Connection, path: str, *, customer_id: int | None
         return PortalResponse(200, tpl.render_help())
     if route == "/unavailable":
         return PortalResponse(503, tpl.render_state_page("unavailable"))
+    if route == "/degraded":
+        return PortalResponse(200, tpl.render_state_page("degraded"))
     if route == "/expired":
         return PortalResponse(410, tpl.render_state_page("expired"))
     if route == "/not-found":
         return PortalResponse(404, tpl.render_state_page("not-found"))
     return PortalResponse(404, tpl.render_state_page("not-found"))
-

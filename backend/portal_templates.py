@@ -61,13 +61,13 @@ def page_head(title: str, lead: str, extra: str = "") -> str:
 
 def render_home() -> str:
     body = page_head(
-        "Portal foundation",
-        "Customer status, Plan ကြည့်ရန် နှင့် subscription landing အတွက် dry-run preview ဖြစ်သည်။",
+        "Customer Portal",
+        "Plan, subscription status နှင့် support အချက်အလက်များကို တစ်နေရာတည်းမှာ ကြည့်ရန် preview ဖြစ်သည်။",
     )
-    body += """<section class="grid three">
-  <article class="card"><h2>Status</h2><p class="muted">Public customer code ဖြင့် subscription အခြေအနေကို ကြည့်ရန်။</p></article>
-  <article class="card"><h2>Plans</h2><p class="muted">DB ထဲရှိ Trial, Basic, Core, Plus, Pro, Max rules ကို ပြသသည်။</p></article>
-  <article class="card"><h2>Subscription link</h2><p class="muted">Branded link placeholder သာ ပြသပြီး raw proxy link မပြပါ။</p></article>
+    body += """<section class="grid three" aria-label="Portal summary">
+  <article class="card"><h2>Status</h2><p class="muted">Public customer code ဖြင့် subscription အခြေအနေကို ချက်ချင်းစစ်နိုင်သည်။</p></article>
+  <article class="card"><h2>Plans</h2><p class="muted">Trial, Basic, Core, Plus, Pro, Max ကို DB data အတိုင်း ပြသည်။</p></article>
+  <article class="card"><h2>Subscription link</h2><p class="muted">Branded placeholder သာ ပြပြီး raw proxy link မပြပါ။</p></article>
 </section>"""
     return layout("Portal", body, "home")
 
@@ -87,15 +87,15 @@ def render_plans(plans: list[dict]) -> str:
                       for p in plan["protocols"]]
         trial = badge("Trial", "info") if plan["is_trial"] else ""
         rows.append(f"""<tr>
-  <td><strong>{h(plan["name"])}</strong><div class="meta">{h(plan["plan_code"])} {trial}</div></td>
-  <td>{h(plan["data_limit"])}</td>
-  <td>{h(plan["duration"])}</td>
-  <td class="price">{h(plan["price"])}</td>
-  <td>{h(plan["devices"])}</td>
-  <td><div class="pillset">{''.join(region_bits)}</div></td>
-  <td><div class="pillset">{''.join(proto_bits)}</div></td>
+  <td data-label="Plan"><strong>{h(plan["name"])}</strong><div class="meta">{h(plan["plan_code"])} {trial}</div></td>
+  <td data-label="Data">{h(plan["data_limit"])}</td>
+  <td data-label="Days">{h(plan["duration"])}</td>
+  <td data-label="Price" class="price">{h(plan["price"])}</td>
+  <td data-label="Devices">{h(plan["devices"])}</td>
+  <td data-label="Regions"><div class="pillset">{''.join(region_bits)}</div></td>
+  <td data-label="Protocols"><div class="pillset">{''.join(proto_bits)}</div></td>
 </tr>""")
-    body = page_head("Plans", "Plan data, regions, protocols နှင့် availability ကို DB မှ ဖတ်ပြသည်။")
+    body = page_head("Plans", "Plan data, region availability နှင့် Fast/Secure options ကို DB မှ ဖတ်ပြသည်။")
     body += f"""<section class="table-wrap" aria-label="Plan table">
   <table>
     <thead><tr><th>Plan</th><th>Data</th><th>Duration</th><th>Price</th><th>Devices</th><th>Regions</th><th>Fast / Secure</th></tr></thead>
@@ -106,8 +106,8 @@ def render_plans(plans: list[dict]) -> str:
 
 
 def render_dashboard(data: dict) -> str:
-    stat_cards = f"""<section class="grid three">
-  <div class="kpi"><span class="meta">Customer</span><span class="value">{h(data["public_customer_code"])}</span></div>
+    stat_cards = f"""<section class="grid three" aria-label="Customer summary">
+  <div class="kpi"><span class="meta">Customer code</span><span class="value">{h(data["public_customer_code"])}</span></div>
   <div class="kpi"><span class="meta">Subscriptions</span><span class="value">{h(data["subscription_count"])}</span></div>
   <div class="kpi"><span class="meta">Active</span><span class="value">{h(data["active_count"])}</span></div>
 </section>"""
@@ -115,12 +115,12 @@ def render_dashboard(data: dict) -> str:
     for sub in data["subscriptions"]:
         subs.append(f"""<li class="row">
   <div class="row-main"><strong>{h(sub["plan_name"])}</strong><div class="meta">{h(sub["code"])} - {h(sub["data_limit"])} - expires {h(sub["expiry_date"])}</div></div>
-  <div class="pillset">{badge(sub["status"]["label"], sub["status"]["tone"])}<a class="button" href="/subscriptions/{h(sub["id"])}">View</a></div>
+  <div class="pillset">{badge(sub["status"]["label"], sub["status"]["tone"])}<a class="button" href="/subscriptions/{h(sub["id"])}">ကြည့်ရန်</a></div>
 </li>""")
     sub_html = "".join(subs) if subs else '<li class="row"><span class="muted">Subscription မရှိသေးပါ။</span></li>'
-    body = page_head("Customer status", "Public customer code ကိုသာ primary identity အဖြစ် ပြသသည်။")
+    body = page_head("Customer status", "Public customer code ကိုသာ identity အဖြစ် ပြထားသည်။")
     body += stat_cards
-    body += f"""<section class="panel" style="margin-top:8px">
+    body += f"""<section class="panel stack-sm">
   <h2>Subscriptions</h2>
   <ul class="compact-list">{sub_html}</ul>
 </section>"""
@@ -141,10 +141,16 @@ def render_subscription(data: dict) -> str:
 </li>""")
     body = page_head(
         f"Subscription {data['code']}",
-        "Snapshot values နှင့် dry-run availability ကို customer-safe view ဖြင့် ပြသည်။",
+        "Plan snapshot, delivery placeholder နှင့် region status ကို customer-safe view ဖြင့် ပြသည်။",
         badge(data["status"]["label"], data["status"]["tone"]),
     )
-    body += f"""<section class="grid two">
+    body += f"""<section class="status-strip" aria-label="Subscription quick status">
+  <div class="kpi"><span class="meta">Plan</span><span class="value">{h(data["plan_name"])}</span></div>
+  <div class="kpi"><span class="meta">Data</span><span class="value">{h(data["data_limit"])}</span></div>
+  <div class="kpi"><span class="meta">Expiry</span><span class="value">{h(data["expiry_date"])}</span></div>
+  <div class="kpi"><span class="meta">Provision</span><span class="value">{h(data["provision_status"]["label"])}</span></div>
+</section>
+<section class="grid two">
   <article class="panel">
     <h2>Snapshot</h2>
     <ul class="compact-list">
@@ -162,11 +168,12 @@ def render_subscription(data: dict) -> str:
     <h2>Branded link</h2>
     <code class="link-placeholder">{h(data["delivery"]["placeholder"])}</code>
     <div class="actions">{delivery_modes}</div>
-    <p class="meta">Placeholder only. Raw subscription/proxy links are not rendered.</p>
+    <p class="section-note">Placeholder only. Raw subscription/proxy links are not rendered.</p>
   </article>
 </section>
-<section class="panel" style="margin-top:8px">
+<section class="panel stack-sm">
   <h2>Availability</h2>
+  <p class="section-note">Region status သာ ပြထားသည်။ Node hostname/IP မပြပါ။</p>
   <ul class="compact-list">{''.join(regions)}</ul>
 </section>"""
     return layout("Subscription", body, "status")
@@ -175,22 +182,22 @@ def render_subscription(data: dict) -> str:
 def render_branded_placeholder() -> str:
     body = page_head(
         "Subscription landing",
-        "ဤ route shape သည် /s/<opaque-token> အတွက် placeholder သာဖြစ်ပြီး token resolution မလုပ်ပါ။",
+        "ဤ /s/<opaque-token> route သည် placeholder သာဖြစ်ပြီး token resolution မလုပ်ပါ။",
         badge("Placeholder", "info"),
     )
-    body += """<section class="panel">
+    body += """<section class="panel stack-sm">
   <h2>Delivery status</h2>
-  <p class="muted">Future portal auth နှင့် live subscription resolution မရှိသေးသောကြောင့် link payload မပြပါ။</p>
+  <p class="muted">Portal auth နှင့် live subscription resolution မရှိသေးသောကြောင့် link payload မပြပါ။</p>
   <div class="pillset">""" + badge("Deep-link planned", "neutral") + badge("Copy-link planned", "neutral") + badge("QR planned", "neutral") + """</div>
 </section>"""
     return layout("Subscription landing", body, "status")
 
 
 def render_help() -> str:
-    body = page_head("Help", "Support handoff အတွက် customer-safe information သာ ပြထားသည်။")
+    body = page_head("Help", "Support အတွက် customer-safe information သာ ပြထားသည်။")
     body += """<section class="grid two">
-  <article class="panel"><h2>Plan ပြောင်းရန်</h2><p class="muted">လက်ရှိ subscription status ကို screenshot မလိုဘဲ public customer code ဖြင့် support ကို ပြောနိုင်သည်။</p></article>
-  <article class="panel"><h2>Connection issue</h2><p class="muted">Region availability ကို portal တွင် ကြည့်နိုင်သည်။ Node hostnames သို့မဟုတ် operational details မပြပါ။</p></article>
+  <article class="panel"><h2>Plan ပြောင်းရန်</h2><p class="muted">Public customer code နှင့် လက်ရှိ Plan ကို support သို့ ပြောနိုင်သည်။</p></article>
+  <article class="panel"><h2>Connection issue</h2><p class="muted">Region availability ကို ကြည့်နိုင်သည်။ Node hostname/IP မပြပါ။</p></article>
 </section>"""
     return layout("Help", body, "help")
 
@@ -198,6 +205,7 @@ def render_help() -> str:
 def render_state_page(kind: str) -> str:
     titles = {
         "unavailable": ("Unavailable", "ယာယီမရနိုင်ပါ။ နောက်မှ ထပ်စမ်းကြည့်ပါ။", "warn"),
+        "degraded": ("Degraded", "Service အကန့်အသတ်ရှိနိုင်သည်။ ရနိုင်သော Region ကို ရွေးပါ။", "warn"),
         "expired": ("Expired", "Subscription သက်တမ်းကုန်နေသည်။ Renew flow ကို နောက်ပိုင်းတွင် ချိတ်ဆက်မည်။", "bad"),
         "not-found": ("Not found", "ရှာမတွေ့ပါ။ Link သို့မဟုတ် status request ကို စစ်ဆေးပါ။", "neutral"),
     }
@@ -205,4 +213,3 @@ def render_state_page(kind: str) -> str:
     body = page_head(title, lead, badge(title, tone))
     body += '<section class="panel"><p class="muted">No private platform IDs, raw links, or operational endpoints are shown.</p></section>'
     return layout(title, body, "")
-

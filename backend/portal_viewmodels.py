@@ -14,7 +14,7 @@ BRANDED_LINK_PLACEHOLDER = f"https://{link_renderer.BRANDED_HOST}{link_renderer.
 
 _STATUS_LABELS = {
     "pending": ("စောင့်ဆိုင်းနေသည်", "warn"),
-    "active": ("Active", "ok"),
+    "active": ("Active ဖြစ်သည်", "ok"),
     "expired": ("သက်တမ်းကုန်", "bad"),
     "suspended": ("ယာယီရပ်ဆိုင်း", "bad"),
     "dry_run_planned": ("Dry-run planned", "info"),
@@ -253,3 +253,23 @@ def sample_data(conn: sqlite3.Connection) -> dict:
     conn.commit()
     return {"customer_id": cid, "subscription_id": sid}
 
+
+def add_preview_degraded_state(conn: sqlite3.Connection) -> None:
+    """Add safe degraded/unavailable sample rows for local preview HTML.
+
+    These rows are temp-DB-only synthetic state. No node is contacted and no real operational
+    hostname, IP, token, or customer data is introduced.
+    """
+    conn.execute(
+        "INSERT OR IGNORE INTO proxy_nodes(node_code, region_code, status) VALUES ('us-preview', 'us', 'live')"
+    )
+    conn.execute(
+        "INSERT OR IGNORE INTO proxy_nodes(node_code, region_code, status) VALUES ('sg-preview', 'sg', 'live')"
+    )
+    conn.execute(
+        "INSERT INTO node_alerts(node_code, level, metric) VALUES ('us-preview', 'WARN', 'preview_health')"
+    )
+    conn.execute(
+        "INSERT INTO node_alerts(node_code, level, metric) VALUES ('sg-preview', 'DOWN', 'preview_health')"
+    )
+    conn.commit()

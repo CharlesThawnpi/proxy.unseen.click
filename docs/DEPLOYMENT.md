@@ -172,3 +172,13 @@ tools default to a fresh temp DB/sample data:
 A real portal deployment is a future gated task requiring a public HTTP boundary, short-lived portal auth, `/s/`
 resolution, secret-safe access logging, and live delivery integration. It remains blocked from real provisioning until
 the de1 rebuild and real-device protocol PASS.
+
+### Phase 8A local preview export
+
+For visual review only:
+
+`python3 bin/portal_preview_export.py --out-dir tmp/portal-preview`
+
+This writes static HTML under git-ignored `tmp/portal-preview/` and prints page names + file paths only. The exporter
+uses a fresh temp DB/sample data by default, refuses output outside repo `tmp/`, starts no server, and performs no
+network calls. Generated preview files are not deployment artifacts and must not be committed.

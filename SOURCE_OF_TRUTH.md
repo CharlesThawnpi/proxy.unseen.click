@@ -1,6 +1,6 @@
 # UNSEEN PROXY — SOURCE OF TRUTH (consolidated, auto-generated)
 
-> **Generated:** 2026-06-16T06:33:06Z — by `scripts/build_source_of_truth.sh`.
+> **Generated:** 2026-06-16T06:52:04Z — by `scripts/build_source_of_truth.sh`.
 > **This is the live project state for external readers (e.g. the Custom GPT).** It is DERIVED from the
 > canonical docs below and regenerated each task. Upload THIS file to the GPT (not IMPLEMENTATION_PLAN.md,
 > which is the static v1.9 plan). Re-download after updates.
@@ -47,7 +47,7 @@ Where the UNSEEN PROXY build stands across the §34 deployment phases.
 | 5 | Telegram bot implementation (Burmese-primary) | **Foundation + transport DONE (dry-run, gated).** Foundation: adapter + Burmese catalogue + router + AccountService identity + env-driven admin. Transport: Bot API boundary (token redacted; injectable opener), offset-tracked polling runner, NotificationService sender consuming `outbound_messages` (queued→sent/requeue/dead), fail-closed double gate. **No polling daemon/webhook/API/send; no systemd.** See PHASE5_TELEGRAM_BOT_FOUNDATION.md + PHASE5_TELEGRAM_TRANSPORT_FOUNDATION.md. Live bring-up = next, Charles-gated. |
 | 6 | Hiddify subscription delivery integration | **Foundation DONE (dry-run): delivery payload model (safe refs only) + branded link rule (`sub.unseen.click/s/<token>`, hash stored) + deep-link/copy-link priority + QR planned + mocked Hiddify-output normalizer + NotificationService/Telegram render integration. No raw links persisted/logged; no network.** See PHASE6_SUBSCRIPTION_DELIVERY_FOUNDATION.md. Sidecar + live = next, gated. |
 | 7 | Plan-based region/protocol entitlement + node resilience | **Foundation DONE (dry-run, DB-driven): `entitlements` (plan→region/protocol, FAST rule, safe errors) + `node_resilience` (status×health readiness, reason vocabulary, graceful degradation, data-driven `node_live_blockers`) + `availability` (region/protocol availability) + provisioning-plan integration + Burmese availability copy. Additive migration `0005`. No node live; no metrics fetch.** See PHASE7_ENTITLEMENT_NODE_RESILIENCE.md. Health monitor = next. |
-| 8 | Web app / customer portal | **Foundation DONE (render-only, dry-run): stdlib portal boundary + compact responsive GitHub-inspired neutral UI + DB-driven plans/customer status/subscription detail + branded `/s/<opaque-token>` placeholder + Phase 7 availability rendering. No server, no public endpoint, no real auth, no live delivery, no Hiddify/Telegram network.** See PHASE8_WEB_PORTAL_FOUNDATION.md + PORTAL.md. |
+| 8 | Web app / customer portal | **Foundation + 8A preview refinement DONE (render-only, dry-run): stdlib portal boundary + compact responsive GitHub-inspired neutral UI + DB-driven plans/customer status/subscription detail + branded `/s/<opaque-token>` placeholder + Phase 7 availability rendering + sanitized local preview export under `tmp/portal-preview/`. No server, no public endpoint, no real auth, no live delivery, no Hiddify/Telegram network.** See PHASE8_WEB_PORTAL_FOUNDATION.md + PHASE8A_PORTAL_PREVIEW_REFINEMENT.md + PORTAL.md. |
 | 9 | Messenger and Viber bot integration | PENDING |
 | 10 | Monitoring, backup, security, production hardening | PENDING |
 | 11 | Internal beta testing | PENDING |
@@ -158,7 +158,13 @@ objects, compact responsive GitHub-inspired neutral UI, DB-driven plans and cust
 `bin/portal_render_dry_run.py`. **No server/public endpoint/auth/live delivery/Hiddify call/Telegram send.** 174 tests
 PASS.
 
-**Next: gated monitor scheduler, real portal deployment/auth design, or Phase 9 channel work.** **Before de1 goes live:** rebuild the node (clears
+**Phase 8A portal preview refinement complete (2026-06-16)** ([PHASE8A_PORTAL_PREVIEW_REFINEMENT.md](PHASE8A_PORTAL_PREVIEW_REFINEMENT.md)):
+local preview exporter + UI/copy refinement. Generated sanitized review files under
+`/opt/unseen-proxy/tmp/portal-preview/` (git-ignored; not committed), added denser desktop spacing, stacked mobile plan
+rows, quick subscription status strip, degraded/unavailable preview state, and stricter safe-output path handling.
+**No server/public endpoint/auth/live delivery/Hiddify call/Telegram send.** 179 tests PASS.
+
+**Next: Charles visual review of `tmp/portal-preview/*.html`, then gated monitor scheduler, real portal deployment/auth design, or Phase 9 channel work.** **Before de1 goes live:** rebuild the node (clears
 `leaked_key_rebuild_pending`) + a real-device FAST1/FAST2/Secure test (`#TASK_for_Charles` in
 PHASE4_PRELIVE_DE1_TUNING.md), then separately-gated tasks (periodic monitor + read-only SSH metrics, bot live latches
 + real opener, `sub.unseen.click` sidecar, live provisioning). Live promotion stays Charles-gated.
@@ -396,6 +402,21 @@ The verified Hiddify Manager **API v2** contract — endpoints, fields, units, a
 
 Chronological record of notable changes to the UNSEEN PROXY project.
 
+## 2026-06-16 — Phase 8A: portal local preview refinement — PASS
+
+- **Render-only, dry-run only**: no web server, no systemd, no nginx/TLS, no public endpoint, no auth, no Hiddify
+  fetch/call, no Telegram send/poll. See [PHASE8A_PORTAL_PREVIEW_REFINEMENT.md](PHASE8A_PORTAL_PREVIEW_REFINEMENT.md).
+- **Preview export:** new `bin/portal_preview_export.py` renders sanitized static HTML under git-ignored
+  `tmp/portal-preview/` (home, plans, dashboard, subscription, branded placeholder, help, unavailable, degraded,
+  expired, not-found). Export refuses paths outside repo `tmp/`.
+- **UI/copy refinement:** denser compact CSS, stacked mobile plan rows, quick subscription status strip, clearer
+  status badges, improved Burmese-primary copy while keeping Plan/Trial/Basic/Core/Plus/Pro/Max/Fast/Fast1/Fast2/Secure
+  terms in English.
+- **Security:** dynamic HTML escaping preserved; preview export scans for raw Hiddify/proxy shapes and UUID-shaped
+  values; generated previews contain no real tokens, raw opaque tokens, admin paths, proxy links, QR payloads, node
+  hostname, or private customer data. Generated preview files were not committed.
+- **Tests:** portal test file expanded to 16 tests; full suite result after Phase 8A: 179 PASS.
+
 ## 2026-06-16 — Phase 8: web/customer portal foundation (render-only, dry-run) — PASS
 
 - **Render-only, dry-run only** (stdlib): no web server, no systemd, no nginx/TLS, no public endpoint, no real auth,
@@ -464,21 +485,6 @@ Chronological record of notable changes to the UNSEEN PROXY project.
   stored; raw-proxy-link detection (`hiddify://`/`vless://`/`ss://`/`hy2://`/`/api/v2/`/`all-configs`) + redaction.
 - **`hiddify_subscription_output`** — normalizes a **mocked** output to a sanitized summary (counts + engine names +
   booleans); raw output discarded, never logged. **`qr_renderer`** — QR honestly **planned**, not generated (stdlib;
-  no risky dep). **`delivery_payloads`/`subscription_delivery`** — `DeliveryPayload` (refs/flags only; mode priority
-  deep-link → copy-link → QR); `prepare_delivery` persists safe refs + audit + enqueues a notification (`payload_ref`
-  only); `_guard_no_raw_link` refuses to persist/log raw links.
-- `telegram_messages.delivery_preview` — safe Burmese-primary preview (no link/token/QR). New CLIs:
-  `bin/subscription_delivery_smoke.py`, `bin/render_delivery_dry_run.py` (temp DB / mocked output).
-- **Tests: 122 PASS** (107 + 15 new, incl. no-network-call guard + no-raw-link-in-DB/audit). Updated
-  DATABASE/BOT_FLOWS/SECURITY/DEPLOYMENT/CURRENT_STATUS; new PHASE6 doc.
-
-## 2026-06-16 — Phase 5: gated Telegram transport foundation (dry-run) — PASS
-
-- **Dry-run only, gated** (stdlib): no Telegram API call, no send, no polling daemon, no webhook, no systemd service;
-  de1 stays `status=test`. See [PHASE5_TELEGRAM_TRANSPORT_FOUNDATION.md](PHASE5_TELEGRAM_TRANSPORT_FOUNDATION.md).
-- **`telegram_transport`** — Bot API boundary (`getUpdates`/`sendMessage`/`editMessageText`/`answerCallbackQuery`);
-  injectable `opener` (tests mock; no real network); dry-run default; token name-mangled + redacted; the token-bearing
-  URL is never logged/returned; timeout/retry boundaries.
 
 
 ---
